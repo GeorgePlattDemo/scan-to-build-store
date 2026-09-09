@@ -917,7 +917,7 @@ The shared contract is:
 
 ```text
 APP
-creates and reconciles dimensional evidence
+collects supplied dimensional evidence and presents reconciliation
         ↓
 GOVERNED PROJECT RECORD
 preserves meaning and provenance
