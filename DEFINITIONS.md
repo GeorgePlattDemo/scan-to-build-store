@@ -280,6 +280,12 @@ Terms used after a requirement becomes specific enough to evaluate against produ
 
 **Sequence** — Ordered arrangement of operations or events.
 
+**Machine-neutral operation sequence** — Store-produced ordered description of the accepted work using part-relative requirements and identity. It does not supply station coordinates or controller commands. Machine-site lowering uses the actual machine configuration to produce the controller-specific representation. Basis: `STORE-JOB-001.md` §3, “From Store operation to machine program,” and §7.
+
+**Machine configuration** — Machine-side description of station locations, tooling and controlled motion relationships used to transform part-relative requirements into local machine movement. It does not redefine finished project dimensions. The associated lowering logic is established and validated through commissioning; these words do not claim that commissioning has occurred. Basis: `README.md`, “Fixed Tool Geometry,” and `STORE-JOB-001.md` §3.
+
+These are operational definitions of concepts already used by the Store. They do not adopt the Cell spine's candidate `MachineNeutralOp`, `LoweringRecord`, or `CellProgramIdentity` as Store or governed record types.
+
 **Station** — Defined physical location or function within a machine or cell where work occurs.
 
 **Machine** — Physical equipment performing or supporting manufacturing operations.
