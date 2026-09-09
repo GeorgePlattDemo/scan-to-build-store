@@ -358,7 +358,9 @@ Terms used after a requirement becomes specific enough to evaluate against produ
 
 **Fail closed** — Do not proceed to the protected action when required information or authority is missing, invalid, stale, contradictory, or unknown.
 
-**Manual mode / automatic mode** — Explicit machine operating conditions with different control assumptions.
+**Manual mode / automatic mode** — Explicit local machine operating conditions with different control assumptions. Manual mode does not imply that automated axes are physically hand-powered, and automatic mode does not imply network dependence.
+
+**POSITION_VALID** — Machine-local condition that the workpiece reference required for an applicable commanded motion has been established and remains valid under the declared machine conditions. It is not readiness, authorization, or proof of part conformance.
 
 ---
 
@@ -544,7 +546,7 @@ Terms used to model the Store without turning Store Zero assumptions into univer
 
 **Special-order route** — Store-represented path to material or goods not satisfied through the applicable local-stock path.
 
-**Machine capability reference** — Store-visible reference to declared machine or cell capability. Not machine readiness or authorization.
+**Machine capability reference** — Store-visible declaration or reference to machine or cell capability conforming to governed `MachineEnvelope` semantics. A Store may declare a machine-specific envelope instance but does not redefine those semantics or infer new capability from observed success. Not machine readiness or authorization.
 
 ---
 
@@ -641,6 +643,10 @@ A compact check for the most consequential translation errors.
 **Machine reference ≠ automatically a formal datum**
 
 **Machine homing ≠ workpiece reference establishment**
+
+**POSITION_VALID ≠ readiness**
+
+**POSITION_VALID ≠ authorization**
 
 **Cycle-time estimate ≠ measured cycle time**
 

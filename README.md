@@ -113,7 +113,53 @@ Machine implementation is modular.
 
 The Store should be able to describe and evaluate machine capability without requiring every store to use the same physical equipment.
 
-Initial development will use four capability levels:
+### Fixed Tool Geometry
+
+The reference cell uses a determinate known tool set — a small fixed group of saws, drills, mills, and routers. Tool positions, machine references, station locations, and controlled motion relationships are established as part of commissioning and held in the machine configuration.
+
+The job supplies what the part is: finished dimensions, feature positions referenced to the part, required operations, and part identity. The machine configuration supplies where the tools are and how stock moves between them. The controller combines those two facts to position the work.
+
+For the fixed-tool reference cell, there is no per-job tool-location map, no manual machine-offset setting at Cycle Start, and no programmer reconstructing the drawing beside the machine.
+
+The machine-specific lowering logic still exists. It is established and validated as part of commissioning and configuration, then executes deterministically for accepted jobs rather than being manually authored again for each order.
+
+This separation keeps the job portable: the part is not defined by one particular cell's station coordinates.
+
+### Capability declaration
+
+The Store uses the governed meaning of `MachineEnvelope`.
+
+A Store may declare or reference a machine-specific capability representation conforming to that contract. It does not redefine the contract, silently extend an envelope because an operation once succeeded, or infer capability from observed behavior.
+
+Capability remains distinct from readiness, authorization, and physical execution.
+
+### Operating conditions
+
+Three machine-side conditions remain separate:
+
+**Local manual / jog operation** — an operator commands permitted machine motion through local controls. Servos may still perform the movement.
+
+**Local automatic operation** — the cell executes an accepted machine program under local control.
+
+**Network communication** — the network delivers a validated job and receives status.
+
+> **Loss of network communication shall not affect real-time motion, interlocks, state management, or stopping. The network delivers a validated job and receives status.**
+
+A change between manual and automatic operation is an explicit local machine event. Network presence is not motion authority.
+
+### `POSITION_VALID`
+
+The machine knows where the applicable workpiece reference is, or it knows that it does not.
+
+`POSITION_VALID` is the machine-local condition that the workpiece reference required for the commanded motion has been established and remains valid under the declared machine conditions.
+
+When `POSITION_VALID` is false, the machine must not execute a command whose geometry depends on known workpiece position. Position must be established again under the applicable machine procedure.
+
+`POSITION_VALID` is not readiness, authorization, or proof that a finished part conforms.
+
+### Capability progression
+
+Initial development uses four capability levels:
 
 ### MCL-1 — Transmission Proof
 
@@ -121,17 +167,25 @@ The smallest complete machine path.
 
 One governed instruction.  
 One board.  
-One established datum.  
+One established workpiece reference.  
 One bounded operation.  
 One observed result.
 
 Its purpose is to prove transmission, interpretation, execution-boundary behavior, and outcome recording with the smallest practical machine system.
+
+A useful comparison exists below MCL-1:
+
+**Position-assisted operation** — controlled stock positioning with an operator completing the physical cut or operation through independently controlled equipment.
+
+This is a comparison point, not an additional formal MCL.
 
 ### MCL-2 — Minimum Useful Cell
 
 The minimum bounded machine capability capable of supporting a viable initial project class or fulfillment offering.
 
 This level is expected to contain the first meaningful multi-operation implementation.
+
+For the D-001 reference path, the number of times the workpiece must be released and re-referenced is a primary complexity and error driver. The preferred pattern is to establish the workpiece once and perform the required operations inside a maintained reference chain.
 
 ### MCL-3 — Extended Capability
 
@@ -144,6 +198,8 @@ Requirements may be defined before every implementation choice is fixed.
 Long-range capability, advanced automation, and future machine concepts.
 
 MCL-4 may guide architecture and research but must not create active implementation obligations merely because a concept is documented.
+
+An MCL label does not itself grant operations. Each implemented capability must explicitly declare the operations and limits it supports.
 
 ---
 
