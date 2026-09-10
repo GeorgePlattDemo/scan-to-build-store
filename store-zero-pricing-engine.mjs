@@ -208,3 +208,33 @@ export function estimateCut001(catalog) {
     ]
   });
 }
+
+/** Square picnic leg — no mill. Control ticket. */
+export function estimatePicnicLegSquare(catalog) {
+  return estimateJob(catalog, {
+    title: "Picnic leg — square 28 in",
+    classId: "picnic.leg.square",
+    pieces: [
+      { storeSku: "STB-ZERO-SPF-2X4-96-001", qty: 1, keptLengthIn: 28, widthIn: 3.5 }
+    ]
+  });
+}
+
+/** Same stick with declared longitudinal taper (+ optional end profile). */
+export function estimatePicnicLegTapered(catalog, { millEnds = 1 } = {}) {
+  return estimateJob(catalog, {
+    title: "Picnic leg — longitudinal taper",
+    classId: "picnic.leg.taper",
+    pieces: [
+      {
+        storeSku: "STB-ZERO-SPF-2X4-96-001",
+        qty: 1,
+        keptLengthIn: 28,
+        widthIn: 3.5,
+        millLongIn: 28,
+        millEnds,
+        passes: 1
+      }
+    ]
+  });
+}
