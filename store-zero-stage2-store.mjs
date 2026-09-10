@@ -17,6 +17,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { estimatePineAlcove, estimateJob } from "./store-zero-pricing-engine.mjs";
+import { envelopeCheck } from "./d001-stage2-envelope.mjs";
 
 export const STAGE2_JOB_DISPOSITIONS = [
   "SUPPORTABLE",
@@ -86,17 +87,20 @@ export function priceAnswer(item) {
   };
 }
 
-export function capabilityAnswer(item, requiredOps = []) {
+export function capabilityAnswer(item, requiredOps = [], feature = {}) {
   if (!item) return { status: "REFUSED", reason: "NO_OFFERING" };
-  const have = new Set(item.supportedOps || []);
-  const missing = requiredOps.filter((op) => !have.has(op));
-  if (missing.length) {
+  const env = envelopeCheck(item, { requiredOps, ...feature });
+  if (env.status === "SOURCED") {
+    return { status: "SOURCED", envelope: env };
+  }
+  if (env.status === "REFUSED") {
     return {
       status: "REFUSED",
-      missing,
+      missing: env.reasons,
       declared: item.supportedOps,
       cellFamily: item.cellFamily,
-      basis: "DECLARED_STAGE2_CAPABILITY"
+      basis: "DECLARED_STAGE2_CAPABILITY",
+      envelope: env
     };
   }
   return {
@@ -104,7 +108,8 @@ export function capabilityAnswer(item, requiredOps = []) {
     declared: item.supportedOps,
     cellFamily: item.cellFamily,
     limitations: item.limitations || [],
-    basis: "DECLARED_STAGE2_CAPABILITY"
+    basis: "DECLARED_STAGE2_CAPABILITY",
+    envelope: env
   };
 }
 
@@ -117,7 +122,11 @@ export function evaluateJob(catalog, spec) {
     const item = findSku(catalog, line.storeSku);
     const stock = stockAnswer(item, line.qty);
     const price = priceAnswer(item);
-    const cap = capabilityAnswer(item, line.requiredOps || ["CROSSCUT"]);
+    const cap = capabilityAnswer(item, line.requiredOps || ["CROSSCUT"], {
+      keptLengthIn: line.keptLengthIn,
+      millYIn: line.millYIn,
+      millDepthIn: line.millDepthIn
+    });
     if (!item || price.status === "UNRESOLVED") unresolved = true;
     if (cap.status === "REFUSED") refused = true;
     if (stock.status === "NOT_ON_HAND" || stock.status === "ON_HAND_SHORT") unavailable = true;

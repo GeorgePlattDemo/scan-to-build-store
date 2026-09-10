@@ -160,7 +160,8 @@ Current on this branch. Role and basis only.
 | `store-zero-pricing-engine.mjs` | Takeoff → extension → modeled cycle → budgetary Q | Sell rule `DECLARED_FIXTURE`. Cycle model `STB-D001-CYCLE-MODEL-S2-0.1` (`CALCULATED`, not measured). Q is not a quote. |
 | `store-zero-stage2-store.mjs` | Bounded Store answers and job disposition | Fixture answers. Job: `SUPPORTABLE` / `UNRESOLVED` / `REFUSED` / `UNAVAILABLE`. |
 | `store-zero-stage2.test.mjs` | Provenance, pine ticket, assertion-level basis | Regression for Commit 2 facts. |
-| `D-001-STAGE2-ENVELOPE-0.1.md` | Declared Stage-2 mill families and fixture limits | `DECLARED_STAGE2_CAPABILITY`. Numeric limits are fixture assumptions to exercise Q, not commissioned Stage-3 design. |
+| `D-001-STAGE2-ENVELOPE-0.1.md` | Declared Stage-2 mill families, station map, 14/12 Y rule | `DECLARED_STAGE2_CAPABILITY`. Fixture assumptions. Not commissioned. |
+| `d001-stage2-envelope.mjs` | Machine-readable envelope + Store fit check | Same basis. Width/length/thickness/op checked before SUPPORTABLE. |
 | `d-001-stage2-mill.test.mjs` | Picnic-leg taper changes modeled minutes and Q | Economic proof only. Not a Picnic Table project class. |
 | `store-zero-disposition.test.mjs` | Negative cases for job dispositions | Shortage, missing price, refused op. |
 

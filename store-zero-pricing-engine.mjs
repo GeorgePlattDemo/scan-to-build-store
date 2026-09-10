@@ -5,9 +5,11 @@
  * sell = ROUND(list_reference * 1.05, 2)   DECLARED_FIXTURE rule SZ-MARK-ON-5
  * cycle minutes are CALCULATED / MODELED under CYCLE_MODEL
  */
+import { millPassesForDepth, D001_STAGE2_ENVELOPE } from "./d001-stage2-envelope.mjs";
+
 export const ENGINE = {
   id: "STB-STORE-ZERO-PRICE-1",
-  version: "0.2.1",
+  version: "0.2.2",
   clock: "2026-09-10",
   documentKind: "BudgetaryEstimate"
 };
@@ -42,7 +44,7 @@ export const TOOLING = {
     deployMin: 0.08,
     retractMin: 0.08
   },
-  rapidInPerMin: 480,
+  rapidInPerMin: D001_STAGE2_ENVELOPE.motion.FEED_X_MAX_LOADED_IN_PER_MIN,
   accelMin: 0.05,
   loadSeatMin: 0.6,
   releaseLabelMin: 0.4,
@@ -52,7 +54,7 @@ export const TOOLING = {
 
 export const MILL = {
   longDeploy: 0.1,
-  longFeedInPerMin: 48,
+  longFeedInPerMin: D001_STAGE2_ENVELOPE.motion.MILL_CUTTING_FEED_IN_PER_MIN,
   longRepass: 0.08,
   longRetract: 0.1,
   endFeatureMin: 0.35
@@ -85,7 +87,8 @@ export function indexMin(keptLengthIn) {
 
 export function millLongMin(profileLengthIn = 0, passes = 1) {
   if (!profileLengthIn) return 0;
-  return MILL.longDeploy + profileLengthIn / MILL.longFeedInPerMin + (passes - 1) * MILL.longRepass + MILL.longRetract;
+  const n = Math.max(1, passes);
+  return MILL.longDeploy + profileLengthIn / MILL.longFeedInPerMin + (n - 1) * MILL.longRepass + MILL.longRetract;
 }
 
 export function millEndMin(count = 0) {
@@ -99,16 +102,18 @@ export function cycleOneStick({
   depthIn = 0.75,
   millLongIn = 0,
   millEnds = 0,
+  millDepthIn = 0,
   passes = 1
 }) {
   const saw = sawCycleMin(widthIn);
+  const millPasses = millDepthIn ? millPassesForDepth(millDepthIn) : passes;
   const total =
     TOOLING.loadSeatMin +
     saw +
     indexMin(keptLengthIn) +
     saw +
     holes * drillCycleMin(depthIn) +
-    millLongMin(millLongIn, passes) +
+    millLongMin(millLongIn, millPasses) +
     millEndMin(millEnds) +
     TOOLING.releaseLabelMin;
   return round(total, 3);
