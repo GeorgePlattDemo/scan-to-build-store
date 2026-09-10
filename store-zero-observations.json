@@ -1,0 +1,185 @@
+{
+  "documentKind": "StoreZeroPriceObservationBasket",
+  "observedOn": "2026-09-10",
+  "sourceMerchant": "Menards",
+  "sourceNote": "Public everyday list. Rebate excluded. Observation is not a Store Zero selling price.",
+  "rule": "Observation is not a Store Zero price. Selling price = ROUND(list \u00d7 1.05, 2). Rebate ignored.",
+  "observations": [
+    {
+      "id": "OBS-001",
+      "desc": "2x4x8 construction/framing",
+      "merchantSku": "1021101",
+      "list": 3.98,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-SPF-2X4-96-001"
+    },
+    {
+      "id": "OBS-002",
+      "desc": "2x4x10 construction",
+      "merchantSku": null,
+      "list": 5.42,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-SPF-2X4-120-001",
+      "note": "vcalc Menards survey 2026-06-22"
+    },
+    {
+      "id": "OBS-003",
+      "desc": "2x4x12 construction",
+      "merchantSku": null,
+      "list": 6.48,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-SPF-2X4-144-001",
+      "note": "vcalc Menards survey 2026-06-22"
+    },
+    {
+      "id": "OBS-004",
+      "desc": "2x6 construction (8 ft family)",
+      "merchantSku": "1021745",
+      "list": 7.19,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-SPF-2X6-96-001"
+    },
+    {
+      "id": "OBS-005",
+      "desc": "2x6x8 #1 SYP",
+      "merchantSku": "1028104",
+      "list": 15.69,
+      "uom": "ea",
+      "mapsTo": null,
+      "note": "premium grade \u2014 not used as SPF peg"
+    },
+    {
+      "id": "OBS-006",
+      "desc": "1x6x6 select pine",
+      "merchantSku": "1031719",
+      "list": 14.99,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-PINE-1X6-72-001"
+    },
+    {
+      "id": "OBS-007",
+      "desc": "1x6x8 select pine",
+      "merchantSku": "1031722",
+      "list": 19.99,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-PINE-1X6-96-001"
+    },
+    {
+      "id": "OBS-008",
+      "desc": "1x4x8 select pine",
+      "merchantSku": "1031638",
+      "list": 10.99,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-PINE-1X4-96-001"
+    },
+    {
+      "id": "OBS-009",
+      "desc": "1x4x8 quality pine",
+      "merchantSku": "1033432",
+      "list": 5.97,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-PINEQ-1X4-96-001"
+    },
+    {
+      "id": "OBS-010",
+      "desc": "1x4x8 standard pine",
+      "merchantSku": "1031010",
+      "list": 2.73,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-PINESTD-1X4-96-001"
+    },
+    {
+      "id": "OBS-011",
+      "desc": "1x8x8 quality pine",
+      "merchantSku": "1033636",
+      "list": 11.98,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-PINEQ-1X8-96-001"
+    },
+    {
+      "id": "OBS-012",
+      "desc": "1x6x6 poplar",
+      "merchantSku": "1049458",
+      "list": 22.99,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-POP-1X6-72-001"
+    },
+    {
+      "id": "OBS-013",
+      "desc": "1x4x8 poplar",
+      "merchantSku": "1049424",
+      "list": 17.99,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-POP-1X4-96-001"
+    },
+    {
+      "id": "OBS-014",
+      "desc": "1x8x10 poplar",
+      "merchantSku": "1049523",
+      "list": 46.7,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-POP-1X8-120-001"
+    },
+    {
+      "id": "OBS-015",
+      "desc": "1x4x8 red oak",
+      "merchantSku": "1042779",
+      "list": 22.99,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-OAK-1X4-96-001"
+    },
+    {
+      "id": "OBS-016",
+      "desc": "1x6x6 red oak",
+      "merchantSku": "1042928",
+      "list": 24.99,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-OAK-1X6-72-001"
+    },
+    {
+      "id": "OBS-017",
+      "desc": "1/2 x 4x8 4-ply sheathing",
+      "merchantSku": "1231098",
+      "list": 25.29,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-PLY-050-48X96-001"
+    },
+    {
+      "id": "OBS-018",
+      "desc": "5/8 x 4x8 BCX sanded plywood",
+      "merchantSku": "1251036",
+      "list": 47.89,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-PLY-063-48X96-001"
+    },
+    {
+      "id": "OBS-019",
+      "desc": "3/4 x 4x8 square-edge OSB",
+      "merchantSku": "1242854",
+      "list": 27.1,
+      "uom": "ea",
+      "mapsTo": "STB-ZERO-OSB-075-48X96-001"
+    },
+    {
+      "id": "OBS-020",
+      "desc": "5mm nickel angle shelf support 12-pk",
+      "merchantSku": "2117447",
+      "list": 2.49,
+      "uom": "pkg",
+      "mapsTo": "STB-ZERO-HW-SHELFPIN-5MM-12-001"
+    }
+  ],
+  "pricingTransformation": {
+    "ruleId": "SZ-MARK-ON-5",
+    "basis": "DECLARED_FIXTURE",
+    "formula": "sellingPrice = ROUND(list_reference * 1.05, 2)",
+    "markOn": 0.05,
+    "note": "Mark-on, not margin."
+  },
+  "fourFacts": [
+    "external price observation",
+    "Store Zero offering",
+    "Store Zero derived sell",
+    "future real-yard price"
+  ]
+}
