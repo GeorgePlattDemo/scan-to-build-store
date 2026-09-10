@@ -2,7 +2,11 @@
 
 Declared reference capability for Stage 2. Commissioning facts remain unresolved. Not Cycle Start. Not generic 2-axis CNC. Not a physical validation record.
 
-Stage 1 / CUT-001 remains in force:
+**Every numeric limit in this file is a Stage-2 fixture assumption.**  
+Purpose: exercise `capability resolution → operation consequence → modeled cycle time → Q`.  
+They are not commissioned machine limits. They do not pre-commit Stage-3 physical design. Do not read them as measured D-001 production data.
+
+Stage 1 / CUT-001 remains a valid regression path and keeps its authority boundary:
 
 - one parent stick
 - origin / cleanup crosscut

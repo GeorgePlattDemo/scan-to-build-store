@@ -70,7 +70,7 @@ Physical commissioning. Safety-rated controls. Live inventory. Commercial quote 
 **What evidence allows advancement to the next stage?**  
 The CUT-001 chain is explicit enough that a larger but still fictional Store can ask more questions without breaking the one-board proof.
 
-CUT-001 remains the live bridge. Later stages must still reduce to it.
+CUT-001 remains the Stage-1 regression and reference path. Later stages must preserve that path and must not break the information/authority boundary it proved. They are not required to collapse every later job into a 2×4 square cut. Stage 4 may still evolve from evidence.
 
 ---
 
@@ -85,7 +85,7 @@ Can a sufficiently realistic but still fictional reference lumberyard accept str
 - Store Zero merchant identifiers (example: `STB-ZERO-PINE-1X6-96-001`).  
 - Assertion-level basis on each Store fact.  
 - D-001 declared Stage-2 envelope: Stage-1 square-cut path plus bounded `MILL_LONGITUDINAL_PROFILE` and `MILL_END_PROFILE`.  
-- Deterministic budgetary estimate and refusal vocabulary: `SUPPORTABLE`, `DEFERRED`, `REFERRED`, `REFUSED`, plus `UNRESOLVED` / `UNAVAILABLE` / `UNSUPPORTED` where those are the honest Store answers.
+- Deterministic budgetary estimate and declared job dispositions: `SUPPORTABLE`, `UNRESOLVED`, `REFUSED`, `UNAVAILABLE`. Line stock facts may be `ON_HAND_SUFFICIENT`, `ON_HAND_SHORT`, or `NOT_ON_HAND`. A short or empty line makes the job `UNAVAILABLE`. `DEFERRED` and `REFERRED` are not Stage-2 Store Zero meanings.
 
 **What may we truthfully claim?**  
 Store Zero can be asked questions and will answer from fixture facts. A configuration change that adds a declared mill feature can change modeled cycle time and therefore the budgetary estimate. The estimate is not a commercial quote.
@@ -149,9 +149,19 @@ Stage 4 is the culmination, not a gate to a numbered Stage 5 in this document.
 
 Demand remains upstream of machine capability. A new envelope operation does not create a project-class feature.
 
-Related working files (introduced after this document, in later commits on this branch):
+## Stage-2 implementation set
 
-- Stage-2 Store Zero observations, catalog, callable Store, pricing engine  
-- D-001 Stage-2 envelope  
+Current on this branch. Role and basis only.
+
+| File | Role | Authority / basis |
+|---|---|---|
+| `store-zero-observations.json` | Frozen public list-price pegs, 2026-09-10 | `OBSERVED` list. Not a Store Zero sell. Rebate excluded. |
+| `store-zero-catalog.json` | Callable Store Zero offerings (92 SKUs) | Sell `CALCULATED` by `SZ-MARK-ON-5`. On-hand `SYNTHETIC_FIXTURE`. Allocation `SIMULATED_STATE`. |
+| `store-zero-pricing-engine.mjs` | Takeoff → extension → modeled cycle → budgetary Q | Sell rule `DECLARED_FIXTURE`. Cycle model `STB-D001-CYCLE-MODEL-S2-0.1` (`CALCULATED`, not measured). Q is not a quote. |
+| `store-zero-stage2-store.mjs` | Bounded Store answers and job disposition | Fixture answers. Job: `SUPPORTABLE` / `UNRESOLVED` / `REFUSED` / `UNAVAILABLE`. |
+| `store-zero-stage2.test.mjs` | Provenance, pine ticket, assertion-level basis | Regression for Commit 2 facts. |
+| `D-001-STAGE2-ENVELOPE-0.1.md` | Declared Stage-2 mill families and fixture limits | `DECLARED_STAGE2_CAPABILITY`. Numeric limits are fixture assumptions to exercise Q, not commissioned Stage-3 design. |
+| `d-001-stage2-mill.test.mjs` | Picnic-leg taper changes modeled minutes and Q | Economic proof only. Not a Picnic Table project class. |
+| `store-zero-disposition.test.mjs` | Negative cases for job dispositions | Shortage, missing price, refused op. |
 
 Those files implement Stage 2. They do not change the meaning of this lineage.

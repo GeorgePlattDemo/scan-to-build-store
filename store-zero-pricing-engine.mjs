@@ -3,13 +3,22 @@
  * Budgetary estimate only. Not a commercial quote. Not a seller-of-record.
  *
  * sell = ROUND(list_reference * 1.05, 2)   DECLARED_FIXTURE rule SZ-MARK-ON-5
- * cycle minutes are CALCULATED / MODELED
+ * cycle minutes are CALCULATED / MODELED under CYCLE_MODEL
  */
 export const ENGINE = {
   id: "STB-STORE-ZERO-PRICE-1",
-  version: "0.2.0",
+  version: "0.2.1",
   clock: "2026-09-10",
   documentKind: "BudgetaryEstimate"
+};
+
+/** Named Stage-2 cycle model. Not measured D-001 production data. */
+export const CYCLE_MODEL = {
+  id: "STB-D001-CYCLE-MODEL-S2-0.1",
+  basis: "CALCULATED",
+  measured: false,
+  commissioned: false,
+  purpose: "deterministic modeled economics now; measured machine economics later"
 };
 
 export const MARK_ON = 0.05;
@@ -158,7 +167,9 @@ export function estimateJob(catalog, { title, classId, pieces, hardwareSku = nul
     material_lines: lines,
     hardware_line: hardwareLine,
     cycle: {
-      basis: "CALCULATED",
+      model: CYCLE_MODEL.id,
+      basis: CYCLE_MODEL.basis,
+      measured: false,
       T_job_min: round(cycleMin, 3),
       T_job_hr: round(hours, 4),
       SFM: round(sfm(), 0),

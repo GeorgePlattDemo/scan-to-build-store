@@ -1,11 +1,29 @@
 /**
  * Store Zero Stage-2 callable Store
  * Ask for the answer, not the database.
+ *
+ * Job dispositions declared at Stage 2:
+ *   UNRESOLVED  missing SKU or missing price
+ *   REFUSED     required operation not in the offering / no offering
+ *   UNAVAILABLE fixture-declared available stock < qty needed
+ *               (ON_HAND_SHORT and NOT_ON_HAND both fail the job)
+ *   SUPPORTABLE every line priced, capable, and sufficient
+ *
+ * Line stock facts remain: ON_HAND_SUFFICIENT | ON_HAND_SHORT | NOT_ON_HAND
+ * DEFERRED and REFERRED are not Stage-2 Store Zero meanings.
+ * A synthetic supplierPath does not convert a shortage into SUPPORTABLE.
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { estimatePineAlcove, estimateJob } from "./store-zero-pricing-engine.mjs";
+
+export const STAGE2_JOB_DISPOSITIONS = [
+  "SUPPORTABLE",
+  "UNRESOLVED",
+  "REFUSED",
+  "UNAVAILABLE"
+];
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 
@@ -102,7 +120,7 @@ export function evaluateJob(catalog, spec) {
     const cap = capabilityAnswer(item, line.requiredOps || ["CROSSCUT"]);
     if (!item || price.status === "UNRESOLVED") unresolved = true;
     if (cap.status === "REFUSED") refused = true;
-    if (stock.status === "NOT_ON_HAND") unavailable = true;
+    if (stock.status === "NOT_ON_HAND" || stock.status === "ON_HAND_SHORT") unavailable = true;
     lines.push({
       storeSku: line.storeSku,
       description: item?.description,
