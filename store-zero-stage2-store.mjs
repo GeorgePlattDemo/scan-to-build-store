@@ -18,6 +18,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { estimatePineAlcove, estimateJob } from "./store-zero-pricing-engine.mjs";
 import { envelopeCheck } from "./d001-stage2-envelope.mjs";
+import { evaluateSheetMode2, sheetMode2NeutralOps, S001_MODE2_ENVELOPE } from "./s001-mode2-envelope.mjs";
+import {
+  evaluateSheetMode2Arched,
+  sheetMode2ArchedNeutralOps,
+  S001_MODE2_ARCHED_ENVELOPE
+} from "./s001-mode2-arched.mjs";
 
 export const STAGE2_JOB_DISPOSITIONS = [
   "SUPPORTABLE",
@@ -164,3 +170,191 @@ export function pineAlcoveEvaluation(catalog) {
 }
 
 export { estimateJob, estimatePineAlcove };
+
+const SHEET_NOT_CLAIMED = [
+  "live ERP",
+  "Cycle Start",
+  "physical stock count",
+  "commercial quote",
+  "commissioned S-001",
+  "automated secondary separation",
+  "G-code",
+  "measured cycle time"
+];
+
+export function evaluateSheetMode2Job(catalog, spec) {
+  const line = spec.line || spec.lines?.[0] || {};
+  const item = findSku(catalog, line.storeSku);
+  const stock = stockAnswer(item, line.qty || 1);
+  const price = priceAnswer(item);
+  const cap = evaluateSheetMode2(item, {
+    profileKind: line.profileKind,
+    blankL_in: line.blankL_in,
+    blankW_in: line.blankW_in,
+    tabCount: line.tabCount,
+    routeDepthIn: line.routeDepthIn,
+    spline: line.spline,
+    toolpath: line.toolpath,
+    gcode: line.gcode,
+    controller: line.controller
+  });
+  let status;
+  if (!item || price.status === "UNRESOLVED" || cap.status === "UNRESOLVED") status = "UNRESOLVED";
+  else if (cap.status === "REFUSED") status = "REFUSED";
+  else if (stock.status === "NOT_ON_HAND" || stock.status === "ON_HAND_SHORT") status = "UNAVAILABLE";
+  else status = "SUPPORTABLE";
+  return {
+    title: spec.title || "Sheet Mode-2 stencil",
+    stage: 2,
+    store: "Store Zero",
+    jobType: "SHEET_MODE2_STENCIL_V1",
+    status,
+    capabilityId: S001_MODE2_ENVELOPE.capabilityId,
+    evidenceClass: "REFERENCE",
+    physicalStatus: "NOT_CLAIMED",
+    measured: false,
+    commissioned: false,
+    neutralOps: sheetMode2NeutralOps(line),
+    line: {
+      storeSku: line.storeSku,
+      description: item?.description,
+      qty: line.qty || 1,
+      stock,
+      price,
+      capability: cap
+    },
+    estimate: spec.estimate || null,
+    not_claimed: SHEET_NOT_CLAIMED
+  };
+}
+
+export function evaluateSheetMode2ArchedJob(catalog, spec) {
+  const line = spec.line || spec.lines?.[0] || {};
+  const item = findSku(catalog, line.storeSku);
+  const stock = stockAnswer(item, line.qty || 1);
+  const price = priceAnswer(item);
+  const cap = evaluateSheetMode2Arched(item, {
+    geometryClass: line.geometryClass || "CURVILINEAR",
+    outerL_in: line.outerL_in ?? line.blankL_in,
+    outerW_in: line.outerW_in ?? line.blankW_in,
+    apertureW_in: line.apertureW_in,
+    apertureStraightH_in: line.apertureStraightH_in,
+    arcChord_in: line.arcChord_in,
+    arcRise_in: line.arcRise_in,
+    arcRadius_in: line.arcRadius_in,
+    tabCount: line.tabCount,
+    routeDepthIn: line.routeDepthIn,
+    exteriorRatingRequested: line.exteriorRatingRequested,
+    spline: line.spline,
+    toolpath: line.toolpath,
+    gcode: line.gcode,
+    controller: line.controller
+  });
+  let status;
+  if (!item || price.status === "UNRESOLVED" || cap.status === "UNRESOLVED") status = "UNRESOLVED";
+  else if (cap.status === "REFUSED") status = "REFUSED";
+  else if (stock.status === "NOT_ON_HAND" || stock.status === "ON_HAND_SHORT") status = "UNAVAILABLE";
+  else status = "SUPPORTABLE";
+  return {
+    title: spec.title || "Sheet Mode-2 arched aperture",
+    stage: 2,
+    store: "Store Zero",
+    jobType: "SHEET_MODE2_ARCHED_APERTURE_V0",
+    status,
+    capabilityId: S001_MODE2_ARCHED_ENVELOPE.capabilityId,
+    evidenceClass: "REFERENCE",
+    physicalStatus: "NOT_CLAIMED",
+    measured: false,
+    commissioned: false,
+    geometryClass: cap.geometryClass,
+    processClass: cap.processClass,
+    referenceArchitecture: S001_MODE2_ARCHED_ENVELOPE.referenceArchitecture,
+    controlsReference: S001_MODE2_ARCHED_ENVELOPE.controlsReference,
+    basis: {
+      materialSku: line.storeSku || null,
+      materialForm: item?.form || null,
+      materialThicknessIn: item?.actualT ?? null,
+      parentW_in: item?.sheetW_in ?? null,
+      parentL_in: item?.sheetL_in ?? null,
+      observationId: item?.observationId || null,
+      list_reference: item?.list_reference ?? null,
+      mark_on: item?.mark_on ?? null,
+      sellingPrice: item?.sellingPrice ?? null,
+      sellingPriceBasis: item ? "CALCULATED" : null,
+      capabilityId: S001_MODE2_ARCHED_ENVELOPE.capabilityId,
+      envelope: S001_MODE2_ARCHED_ENVELOPE.id,
+      geometryClass: cap.geometryClass,
+      processClass: cap.processClass,
+      retention: cap.retention,
+      curve: cap.curve,
+      evidenceClass: "REFERENCE",
+      physicalStatus: "NOT_CLAIMED",
+      processQ_status: "UNRESOLVED"
+    },
+    neutralOps: sheetMode2ArchedNeutralOps(line),
+    line: {
+      storeSku: line.storeSku,
+      description: item?.description,
+      qty: line.qty || 1,
+      stock,
+      price,
+      capability: cap
+    },
+    estimate: spec.estimate || null,
+    not_claimed: SHEET_NOT_CLAIMED
+  };
+}
+
+export function estimateSheetMode2Job(catalog, spec) {
+  const line = spec.line || spec.lines?.[0] || {};
+  const item = findSku(catalog, line.storeSku);
+  const qty = line.qty || 1;
+  if (!item || item.sellingPrice == null) {
+    return { status: "UNRESOLVED", reason: "MISSING_PRICE", jobType: "SHEET_MODE2_STENCIL_V1" };
+  }
+  const material = Number((item.sellingPrice * qty).toFixed(2));
+  return {
+    status: "BUDGETARY_MATERIAL_ONLY",
+    jobType: "SHEET_MODE2_STENCIL_V1",
+    title: spec.title || "Sheet Mode-2 stencil",
+    material,
+    processQ: null,
+    processQ_status: "UNRESOLVED",
+    Q: material,
+    Q_basis: "MATERIAL_FIXTURE_ONLY",
+    note: "Budgetary material fixture only. Process time and fabrication Q are unresolved. Not a commercial quote."
+  };
+}
+
+export function estimateSheetMode2ArchedJob(catalog, spec) {
+  const line = spec.line || spec.lines?.[0] || {};
+  const item = findSku(catalog, line.storeSku);
+  const qty = line.qty || 1;
+  if (!item || item.sellingPrice == null) {
+    return { status: "UNRESOLVED", reason: "MISSING_PRICE", jobType: "SHEET_MODE2_ARCHED_APERTURE_V0" };
+  }
+  const material = Number((item.sellingPrice * qty).toFixed(2));
+  return {
+    status: "BUDGETARY_MATERIAL_ONLY",
+    jobType: "SHEET_MODE2_ARCHED_APERTURE_V0",
+    title: spec.title || "Sheet Mode-2 arched aperture",
+    material,
+    processQ: null,
+    processQ_status: "UNRESOLVED",
+    Q: material,
+    Q_basis: "MATERIAL_FIXTURE_ONLY",
+    list_reference: item.list_reference,
+    mark_on: item.mark_on,
+    observationId: item.observationId || null,
+    note: "Budgetary material fixture only. Process time and fabrication Q are unresolved. Not a commercial quote."
+  };
+}
+
+export {
+  evaluateSheetMode2,
+  sheetMode2NeutralOps,
+  S001_MODE2_ENVELOPE,
+  evaluateSheetMode2Arched,
+  sheetMode2ArchedNeutralOps,
+  S001_MODE2_ARCHED_ENVELOPE
+};
