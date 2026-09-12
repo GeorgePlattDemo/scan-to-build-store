@@ -25,7 +25,19 @@ A supplied radius that contradicts chord + rise is refused.
 
 ## Process
 
-`MODE2_STENCIL_ROUTE` with `STENCIL_TABS`. Selected perimeter regions remain attached. Secondary separation is operator or later. Tab width and placement stay unresolved physical parameters.
+`MODE2_STENCIL_ROUTE` with `STENCIL_TABS`. Selected perimeter regions remain attached. Secondary separation is operator or later.
+
+Tab planning is now owned by [`STENCIL-TAB-POLICY-0.1.md`](STENCIL-TAB-POLICY-0.1.md) / `S001-STENCIL-TAB-POLICY-V0`.
+
+For the current reference aperture:
+
+- routed perimeter ≈ `153.864203 in`
+- current reference base count = `4`
+- conservative planning reserve = `+1`
+- current Store plan when four are requested = `5` candidate tab centers
+- placement method = `DISTRIBUTED_ARCLENGTH_TRANSITION_AVOIDANCE`
+
+The extra tab is a planning reserve, not a validated safety factor. Bridge width, maximum proven gap, retained thickness, and physical holding performance remain `NOT_MEASURED` and are not invented here.
 
 ## Stock
 
@@ -37,4 +49,6 @@ Do not interpret 4-ply sheathing as exterior-rated plywood. If exterior rating i
 ## Refuse / unresolved
 
 Refuse: dimensional stock, missing required ops, aperture outside outer panel, contradictory curve, machine-local language, depth above envelope.  
-Unresolved: missing curve numbers, missing units at the wire, missing tabs, unsupported exterior rating.
+Unresolved: missing curve numbers, missing units at the wire, missing requested tab count, unsupported exterior rating.
+
+A complete REFERENCE tab plan is not physical workholding evidence and does not authorize machine operation.

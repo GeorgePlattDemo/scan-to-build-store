@@ -6,6 +6,7 @@
  */
 import { evaluateSheetMode2, S001_MODE2_ENVELOPE, sheetMode2NeutralOps } from "./s001-mode2-envelope.mjs";
 import { evaluateCircularSegment, referenceArchedAperture } from "./circular-segment.mjs";
+import { STENCIL_TAB_POLICY_V0, planArchedStencilTabs } from "./stencil-tab-policy.mjs";
 
 export const S001_MODE2_ARCHED_ENVELOPE = {
   id: "S001-MODE2-ARCHED-APERTURE-V0",
@@ -21,8 +22,9 @@ export const S001_MODE2_ARCHED_ENVELOPE = {
   apertureKind: "ARCHED_RECT",
   outerKind: "STRAIGHT_RECT",
   minMarginIn: 3,
-  tabWidth_in: null,
-  tabPlacement: "UNRESOLVED_PHYSICAL_PARAMETER",
+  tabPolicyId: STENCIL_TAB_POLICY_V0.id,
+  tabWidth_in: STENCIL_TAB_POLICY_V0.minBridgeWidth_in,
+  tabPlacement: STENCIL_TAB_POLICY_V0.placementMethod,
   referenceArchitecture: "S-001-MODE2-REFERENCE-ARCHITECTURE-0.1",
   controlsReference: "S-001-MODE2-CONTROLS-REFERENCE-0.1",
   stock: S001_MODE2_ENVELOPE.stock,
@@ -89,6 +91,26 @@ export function evaluateSheetMode2Arched(item, req = {}) {
     reasons.push("GEOMETRY_CLASS_NOT_CURVILINEAR");
   }
 
+  let tabPlan = null;
+  if (
+    curve.ok &&
+    Number.isFinite(apertureW) && apertureW > 0 &&
+    Number.isFinite(apertureStraightH) && apertureStraightH > 0 &&
+    apertureW === curve.chord_in
+  ) {
+    tabPlan = planArchedStencilTabs({
+      chord_in: curve.chord_in,
+      rise_in: curve.rise_in,
+      radius_in: curve.radius_in,
+      straightHeight_in: apertureStraightH,
+      requestedTabCount: req.tabCount
+    });
+    if (!tabPlan.ok) {
+      if (tabPlan.status === "REFUSED") reasons.push(tabPlan.reason);
+      else unresolved.push(tabPlan.reason);
+    }
+  }
+
   const status = reasons.length
     ? "REFUSED"
     : unresolved.length
@@ -122,10 +144,17 @@ export function evaluateSheetMode2Arched(item, req = {}) {
       : null,
     retention: {
       class: "STENCIL_TABS",
-      tabCount: req.tabCount ?? null,
-      tabWidth_in: env.tabWidth_in,
+      requestedTabCount: req.tabCount ?? null,
+      plannedTabCount: tabPlan?.plannedTabCount ?? null,
+      tabPolicyId: env.tabPolicyId,
+      tabPlanStatus: tabPlan?.status ?? null,
+      planningReserveTabs: tabPlan?.planningReserveTabs ?? STENCIL_TAB_POLICY_V0.planningReserveTabs,
+      tabWidth_in: tabPlan?.minBridgeWidth_in ?? env.tabWidth_in,
+      maxAllowedGap_in: tabPlan?.maxAllowedGap_in ?? STENCIL_TAB_POLICY_V0.maxAllowedGap_in,
       placement: env.tabPlacement,
+      plan: tabPlan,
       fullSeverance: false,
+      physicalRetentionStatus: STENCIL_TAB_POLICY_V0.physicalRetentionStatus,
       secondarySeparation: "OPERATOR_OR_LATER — not claimed automated"
     },
     secondarySeparation: "OPERATOR_OR_LATER — not claimed automated"
