@@ -71,6 +71,7 @@ export function evaluateSheetMode2(item, req = {}) {
   const kind = req.profileKind;
   if (!kind) unresolved.push("PROFILE_KIND_MISSING");
   else if (!env.profileKinds.includes(kind)) reasons.push("PROFILE_KIND_UNSUPPORTED");
+  else if (kind === "CURVILINEAR_OUTLINE") unresolved.push("CURVILINEAR_GEOMETRY_REQUIRED");
 
   const L = req.blankL_in;
   const W = req.blankW_in;

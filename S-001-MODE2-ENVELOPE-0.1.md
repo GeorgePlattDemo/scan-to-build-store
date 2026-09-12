@@ -34,13 +34,15 @@ Required for a complete evaluation:
 - integer `tabCount` ≥ 1
 - bounded `routeDepthIn`
 
+`CURVILINEAR_OUTLINE` by itself is retained demand, not reconstructable geometry. It remains `UNRESOLVED` under this parent envelope until a bounded child family supplies actual curve geometry. `SHEET_MODE2_ARCHED_APERTURE_V0` is the first such live family: chord + rise are canonical and radius is derived/checked.
+
 Not consumed: room geometry, CAD kernels, splines, G-code, servo steps, controller packets.
 
 ## Outcomes
 
 - `SUPPORTABLE` — current definition is inside this REFERENCE envelope
 - `REFUSED` — form, ops, size, tabs, depth, or machine-local language fail
-- `UNRESOLVED` — a required field is missing
+- `UNRESOLVED` — a required field is missing, or a generic curvilinear flag lacks reconstructable curve geometry
 
 `SUPPORTABLE` is not an order, reservation, or fabrication authority.
 

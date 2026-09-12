@@ -42,9 +42,8 @@ const curve = evaluateSheetMode2(ply, {
   tabCount: 4,
   routeDepthIn: 0.5
 });
-assert.equal(curve.status, "SUPPORTABLE");
-assert.equal(curve.profileKind, "CURVILINEAR_OUTLINE");
-assert.notEqual(straight.profileKind, curve.profileKind);
+assert.equal(curve.status, "UNRESOLVED");
+assert.ok(curve.unresolved.includes("CURVILINEAR_GEOMETRY_REQUIRED"));
 
 const tabsMissing = evaluateSheetMode2(ply, {
   profileKind: "STRAIGHT_RECT",

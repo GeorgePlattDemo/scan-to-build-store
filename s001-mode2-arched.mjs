@@ -49,7 +49,7 @@ export function evaluateSheetMode2Arched(item, req = {}) {
 
   const reasons = [...base.reasons];
   const unresolved = [...base.unresolved].filter(
-    (code) => code !== "PROFILE_KIND_MISSING"
+    (code) => code !== "PROFILE_KIND_MISSING" && code !== "CURVILINEAR_GEOMETRY_REQUIRED"
   );
 
   if (req.exteriorRatingRequested === true && item && item.grade !== "exterior" && item.rating !== "exterior") {
