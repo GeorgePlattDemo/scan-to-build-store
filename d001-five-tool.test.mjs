@@ -101,6 +101,24 @@ const leaked = evaluateD001FeaturedBoard(board, {
 assert.equal(leaked.status, "REFUSED");
 assert.ok(leaked.reasons.some((reason) => reason.includes("MACHINE_LOCAL_FIELD_NOT_ACCEPTED:gcode")));
 
+const leakedNotch = evaluateD001FeaturedBoard(board, {
+  keptLengthIn: 60,
+  features: [
+    { kind: "EDGE_NOTCH", xFromLeftIn: 12, controller: "linuxcnc" },
+  ],
+});
+assert.equal(leakedNotch.status, "REFUSED");
+assert.ok(leakedNotch.reasons.includes("EDGE_NOTCH:MACHINE_LOCAL_FIELD_NOT_ACCEPTED:controller"));
+
+const leakedRoutedEnd = evaluateD001FeaturedBoard(board, {
+  keptLengthIn: 60,
+  features: [
+    { kind: "ROUTED_END", end: "RIGHT", spindleRpm: 18000 },
+  ],
+});
+assert.equal(leakedRoutedEnd.status, "REFUSED");
+assert.ok(leakedRoutedEnd.reasons.includes("ROUTED_END:MACHINE_LOCAL_FIELD_NOT_ACCEPTED:spindleRpm"));
+
 const materialOnly = estimateD001FeaturedBoardMaterial(board, 1);
 assert.equal(materialOnly.status, "BUDGETARY_MATERIAL_ONLY");
 assert.equal(materialOnly.processQ_status, "UNRESOLVED");

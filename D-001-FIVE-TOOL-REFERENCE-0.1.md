@@ -63,7 +63,7 @@ These are deliberately represented so refusals/unresolved demand become data wit
 - `EDGE_NOTCH` — T1 travel/depth envelope not yet published;
 - `ROUTED_END` — T3 end-router envelope not yet published.
 
-The returned `capabilityGaps` record names the exact feature and reason.
+The returned `capabilityGaps` summary names the feature and reason. It is evaluation output, not a persistent demand-history record.
 
 ## Neutral operations
 
@@ -91,13 +91,9 @@ New five-tool process time is unresolved. The candidate estimator returns budget
 
 ## Capability-gap data
 
-A non-supportable feature is useful demand evidence. Preserve:
+A non-supportable feature is useful demand evidence. The evaluator returns a bounded gap summary containing the feature family/identity, status and exact refusal or unresolved reasons.
 
-- feature family;
-- requested part-relative dimensions;
-- current Store/machine configuration identity;
-- exact refusal/unresolved reason;
-- recurrence and alternate fulfillment later, where known.
+Requested part-relative dimensions and the current Store/machine configuration identity remain available through the surrounding request/evaluation context; durable persistence, recurrence counts and alternate-fulfillment history require the surrounding request/result record or later work. This evaluator does not create that persistent record by itself.
 
 Repeated demand may justify engineering a wider envelope. It does not widen the current envelope automatically.
 

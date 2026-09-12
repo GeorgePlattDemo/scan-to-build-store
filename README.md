@@ -258,6 +258,8 @@ Higher capability levels should grow from demonstrated requirements rather than 
 
 **Early private development.**
 
+Candidate on `build/d001-five-tool-0.1`: [`D-001-FIVE-TOOL-REFERENCE-0.1.md`](D-001-FIVE-TOOL-REFERENCE-0.1.md) documents the bounded five-tool D-001 reference evaluator on this branch. It is candidate-only; its existence does not advance any application `STORE_PIN` or establish commissioned machinery.
+
 This repository is not a production lumberyard system, production machine controller, commerce service, or claim of production readiness.
 
 The immediate goal is to establish a clean, testable, modular Store boundary capable of growing without weakening the Scan-to-Build governance model.

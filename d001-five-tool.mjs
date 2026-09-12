@@ -78,6 +78,16 @@ const FORBIDDEN_MACHINE_FIELDS = Object.freeze([
   "cycleStart",
 ]);
 
+const FEATURE_TOOL_REFERENCE = Object.freeze({
+  DADO: "T2",
+  TRANSVERSE_GROOVE: "T2",
+  PILOT_FACE_3_16: "T4",
+  PILOT_EDGE_3_16: "T5",
+  ANGLED_END_SINGLE_PLANE: "SAW-L/SAW-R",
+  EDGE_NOTCH: "T1",
+  ROUTED_END: "T3",
+});
+
 function finitePositive(value) {
   return Number.isFinite(value) && value > 0;
 }
@@ -178,6 +188,10 @@ function evaluateFeature(feature, item, keptLengthIn) {
   if (!feature || typeof feature !== "object" || Array.isArray(feature)) {
     return featureResult(feature, null, "REFUSED", ["FEATURE_OBJECT_REQUIRED"]);
   }
+  const machineReasons = machineLanguageReasons(feature);
+  if (machineReasons.length && FEATURE_TOOL_REFERENCE[feature.kind]) {
+    return featureResult(feature, FEATURE_TOOL_REFERENCE[feature.kind], "REFUSED", machineReasons);
+  }
   switch (feature.kind) {
     case "DADO":
     case "TRANSVERSE_GROOVE":
@@ -187,8 +201,6 @@ function evaluateFeature(feature, item, keptLengthIn) {
     case "PILOT_EDGE_3_16":
       return evaluatePilot(feature, item, keptLengthIn, "EDGE");
     case "ANGLED_END_SINGLE_PLANE": {
-      const machineReasons = machineLanguageReasons(feature);
-      if (machineReasons.length) return featureResult(feature, "SAW-L/SAW-R", "REFUSED", machineReasons);
       if (!Number.isFinite(feature.angleDeg)) {
         return featureResult(feature, "SAW-L/SAW-R", "REFUSED", ["ANGLE_DEGREES_REQUIRED"]);
       }
