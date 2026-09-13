@@ -34,7 +34,10 @@ jobs:
         run: node d001-stage2-envelope.test.mjs
 
       - name: Bundle exact functional Store pin
-        run: git bundle create store-functional-4402.bundle 4402abeb6b0299a5b6db2eec85ed04c3b0236bcc
+        run: |
+          git update-ref refs/heads/bundle-functional-4402 4402abeb6b0299a5b6db2eec85ed04c3b0236bcc
+          git bundle create store-functional-4402.bundle refs/heads/bundle-functional-4402
+          git update-ref -d refs/heads/bundle-functional-4402
 
       - name: Upload Store bundle
         uses: actions/upload-artifact@v4
