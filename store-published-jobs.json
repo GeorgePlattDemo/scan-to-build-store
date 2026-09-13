@@ -1,0 +1,141 @@
+{
+  "documentKind": "StorePublishedJobsCandidate",
+  "version": "0.1",
+  "status": "CANDIDATE",
+  "store": "Store Zero",
+  "basisBranch": "build/store-d001-s001-combined-0.1",
+  "basisCommit": "096e99d645d745b1670185f46c75de75f9e59661",
+  "rule": "Name the bounded thing a person wants, bind it to existing stock and an existing Store evaluator, and do not create new machine authority.",
+  "jobs": [
+    {
+      "id": "PUB-SQUARE-STICK-001",
+      "publicName": "Square 2x4",
+      "plainIntent": "Cut one 2x4 square to the finished length I enter.",
+      "requestType": "BOARD_SQUARE_V1",
+      "storeEvaluator": "evaluateJob",
+      "stock": [
+        {
+          "storeSku": "STB-ZERO-SPF-2X4-72-001",
+          "qty": 1
+        }
+      ],
+      "userInputs": ["finishedLengthIn"],
+      "defaults": {
+        "finishedLengthIn": 45,
+        "unit": "in"
+      },
+      "implementationDefaults": {
+        "requiredOps": ["CROSSCUT"]
+      },
+      "publishedAppSlice": {
+        "minFinishedLengthIn": 24,
+        "maxFinishedLengthIn": 60
+      },
+      "currentAppPin": "CONNECTED",
+      "currentAppPinNote": "The current application pin already asks this Board family. Naming it does not change the Store pin or evaluator.",
+      "refuseOrStop": [
+        "missing or unsupported finished-length input remains unresolved",
+        "finished length outside the published application slice is not clamped",
+        "Store may refuse, leave unresolved, or report unavailable from its own basis"
+      ],
+      "notClaimed": [
+        "commercial quote",
+        "order",
+        "production release",
+        "machine readiness",
+        "Cycle Start",
+        "physical fabrication"
+      ]
+    },
+    {
+      "id": "PUB-RECT-STENCIL-001",
+      "publicName": "Rectangular sheet stencil",
+      "plainIntent": "Route a rectangular blank in 3/4 in sheet stock and leave it attached with reference tabs for later separation.",
+      "requestType": "SHEET_MODE2_STENCIL_V1",
+      "storeEvaluator": "evaluateSheetMode2Job",
+      "stock": [
+        {
+          "storeSku": "STB-ZERO-PLY-075-48X96-001",
+          "qty": 1
+        }
+      ],
+      "userInputs": ["blankLengthIn", "blankWidthIn"],
+      "defaults": {
+        "blankLengthIn": 24,
+        "blankWidthIn": 18,
+        "unit": "in"
+      },
+      "implementationDefaults": {
+        "profileKind": "STRAIGHT_RECT",
+        "tabCount": 4,
+        "routeDepthIn": 0.5
+      },
+      "currentAppPin": "NOT_CONNECTED",
+      "currentAppPinNote": "This evaluator exists on the Store candidate basis branch, but the current application Store pin does not contain it. A deliberate pin trial is required before the app may ask it.",
+      "refuseOrStop": [
+        "blank below the declared minimum or larger than the parent sheet is refused",
+        "missing tabs or route-depth basis stops or refuses as declared by the envelope",
+        "machine-local language such as G-code is refused",
+        "generic curvilinear demand is not silently interpreted as this rectangle"
+      ],
+      "notClaimed": [
+        "commissioned S-001",
+        "physical workholding proof",
+        "automated secondary separation",
+        "process time",
+        "fabrication quote",
+        "Cycle Start",
+        "physical fabrication"
+      ]
+    },
+    {
+      "id": "PUB-ARCHED-OPENING-001",
+      "publicName": "Arched opening in 1/2 in plywood",
+      "plainIntent": "Route the published arched opening in a 1/2 in sheet reference, using opening width and rise to define the circular segment.",
+      "requestType": "SHEET_MODE2_ARCHED_APERTURE_V0",
+      "storeEvaluator": "evaluateSheetMode2ArchedJob",
+      "stock": [
+        {
+          "storeSku": "STB-ZERO-PLY-050-48X96-001",
+          "qty": 1
+        }
+      ],
+      "userInputs": ["openingWidthIn", "straightHeightIn", "riseIn"],
+      "defaults": {
+        "outerLengthIn": 72,
+        "outerWidthIn": 48,
+        "openingWidthIn": 36,
+        "straightHeightIn": 36,
+        "riseIn": 12,
+        "unit": "in"
+      },
+      "derived": {
+        "arcChordIn": "openingWidthIn",
+        "radiusFormula": "R = chord^2 / (8 * rise) + rise / 2",
+        "referenceRadiusIn": 19.5
+      },
+      "implementationDefaults": {
+        "tabCount": 4,
+        "routeDepthIn": 0.5
+      },
+      "currentAppPin": "NOT_CONNECTED",
+      "currentAppPinNote": "This reconstructable arched family exists on the Store candidate basis branch, but the current application Store pin does not contain it. A deliberate pin trial is required before the app may ask it.",
+      "refuseOrStop": [
+        "missing chord or rise remains unresolved",
+        "a supplied radius that contradicts chord plus rise is refused",
+        "an aperture outside the outer panel is refused",
+        "requested exterior rating remains unresolved for the published 1/2 in sheathing SKU",
+        "machine-local language such as G-code is refused"
+      ],
+      "notClaimed": [
+        "exterior-rated plywood",
+        "commissioned S-001",
+        "physical tab holding performance",
+        "process time",
+        "fabrication quote",
+        "Cycle Start",
+        "physical fabrication"
+      ]
+    }
+  ]
+}
