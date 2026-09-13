@@ -51,12 +51,7 @@ assert.ok(contradiction.reasons.includes("CURVE_RADIUS_CONTRADICTS_CHORD_RISE"))
 const missingCurve = evaluateCircularSegment({});
 assert.equal(missingCurve.status, "UNRESOLVED");
 
-const perimeter = archedAperturePerimeter({
-  chord_in: 36,
-  rise_in: 12,
-  radius_in: 19.5,
-  straightHeight_in: 24
-});
+const perimeter = archedAperturePerimeter({ chord_in: 36, rise_in: 12, radius_in: 19.5, straightHeight_in: 24 });
 assert.ok(perimeter);
 assert.equal(Number(perimeter.perimeter_in.toFixed(6)), 129.864203);
 assert.equal(Number(perimeter.arcLength_in.toFixed(6)), 45.864203);
@@ -65,13 +60,7 @@ assert.equal(STENCIL_TAB_POLICY_V0.planningReserveTabs, 1);
 assert.equal(STENCIL_TAB_POLICY_V0.maxAllowedGap_in, null);
 assert.equal(STENCIL_TAB_POLICY_V0.minBridgeWidth_in, null);
 
-const tabPlan = planArchedStencilTabs({
-  chord_in: 36,
-  rise_in: 12,
-  radius_in: 19.5,
-  straightHeight_in: 24,
-  requestedTabCount: 4
-});
+const tabPlan = planArchedStencilTabs({ chord_in: 36, rise_in: 12, radius_in: 19.5, straightHeight_in: 24, requestedTabCount: 4 });
 assert.equal(tabPlan.ok, true);
 assert.equal(tabPlan.status, "REFERENCE_PLAN_READY");
 assert.equal(tabPlan.requestedTabCount, 4);
@@ -80,13 +69,7 @@ assert.equal(tabPlan.candidates.length, 5);
 assert.equal(tabPlan.physicalRetentionStatus, "NOT_MEASURED");
 assert.ok(tabPlan.candidates.every((candidate) => candidate.distanceToNearestTransition_in > 0));
 
-const userRequestsMore = planArchedStencilTabs({
-  chord_in: 36,
-  rise_in: 12,
-  radius_in: 19.5,
-  straightHeight_in: 24,
-  requestedTabCount: 8
-});
+const userRequestsMore = planArchedStencilTabs({ chord_in: 36, rise_in: 12, radius_in: 19.5, straightHeight_in: 24, requestedTabCount: 8 });
 assert.equal(userRequestsMore.plannedTabCount, 8);
 
 const ref = {
@@ -108,18 +91,8 @@ assert.equal(support.curve.radius_in, 19.5);
 assert.equal(support.workField.id, "S001-CENTER-WORK-FIELD-V0");
 assert.equal(support.workField.parentContainsField, true);
 assert.equal(support.workField.profileInsideField, true);
-assert.deepEqual(support.workField.parentMargins_in, {
-  left: 24,
-  right: 24,
-  bottom: 6,
-  top: 6
-});
-assert.deepEqual(support.workField.profileMarginsWithinField_in, {
-  left: 6,
-  right: 6,
-  bottom: 0,
-  top: 0
-});
+assert.deepEqual(support.workField.parentMargins_in, { left: 24, right: 24, bottom: 6, top: 6 });
+assert.deepEqual(support.workField.profileMarginsWithinField_in, { left: 6, right: 6, bottom: 0, top: 0 });
 assert.equal(support.retention.class, "STENCIL_TABS");
 assert.equal(support.retention.requestedTabCount, 4);
 assert.equal(support.retention.plannedTabCount, 5);
@@ -127,12 +100,7 @@ assert.equal(support.retention.tabPolicyId, "S001-STENCIL-TAB-POLICY-V0");
 assert.equal(support.retention.physicalRetentionStatus, "NOT_MEASURED");
 assert.equal(support.retention.fullSeverance, false);
 
-const flagOnly = evaluateSheetMode2Arched(ply050, {
-  outerL_in: 96,
-  outerW_in: 48,
-  tabCount: 4,
-  routeDepthIn: 0.5
-});
+const flagOnly = evaluateSheetMode2Arched(ply050, { outerL_in: 96, outerW_in: 48, tabCount: 4, routeDepthIn: 0.5 });
 assert.equal(flagOnly.status, "UNRESOLVED");
 assert.ok(flagOnly.unresolved.includes("CURVE_CHORD_OR_RISE_MISSING"));
 
@@ -140,24 +108,17 @@ const outsideWorkingFieldHorizontal = evaluateSheetMode2Arched(ply050, {
   ...ref,
   apertureW_in: 50,
   arcChord_in: 50,
-  arcRise_in: 12
+  arcRise_in: 12,
+  arcRadius_in: undefined
 });
 assert.equal(outsideWorkingFieldHorizontal.status, "REFUSED");
 assert.ok(outsideWorkingFieldHorizontal.reasons.includes("CENTER_WORK_FIELD_EXCEEDED"));
 
-const outsideWorkingFieldVertical = evaluateSheetMode2Arched(ply050, {
-  ...ref,
-  apertureStraightH_in: 25,
-  arcRise_in: 12
-});
+const outsideWorkingFieldVertical = evaluateSheetMode2Arched(ply050, { ...ref, apertureStraightH_in: 25, arcRise_in: 12 });
 assert.equal(outsideWorkingFieldVertical.status, "REFUSED");
 assert.ok(outsideWorkingFieldVertical.reasons.includes("CENTER_WORK_FIELD_EXCEEDED"));
 
-const parentTooSmallForField = evaluateSheetMode2Arched(ply050, {
-  ...ref,
-  outerL_in: 47,
-  outerW_in: 48
-});
+const parentTooSmallForField = evaluateSheetMode2Arched(ply050, { ...ref, outerL_in: 47, outerW_in: 48 });
 assert.equal(parentTooSmallForField.status, "REFUSED");
 assert.ok(parentTooSmallForField.reasons.includes("CENTER_WORK_FIELD_OUTSIDE_PARENT"));
 
@@ -201,9 +162,7 @@ assert.equal(job.line.capability.retention.plan.perimeter_in, 129.864203);
 assert.ok(job.not_claimed.includes("G-code"));
 assert.ok(job.not_claimed.includes("Cycle Start"));
 
-const estimate = estimateSheetMode2ArchedJob(catalog, {
-  line: { storeSku: "STB-ZERO-PLY-050-48X96-001", qty: 1 }
-});
+const estimate = estimateSheetMode2ArchedJob(catalog, { line: { storeSku: "STB-ZERO-PLY-050-48X96-001", qty: 1 } });
 assert.equal(estimate.status, "BUDGETARY_MATERIAL_ONLY");
 assert.equal(estimate.processQ_status, "UNRESOLVED");
 assert.equal(estimate.Q, 26.55);
@@ -211,15 +170,7 @@ assert.equal(estimate.observationId, "OBS-017");
 
 const stencilStillWorks = evaluateSheetMode2Job(catalog, {
   title: "control stencil",
-  line: {
-    storeSku: "STB-ZERO-PLY-075-48X96-001",
-    qty: 1,
-    profileKind: "STRAIGHT_RECT",
-    blankL_in: 24,
-    blankW_in: 18,
-    tabCount: 4,
-    routeDepthIn: 0.5
-  }
+  line: { storeSku: "STB-ZERO-PLY-075-48X96-001", qty: 1, profileKind: "STRAIGHT_RECT", blankL_in: 24, blankW_in: 18, tabCount: 4, routeDepthIn: 0.5 }
 });
 assert.equal(stencilStillWorks.status, "SUPPORTABLE");
 assert.equal(stencilStillWorks.jobType, "SHEET_MODE2_STENCIL_V1");
