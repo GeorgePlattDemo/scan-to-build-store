@@ -1,0 +1,48 @@
+name: S-001 centered field checks
+
+on:
+  push:
+    branches:
+      - build/s001-centered-field-0.1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  s001-centered-field:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run arched S-001 envelope tests
+        run: node s001-mode2-arched.test.mjs
+
+      - name: Run base S-001 envelope tests
+        run: node s001-mode2-envelope.test.mjs
+
+      - name: Run D-001 control tests
+        run: node d001-stage2-envelope.test.mjs
+
+      - name: Bundle exact functional Store pin
+        run: |
+          git update-ref refs/heads/bundle-functional-4402 4402abeb6b0299a5b6db2eec85ed04c3b0236bcc
+          git bundle create store-functional-4402.bundle refs/heads/bundle-functional-4402
+          git update-ref -d refs/heads/bundle-functional-4402
+
+      - name: Upload Store bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-functional-4402
+          path: store-functional-4402.bundle
+          if-no-files-found: error
+          retention-days: 7

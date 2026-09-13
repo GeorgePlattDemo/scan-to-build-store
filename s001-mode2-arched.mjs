@@ -22,6 +22,16 @@ export const S001_MODE2_ARCHED_ENVELOPE = {
   apertureKind: "ARCHED_RECT",
   outerKind: "STRAIGHT_RECT",
   minMarginIn: 3,
+  workField: Object.freeze({
+    id: "S001-CENTER-WORK-FIELD-V0",
+    placement: "CENTERED_ON_PARENT",
+    horizontalAxis: "PARENT_LONG_AXIS",
+    verticalAxis: "PARENT_SHORT_AXIS",
+    horizontalSpan_in: 48,
+    verticalSpan_in: 36,
+    containment: "WHOLE_PROFILE",
+    edgeWork: "REFUSED_OUTSIDE_FIELD"
+  }),
   tabPolicyId: STENCIL_TAB_POLICY_V0.id,
   tabWidth_in: STENCIL_TAB_POLICY_V0.minBridgeWidth_in,
   tabPlacement: STENCIL_TAB_POLICY_V0.placementMethod,
@@ -34,6 +44,40 @@ export const S001_MODE2_ARCHED_ENVELOPE = {
 };
 
 export const REFERENCE_ARCHED_APERTURE = referenceArchedAperture();
+
+function centeredWorkFieldResult(req, apertureW, openingH) {
+  const field = S001_MODE2_ARCHED_ENVELOPE.workField;
+  if (!(Number.isFinite(req.outerL_in) && Number.isFinite(req.outerW_in))) return null;
+  const parentContainsField = req.outerL_in >= field.horizontalSpan_in && req.outerW_in >= field.verticalSpan_in;
+  const profileInsideField = Number.isFinite(apertureW) && Number.isFinite(openingH)
+    ? apertureW <= field.horizontalSpan_in && openingH <= field.verticalSpan_in
+    : null;
+  return {
+    id: field.id,
+    placement: field.placement,
+    horizontalAxis: field.horizontalAxis,
+    verticalAxis: field.verticalAxis,
+    horizontalSpan_in: field.horizontalSpan_in,
+    verticalSpan_in: field.verticalSpan_in,
+    containment: field.containment,
+    parentContainsField,
+    profileInsideField,
+    parentMargins_in: {
+      left: (req.outerL_in - field.horizontalSpan_in) / 2,
+      right: (req.outerL_in - field.horizontalSpan_in) / 2,
+      bottom: (req.outerW_in - field.verticalSpan_in) / 2,
+      top: (req.outerW_in - field.verticalSpan_in) / 2
+    },
+    profileMarginsWithinField_in: profileInsideField
+      ? {
+          left: (field.horizontalSpan_in - apertureW) / 2,
+          right: (field.horizontalSpan_in - apertureW) / 2,
+          bottom: (field.verticalSpan_in - openingH) / 2,
+          top: (field.verticalSpan_in - openingH) / 2
+        }
+      : null
+  };
+}
 
 export function evaluateSheetMode2Arched(item, req = {}) {
   const env = S001_MODE2_ARCHED_ENVELOPE;
@@ -70,6 +114,7 @@ export function evaluateSheetMode2Arched(item, req = {}) {
 
   const apertureW = req.apertureW_in ?? req.arcChord_in;
   const apertureStraightH = req.apertureStraightH_in;
+  let openingH = null;
   if (apertureW == null || apertureStraightH == null) {
     unresolved.push("APERTURE_SIZE_MISSING");
   } else if (!(Number.isFinite(apertureW) && Number.isFinite(apertureStraightH))) {
@@ -77,14 +122,22 @@ export function evaluateSheetMode2Arched(item, req = {}) {
   } else if (!(apertureW > 0 && apertureStraightH > 0)) {
     reasons.push("APERTURE_SIZE_INVALID");
   } else if (curve.ok && Number.isFinite(req.outerL_in) && Number.isFinite(req.outerW_in)) {
-    const openingH = apertureStraightH + curve.rise_in;
+    openingH = apertureStraightH + curve.rise_in;
     const margin = env.minMarginIn;
-    if (apertureW + 2 * margin > req.outerW_in || openingH + 2 * margin > req.outerL_in) {
+    if (apertureW + 2 * margin > req.outerL_in || openingH + 2 * margin > req.outerW_in) {
       reasons.push("APERTURE_OUTSIDE_OUTER_PANEL");
     }
     if (apertureW !== curve.chord_in) {
       reasons.push("APERTURE_WIDTH_MUST_EQUAL_CHORD");
     }
+  }
+
+  const workField = centeredWorkFieldResult(req, apertureW, openingH);
+  if (workField && workField.parentContainsField === false) {
+    reasons.push("CENTER_WORK_FIELD_OUTSIDE_PARENT");
+  }
+  if (workField && workField.profileInsideField === false) {
+    reasons.push("CENTER_WORK_FIELD_EXCEEDED");
   }
 
   if (req.geometryClass && req.geometryClass !== "CURVILINEAR") {
@@ -119,8 +172,8 @@ export function evaluateSheetMode2Arched(item, req = {}) {
 
   return {
     status,
-    reasons,
-    unresolved,
+    reasons: [...new Set(reasons)],
+    unresolved: [...new Set(unresolved)],
     envelope: env.id,
     capabilityId: env.capabilityId,
     parentCapabilityId: env.parentCapabilityId,
@@ -133,6 +186,7 @@ export function evaluateSheetMode2Arched(item, req = {}) {
     profileKind: "ARCHED_APERTURE",
     outerKind: env.outerKind,
     apertureKind: env.apertureKind,
+    workField,
     curve: curve.ok
       ? {
           kind: "CIRCULAR_SEGMENT",
