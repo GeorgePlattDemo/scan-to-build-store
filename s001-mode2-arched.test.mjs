@@ -2,6 +2,11 @@ import assert from "node:assert/strict";
 import { radiusFromChordRise, evaluateCircularSegment } from "./circular-segment.mjs";
 import { evaluateSheetMode2Arched, S001_MODE2_ARCHED_ENVELOPE } from "./s001-mode2-arched.mjs";
 import {
+  STENCIL_TAB_POLICY_V0,
+  archedAperturePerimeter,
+  planArchedStencilTabs
+} from "./stencil-tab-policy.mjs";
+import {
   loadCatalog,
   findSku,
   evaluateJob,
@@ -19,6 +24,7 @@ const board = findSku(catalog, "STB-ZERO-SPF-2X4-72-001");
 assert.equal(S001_MODE2_ARCHED_ENVELOPE.capabilityId, "SHEET_MODE2_ARCHED_APERTURE_V0");
 assert.equal(S001_MODE2_ARCHED_ENVELOPE.evidenceClass, "REFERENCE");
 assert.equal(S001_MODE2_ARCHED_ENVELOPE.commissioned, false);
+assert.equal(S001_MODE2_ARCHED_ENVELOPE.tabPolicyId, "S001-STENCIL-TAB-POLICY-V0");
 assert.equal(radiusFromChordRise(36, 12), 19.5);
 
 const goodCurve = evaluateCircularSegment({ chord_in: 36, rise_in: 12 });
@@ -34,6 +40,44 @@ assert.ok(contradiction.reasons.includes("CURVE_RADIUS_CONTRADICTS_CHORD_RISE"))
 
 const missingCurve = evaluateCircularSegment({});
 assert.equal(missingCurve.status, "UNRESOLVED");
+
+const perimeter = archedAperturePerimeter({
+  chord_in: 36,
+  rise_in: 12,
+  radius_in: 19.5,
+  straightHeight_in: 36
+});
+assert.ok(perimeter);
+assert.equal(Number(perimeter.perimeter_in.toFixed(6)), 153.864203);
+assert.equal(Number(perimeter.arcLength_in.toFixed(6)), 45.864203);
+assert.equal(STENCIL_TAB_POLICY_V0.referenceBaseCount, 4);
+assert.equal(STENCIL_TAB_POLICY_V0.planningReserveTabs, 1);
+assert.equal(STENCIL_TAB_POLICY_V0.maxAllowedGap_in, null);
+assert.equal(STENCIL_TAB_POLICY_V0.minBridgeWidth_in, null);
+
+const tabPlan = planArchedStencilTabs({
+  chord_in: 36,
+  rise_in: 12,
+  radius_in: 19.5,
+  straightHeight_in: 36,
+  requestedTabCount: 4
+});
+assert.equal(tabPlan.ok, true);
+assert.equal(tabPlan.status, "REFERENCE_PLAN_READY");
+assert.equal(tabPlan.requestedTabCount, 4);
+assert.equal(tabPlan.plannedTabCount, 5);
+assert.equal(tabPlan.candidates.length, 5);
+assert.equal(tabPlan.physicalRetentionStatus, "NOT_MEASURED");
+assert.ok(tabPlan.candidates.every((candidate) => candidate.distanceToNearestTransition_in > 0));
+
+const userRequestsMore = planArchedStencilTabs({
+  chord_in: 36,
+  rise_in: 12,
+  radius_in: 19.5,
+  straightHeight_in: 36,
+  requestedTabCount: 8
+});
+assert.equal(userRequestsMore.plannedTabCount, 8);
 
 const ref = {
   outerL_in: 72,
@@ -52,6 +96,10 @@ assert.equal(support.status, "SUPPORTABLE");
 assert.equal(support.geometryClass, "CURVILINEAR");
 assert.equal(support.curve.radius_in, 19.5);
 assert.equal(support.retention.class, "STENCIL_TABS");
+assert.equal(support.retention.requestedTabCount, 4);
+assert.equal(support.retention.plannedTabCount, 5);
+assert.equal(support.retention.tabPolicyId, "S001-STENCIL-TAB-POLICY-V0");
+assert.equal(support.retention.physicalRetentionStatus, "NOT_MEASURED");
 assert.equal(support.retention.fullSeverance, false);
 
 const flagOnly = evaluateSheetMode2Arched(ply050, {
@@ -105,6 +153,8 @@ assert.equal(job.basis.observationId, "OBS-017");
 assert.equal(job.basis.list_reference, 25.29);
 assert.equal(job.basis.sellingPrice, 26.55);
 assert.equal(job.line.capability.curve.radius_in, 19.5);
+assert.equal(job.line.capability.retention.plannedTabCount, 5);
+assert.equal(job.line.capability.retention.plan.perimeter_in, 153.864203);
 assert.ok(job.not_claimed.includes("G-code"));
 assert.ok(job.not_claimed.includes("Cycle Start"));
 
