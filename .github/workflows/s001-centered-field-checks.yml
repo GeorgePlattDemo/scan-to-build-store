@@ -1,0 +1,32 @@
+name: S-001 centered field checks
+
+on:
+  push:
+    branches:
+      - build/s001-centered-field-0.1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  s001-centered-field:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run arched S-001 envelope tests
+        run: node s001-mode2-arched.test.mjs
+
+      - name: Run base S-001 envelope tests
+        run: node s001-mode2-envelope.test.mjs
+
+      - name: Run D-001 control tests
+        run: node d001-stage2-envelope.test.mjs
