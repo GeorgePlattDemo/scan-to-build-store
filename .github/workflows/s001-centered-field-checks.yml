@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout exact branch head
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node 20
         uses: actions/setup-node@v4
@@ -30,3 +32,14 @@ jobs:
 
       - name: Run D-001 control tests
         run: node d001-stage2-envelope.test.mjs
+
+      - name: Bundle exact functional Store pin
+        run: git bundle create store-functional-4402.bundle 4402abeb6b0299a5b6db2eec85ed04c3b0236bcc
+
+      - name: Upload Store bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: store-functional-4402
+          path: store-functional-4402.bundle
+          if-no-files-found: error
+          retention-days: 7
