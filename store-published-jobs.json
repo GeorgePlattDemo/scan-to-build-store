@@ -1,0 +1,163 @@
+{
+  "documentKind": "StorePublishedJobsCandidate",
+  "version": "0.2-reconciled",
+  "status": "CANDIDATE",
+  "store": "Store Zero",
+  "runtimeBasis": {
+    "branch": "build/s001-centered-field-0.1",
+    "commit": "0da283c01ae9980b39c94e41437bf34340b7c337",
+    "combinedAncestor": "096e99d645d745b1670185f46c75de75f9e59661"
+  },
+  "namedJobSource": {
+    "branch": "build/store-published-jobs-0.1",
+    "commit": "0023b39a9a59c7cd2c882627c78ef59236f553e4"
+  },
+  "rule": "Name the bounded thing a person wants, bind it to existing stock and an existing Store evaluator, and do not create new machine authority.",
+  "jobs": [
+    {
+      "id": "square-stick",
+      "publicName": "Square 2x4",
+      "plainIntent": "Cut one 2x4 square to the finished length I enter.",
+      "requestType": "BOARD_SQUARE_V1",
+      "storeEvaluator": "evaluateJob",
+      "stock": [
+        {
+          "storeSku": "STB-ZERO-SPF-2X4-72-001",
+          "qty": 1
+        }
+      ],
+      "userInputs": ["keptLengthIn"],
+      "defaults": {
+        "keptLengthIn": 45,
+        "unit": "in"
+      },
+      "implementationDefaults": {
+        "requiredOps": ["CROSSCUT"]
+      },
+      "publishedAppSlice": {
+        "minFinishedLengthIn": 24,
+        "maxFinishedLengthIn": 60
+      },
+      "currentAppPin": "CONNECTED",
+      "currentAppPinKind": "STORE_PIN",
+      "currentAppPinValue": "b40cdc60a405d6c2a63d846f2c2e89cddc5bb95d",
+      "currentAppPinNote": "The established Board path is pinned separately. Later Store candidates descend from that Stage-2 Store state; this reconciliation does not move the application pin.",
+      "refuseOrStop": [
+        "missing or unsupported finished-length input remains unresolved",
+        "finished length outside the published application slice is not clamped",
+        "Store may refuse, leave unresolved, or report unavailable from its own basis"
+      ],
+      "notClaimed": [
+        "commercial quote",
+        "order",
+        "production release",
+        "machine readiness",
+        "Cycle Start",
+        "physical fabrication"
+      ]
+    },
+    {
+      "id": "rect-stencil",
+      "publicName": "Rectangular sheet stencil",
+      "plainIntent": "Route a rectangular blank in 3/4 in sheet stock and leave it attached with reference tabs for later separation.",
+      "requestType": "SHEET_MODE2_STENCIL_V1",
+      "storeEvaluator": "evaluateSheetMode2Job",
+      "stock": [
+        {
+          "storeSku": "STB-ZERO-PLY-075-48X96-001",
+          "qty": 1
+        }
+      ],
+      "userInputs": ["lengthIn", "widthIn"],
+      "defaults": {
+        "lengthIn": 24,
+        "widthIn": 18,
+        "unit": "in"
+      },
+      "implementationDefaults": {
+        "profileKind": "STRAIGHT_RECT",
+        "tabCount": 4,
+        "routeDepthIn": 0.5
+      },
+      "currentAppPin": "CONNECTED",
+      "currentAppPinKind": "PUBLISHED_JOB_STORE_PIN",
+      "currentAppPinValue": "4402abeb6b0299a5b6db2eec85ed04c3b0236bcc",
+      "currentAppPinNote": "The current System published-job path asks this existing Store evaluator at its exact published-job pin. This reconciliation does not move that pin.",
+      "refuseOrStop": [
+        "blank below the declared minimum or larger than the parent sheet is refused",
+        "missing tabs or route-depth basis stops or refuses as declared by the envelope",
+        "machine-local language such as G-code is refused",
+        "generic curvilinear demand is not silently interpreted as this rectangle"
+      ],
+      "notClaimed": [
+        "commissioned S-001",
+        "physical workholding proof",
+        "automated secondary separation",
+        "process time",
+        "fabrication quote",
+        "Cycle Start",
+        "physical fabrication"
+      ]
+    },
+    {
+      "id": "arched-opening",
+      "publicName": "Centered arched cutout in 1/2 in ply",
+      "plainIntent": "Route the published centered arched opening in a full 48 x 96 in 1/2 in sheet reference, using opening width and rise to define the circular segment.",
+      "requestType": "SHEET_MODE2_ARCHED_APERTURE_V0",
+      "storeEvaluator": "evaluateSheetMode2ArchedJob",
+      "stock": [
+        {
+          "storeSku": "STB-ZERO-PLY-050-48X96-001",
+          "qty": 1
+        }
+      ],
+      "userInputs": ["openingWidthIn", "straightHeightIn", "riseIn"],
+      "defaults": {
+        "outerLengthIn": 96,
+        "outerWidthIn": 48,
+        "openingWidthIn": 36,
+        "straightHeightIn": 24,
+        "riseIn": 12,
+        "unit": "in"
+      },
+      "workField": {
+        "id": "S001-CENTER-WORK-FIELD-V0",
+        "horizontalIn": 48,
+        "verticalIn": 36,
+        "placement": "CENTERED_ON_PARENT",
+        "containment": "WHOLE_PROFILE"
+      },
+      "derived": {
+        "arcChordIn": "openingWidthIn",
+        "radiusFormula": "R = chord^2 / (8 * rise) + rise / 2",
+        "referenceRadiusIn": 19.5,
+        "referenceOpeningHeightIn": 36
+      },
+      "implementationDefaults": {
+        "tabCount": 4,
+        "routeDepthIn": 0.5
+      },
+      "currentAppPin": "CONNECTED",
+      "currentAppPinKind": "PUBLISHED_JOB_STORE_PIN",
+      "currentAppPinValue": "4402abeb6b0299a5b6db2eec85ed04c3b0236bcc",
+      "currentAppPinNote": "The current System published-job path is pinned to the canonical centered S-001 runtime. This reconciliation keeps the full 48 x 96 parent and centered 48 x 36 work field; it does not broaden edge-routing capability.",
+      "refuseOrStop": [
+        "missing chord or rise remains unresolved",
+        "a supplied radius that contradicts chord plus rise is refused",
+        "the whole routed profile must remain inside the centered 48 x 36 work field",
+        "requested exterior rating remains unresolved for the published 1/2 in sheathing SKU",
+        "machine-local language such as G-code is refused"
+      ],
+      "notClaimed": [
+        "exterior-rated plywood",
+        "commissioned S-001",
+        "physical tab holding performance",
+        "edge routing outside the centered work field",
+        "process time",
+        "fabrication quote",
+        "Cycle Start",
+        "physical fabrication"
+      ]
+    }
+  ]
+}
