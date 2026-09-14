@@ -1,0 +1,48 @@
+name: Store reconciliation checks
+
+on:
+  push:
+    branches:
+      - stabilize/store-reconciliation-0.1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  store-reconciliation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run complete Store candidate test set
+        run: |
+          set -euo pipefail
+          tests=(
+            d-001-stage2-mill.test.mjs
+            d001-five-tool.test.mjs
+            d001-stage2-envelope.test.mjs
+            s001-mode2-arched.test.mjs
+            s001-mode2-envelope.test.mjs
+            store-zero-disposition.test.mjs
+            store-zero-stage2.test.mjs
+            store-published-jobs.test.mjs
+          )
+          for test_file in "${tests[@]}"; do
+            echo "==> ${test_file}"
+            node "${test_file}"
+          done
+
+      - name: Show exact candidate identity
+        run: |
+          echo "STORE_RECONCILIATION_HEAD=$(git rev-parse HEAD)"
+          git status --short
