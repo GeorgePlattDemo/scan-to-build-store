@@ -686,13 +686,7 @@ The research problem includes whether ordinary, economical sensing and workholdi
 
 `POSITION_VALID` is a **machine-local workpiece-reference validity condition**.
 
-It is not:
-
-- authorization;
-- full readiness;
-- safety approval;
-- Store supportability;
-- proof of finished-part conformance.
+It is not authorization, full readiness, safety approval, Store supportability, or proof of finished-part conformance.
 
 For Job 001’s dimensional operating narrative, length-dependent work uses the Store rule that the first cleanup cut establishes the longitudinal origin. Patent centering/jog remains patent correspondence, not a replacement Store rule.
 
@@ -814,6 +808,8 @@ The published reference proof includes:
 - total opening height: 36 in;
 - retained tabs/attach points;
 - downstream secondary separation.
+
+The tab-policy reference uses four requested base tabs and plans five in the canonical test by adding one reserve tab. Physical retention status remains `NOT_MEASURED`.
 
 This is a bounded reference geometry, not a generic free-form contour promise.
 
@@ -947,8 +943,6 @@ Current modeled completion/fulfillment relationships may include:
 
 A completed machine cycle is not automatically a completed customer handoff.
 
-The completion path distinguishes:
-
 ```text
 PRIMARY MACHINE OUTCOME
         ↓
@@ -1024,29 +1018,322 @@ A Store-visible capability change requires deliberate versioned Store promotion 
 
 ---
 
-## 22. Current machine unresolved register
+## 22. Capability-gap register
 
-### D-001 engineering / commissioning
+Store Zero should preserve unmet demand in a form that can support later research rather than returning an unexplained “no.”
 
-- exact physical travel/geometry;
-- actual first physical roller count and mechanism;
+### Required gap fields
+
+For each material gap where evidence exists, retain:
+
+```text
+project class
+part / feature
+required operation
+current Store disposition
+current machine limitation
+material limitation
+handling limitation
+secondary-operation option
+supplier / outsourcing option
+frequency / count, if measured
+economic consequence, if measured
+operator burden, if measured
+reference transfer required
+candidate smallest capability increment
+evidence status
+```
+
+Do not invent population statistics. A structure may exist before frequency data exists.
+
+### Current named research gaps
+
+| Gap | Present evidence | Consequence / question | Candidate smallest increment | Frequency status |
+|---|---|---|---|---|
+| D-001 actual board reference retention | reference/model only | can commanded roller motion be trusted as actual stock displacement? | sensing/workholding method sufficient to prove `POSITION_VALID` | not yet measured |
+| D-001 third manipulating roller | patent correspondence + current open question | does another contact/drive point materially improve retention, short-stock handling or recovery? | one additional manipulating roller if evidence earns it | not yet measured |
+| D-001 simple cleanup/taper function | retained demand + current research hypothesis | can one bounded tool avoid transfer/flip/layout/rereference? | narrow router/mill function, not universal axis expansion | not yet measured |
+| D-001 miter | disclosed/published family but numeric current physical range unresolved | when is bounded angle work worth carrying locally? | smallest declared miter actuation/range that answers real demand | not yet measured |
+| D-001 over-length stock | Stage-2 >96 in requires external support | handling may dominate usefulness | bounded external support/roller-stand solution | not yet measured |
+| D-001 first digital bridge | manual control case remains current physical truth | can one digital finished length become one measured cut without tape/pencil layout? | controlled positioning + one cut-to-length path | planned physical experiment |
+| S-001 physical support/workholding | reference model only | can a sheet retain reference through the bounded profile? | smallest support/clamp/reference architecture | not yet measured |
+| S-001 physical work field | software/reference field 48 × 36 | what usable field remains after real guards/tool/workholding geometry? | physical frame/travel sufficient for the first research part | not yet measured |
+| S-001 tab retention | tab plan exists; physical retention `NOT_MEASURED` | do tabs safely retain the actual cutout in actual material? | measured tab policy before promotion | not yet measured |
+| S-001 process economics | material Q known; process Q unresolved | does local routing create useful Store economics? | measured cycle + labor/secondary handling evidence | not yet measured |
+| Store/main implementation locality | current main documentary; executable family at path pins | cold readers can miss the executable basis | canonical manifest + path-specific pins; no silent file restoration | documented in this file |
+
+A gap may end in `TEST`, `DEFER`, `OUTSOURCE`, or `REJECT`. The register is not an automatic machine backlog.
+
+---
+
+## 23. Capability-increment evaluation
+
+A candidate addition should be compared as an increment rather than celebrated as “more capability.”
+
+Use, as applicable:
+
+```text
+capability increment
+new neutral operations enabled
+project classes recovered
+material forms covered
+manual setups eliminated
+reference transfers eliminated
+operator interpretation eliminated
+handling reduction
+refusal reduction
+cycle-time effect
+
+actuation delta
+sensing delta
+calibration delta
+I/O / control delta
+guarding delta
+safety delta
+dust / extraction delta
+maintenance delta
+capital cost
+integration cost
+footprint / interference cost
+
+evidence status
+decision: KEEP / TEST / DEFER / OUTSOURCE / REJECT
+```
+
+Candidate examples include a third manipulating roller, a second router orientation, the simpler cleanup/taper router, bounded miter actuation, external support, or additional sheet capability. None becomes Store capability simply by appearing in this comparison.
+
+A useful increment should answer a real Store gap with less total handling, rereferencing, operator interpretation or refusal burden than the alternatives. It may still be rejected if safety, maintenance, footprint, capital, integration or low demand make the increment unjustified.
+
+---
+
+## 24. Patent lineage and correspondence
+
+### 24.1 Primary source and discipline
+
+Primary issued sources retained in the System repository:
+
+- `docs/patents/source/US9720401B2.pdf` — U.S. Patent 9,720,401 B2;
+- `docs/patents/source/US10768609B2.pdf` — U.S. Patent 10,768,609 B2.
+
+Correspondence discipline:
+
+- `docs/patents/PATENT-ALIGNMENT-GATE.md` at System pin `138d0c01b62193012e5c5c891723b7dd47407119`.
+
+Permitted relationship labels:
+
+- `CLAIM CORRESPONDENCE`;
+- `SPECIFICATION CORRESPONDENCE`;
+- `FIGURE CORRESPONDENCE`;
+- `BOUNDED IMPLEMENTATION CHOICE`;
+- `PROJECT EXTENSION`;
+- `NO PATENT DEPENDENCY`.
+
+The issued source controls patent wording. Secondary maps help navigation only.
+
+### 24.2 Store/system correspondence table
+
+| Current subject | Correspondence label | Issued-source relationship | Current implementation meaning |
+|---|---|---|---|
+| customer/project interaction → estimated price → fabrication instructions → components ready at a location | `CLAIM CORRESPONDENCE` | issued integrated-system/method claims describe customer project interaction, estimated pricing, machine instructions and local pickup-ready fabrication | current Store uses reference economics and bounded Store answers only; it does not claim a live seller/order flow |
+| tandem sheet + dimensional machine relationship | `CLAIM CORRESPONDENCE` | issued claims expressly distinguish a sheet machine and a dimensional-stock machine within the integrated system | current D-001/S-001 are separated capability families; neither is thereby commissioned |
+| S-001 support/backing/rollers/yokes/tooling-platform relationship | `CLAIM CORRESPONDENCE` + `FIGURE CORRESPONDENCE` | issued claims/specification describe support frame, backing plates, base rollers, clamping rollers, rotating yokes with servo-controlled manipulating rollers, guide rails and movable tooling platform | current Mode-2 reference is narrower and remains `REFERENCE / NOT_CLAIMED` physically |
+| D-001 support surface/fence/clamp/manipulating roller/saw relationship | `CLAIM CORRESPONDENCE` + `FIGURE CORRESPONDENCE` | U.S. 9,720,401 B2 claim 4 describes frame/surface, fence, clamping roller, servo-controlled manipulating roller and sawing station; dependent material adds fixed ways | current reference/hypothesis uses a bounded subset and its own evidence status |
+| secondary-operations station and labeling | `CLAIM CORRESPONDENCE` | issued dependent claims include secondary operations and labeling/assembly relationships | current completion layer admits only explicitly declared residual operations and operational identity labels |
+| existing retail/manual machinery footprint and simple maintainable construction | `SPECIFICATION CORRESPONDENCE` | issued specification discusses retail-store deployment, existing legacy machinery space, simple/less-expensive maintainable construction and in-store staging | current machine research tests that economic/deployment premise rather than treating it as proved |
+| present two-manipulating-roller D-001 reference | `BOUNDED IMPLEMENTATION CHOICE` | issued claims require at least one; exemplary description includes a broader roller arrangement | current two-roller Store reference is a narrowed research implementation, not a claim about required patent scope |
+| first-cleanup-cut longitudinal origin | `BOUNDED IMPLEMENTATION CHOICE` | issued exemplary machine narrative also describes centering/jog reference approaches | current Job 001 Store narrative uses the cleanup-cut origin; sensing remains unresolved |
+| controller-specific lowering at machine site | `BOUNDED IMPLEMENTATION CHOICE` | issued lineage includes generated/transmitted machining instructions | current architecture preserves instruction generation/transmission but moves controller-specific lowering downstream of Store/app boundaries |
+| `POSITION_VALID`, Store membrane, governed gates, provenance, default-deny live motion | `PROJECT EXTENSION` / `NO PATENT DEPENDENCY` | current governance and machine-local validity architecture is not relied upon as patent disclosure | these are current engineering/governance controls and must stand on their own evidence |
+| modern encoder/sensing choices | `PROJECT EXTENSION` / `BOUNDED IMPLEMENTATION CHOICE` | exact modern hardware is not inferred from older issued disclosure | later engineering may select sensing; this file does not invent it |
+
+### 24.3 Patent firewall
+
+Patent correspondence does not establish:
+
+- installed hardware;
+- commissioned capability;
+- machine readiness;
+- measured tolerance or repeatability;
+- guarding adequacy;
+- safety category / PL / SIL;
+- regulatory compliance;
+- production authorization.
+
+This file makes no conclusion about infringement, validity, enforceability, claim scope, remaining term, or licensing outcome. It is a technical provenance/correspondence record, not a legal opinion.
+
+---
+
+## 25. Worked Store Zero requests
+
+### 25.1 CUT-001 — simple dimensional board proof
+
+**Demand.** One nominal 2×4×6 SPF parent board; finished kept length 60.000 in; square cut-to-length reference path; label/staged pickup relationship.
+
+**Store resolution.** The active fixture maps this to `STB-ZERO-SPF-2X4-72-001`:
+
+- fixture selling price: `$3.13`;
+- fixture on hand: `60 ea`;
+- required Store reference operation: `CROSSCUT`;
+- D-001 reference family applies;
+- stock answer for quantity 1: `ON_HAND_SUFFICIENT`;
+- Stage-2 reference disposition: `SUPPORTABLE`.
+
+**Reference sequence.** Seat/register the stock; first cleanup cut establishes the working longitudinal origin in the Job 001 operating rule; index to the finished requirement; square crosscut; release; label.
+
+**Economics.** Applying the published Stage-2 cycle formula to the CUT-001 fixture gives approximately `9.518 min` modeled job time, about `$50.86` modeled cell recovery, and `Q ≈ $53.99` including the fixture material line. These are calculated reference values, not measured production time or a commercial quote.
+
+**Meaning.** This is the smallest reference chain showing that a finished-length requirement can be translated to a bounded Store/machine-neutral demand. The current physical Machine Build 1 still has to earn the corresponding real measured result.
+
+### 25.2 Alcove Insert — dimensional Store proof
+
+The current Store Job 001 / pricing fixture carries the established pine alcove example with a 45.5-in opening width, 14-in configured depth, five shelves and a derived crosswise finished length of `43.875 in` for the shelf boards under the published fixture calculation.
+
+**Store material lines.** The Stage-2 pricing/evaluation path uses:
+
+- `STB-ZERO-PINE-1X6-72-001` — quantity 4; selling price `$15.74`; fixture on hand 30;
+- `STB-ZERO-PINE-1X6-96-001` — quantity 10; selling price `$20.99`; fixture on hand 36;
+- `STB-ZERO-HW-ALCOVE-PACK-001` — one hardware pack; selling price `$18.00`; fixture on hand 25.
+
+The regression test establishes:
+
+- catalog line material total: `$272.86`;
+- hardware extension: `$18.00`;
+- Store evaluation: `SUPPORTABLE`;
+- stock basis: `SYNTHETIC_FIXTURE`.
+
+Applying the published cycle formula gives a modeled dimensional cycle of approximately `29.134 min`, modeled cell recovery of about `$83.56`, and `Q ≈ $374.42` including material, hardware and modeled cell recovery. `Q` remains a budgetary reference, not a commercial quote.
+
+**Boundary.** That Store answer does not establish site verification, structural adequacy, installation suitability, production authority, machine readiness, or physical fabrication. Those remain owned by their respective layers.
+
+### 25.3 Window Seat — useful stop before Store promotion
+
+The Window Seat is deliberately not presented here as a clean Store success path.
+
+The current System source uses it to prove that ordinary project language can change the questions that must be answered. Once intended human seating is part of the candidate, additional governed questions become relevant, including seating load, span/deflection, substrate/anchorage, window operation/access and conditional human review.
+
+The documented first governed fixture stops with `EGRESS_REVIEW_REQUIRED` when the configured seat envelope intersects the fixture-declared access zone. A later revised configuration does not erase that stop; affected gates rerun. The current source also preserves the separate seat-load/span/anchorage blocker before the PASS fixture can be treated as complete.
+
+Therefore this canonical Store file does **not** invent a full Window Seat SKU list, structural answer, or `SUPPORTABLE` Store disposition for the complete project.
+
+The correct chain is:
+
+```text
+owner intent / evidence
+→ candidate seating configuration
+→ governed questions and STOP where applicable
+→ review / revised configuration
+→ dependent gates rerun
+→ only when the demand is stable enough:
+   Store material / capability question
+```
+
+Historical dual-stream window-seat demonstrations remain useful donors. They do not become current production authority.
+
+### 25.4 S-001 centered arched internal opening
+
+**Demand.** One 48 × 96 nominal 1/2-in plywood fixture sheet with a centered bounded internal opening:
+
+- opening width 36 in;
+- straight-side height 24 in;
+- arch rise 12 in;
+- derived radius 19.5 in;
+- total opening height 36 in;
+- requested retained tabs 4;
+- route depth 0.5 in.
+
+**Store material.** `STB-ZERO-PLY-050-48X96-001`:
+
+- list reference `$25.29`;
+- fixture selling price `$26.55`;
+- fixture on hand `18 ea`;
+- observation identity `OBS-017` in the pinned fixture.
+
+**Reference capability.** The published evaluator returns `SUPPORTABLE` for this exact reference request under `SHEET_MODE2_ARCHED_APERTURE_V0` and the centered `S001-CENTER-WORK-FIELD-V0`.
+
+The tab policy plans 5 tabs from the 4-tab base request by adding one planning reserve. Physical retention remains `NOT_MEASURED`.
+
+**Economics.** Current estimate status is `BUDGETARY_MATERIAL_ONLY`; `Q = $26.55`; `processQ_status = UNRESOLVED`.
+
+**Physical meaning.** `SUPPORTABLE` is a Store reference result. The same returned object explicitly retains `REFERENCE`, `NOT_CLAIMED`, measured `false`, commissioned `false`, and non-claims including G-code and Cycle Start. It is not evidence of a built S-001.
+
+---
+
+## 26. Negative / refusal examples
+
+A serious Store must be useful because it can say no precisely.
+
+| Request / condition | Current result | Reason / meaning |
+|---|---|---|
+| SKU/material not represented | `UNRESOLVED` or no offering/refusal as defined by the evaluator path | material identity/offering must not be invented |
+| offered SKU with insufficient fixture quantity | `UNAVAILABLE` | supplier path does not silently cure on-hand shortage |
+| D-001 pilot diameter other than 0.1875 in where only fixed pilot is admitted | `REFUSED` | tool capability is bounded |
+| D-001 requested operation outside material/envelope declaration | `REFUSED` | operation name alone is not enough |
+| S-001 50-in centered aperture width in the 48-in horizontal reference field | `REFUSED` | `CENTER_WORK_FIELD_EXCEEDED` |
+| S-001 25-in straight side + 12-in rise in 36-in vertical field | `REFUSED` | `CENTER_WORK_FIELD_EXCEEDED` |
+| S-001 parent too small to contain declared centered field | `REFUSED` | `CENTER_WORK_FIELD_OUTSIDE_PARENT` |
+| S-001 route depth 0.9 in in current reference | `REFUSED` | `ROUTE_DEPTH_EXCEEDS_REFERENCE_ENVELOPE` |
+| S-001 tab count 0 | `REFUSED` | `STENCIL_TABS_REQUIRED` |
+| G-code/controller language placed in Store-level S-001 request | `REFUSED` | `MACHINE_LOCAL_LANGUAGE_NOT_ACCEPTED` |
+| exterior rating requested on the current 1/2-in plywood fixture without established rating | `UNRESOLVED` | `EXTERIOR_RATING_NOT_ESTABLISHED_BY_SKU` |
+| dimensional 2×4 submitted to S-001 sheet path | `REFUSED` | `SHEET_MODE2_NOT_DIMENSIONAL` |
+| OSB line without route-profile declaration submitted to arched S-001 path | `REFUSED` | material offering does not carry the required reference operation |
+| window-seat configuration with unresolved access/load/span/anchorage conditions | upstream governed STOP / unresolved demand | do not manufacture a clean Store answer before the project question is ready |
+| modeled capability requested as physical production because simulation passed | refused by authority boundary | simulation/reference evidence cannot promote itself to production |
+| stale answer after request or Store state changed | reevaluate | provenance/version must identify the changed basis |
+
+Silence is never the negative case. A consequential line is either answered, unresolved, refused, unavailable, or identified as an implementation/protocol failure outside the business disposition set.
+
+---
+
+## 27. Source contradictions and their disposition
+
+This consolidation does not solve contradictions by selecting the most convenient sentence.
+
+| ID | Source discrepancy | Canonical representation |
+|---|---|---|
+| C-01 | current Store `main` is documentary while the executable Stage-2/published-job family exists at older path-specific pins | preserve current `main` as documentary source and list executable assets with exact pins; do not restore/delete silently |
+| C-02 | patent exemplary D-001 narrative includes three manipulating rollers; Stage-2/current bounded hypothesis uses two | patent = correspondence; two-roller Store model = bounded reference choice; third roller remains research candidate |
+| C-03 | patent longitudinal reference narrative includes centering/jog; Job 001 uses first cleanup cut as longitudinal origin | current Store operating narrative uses Job 001 first-cut origin; patent approach remains correspondence; sensing unresolved |
+| C-04 | older Cell material describes S-001 as not a live Store asset; later published-job pin contains explicit S-001 reference evaluators | later pinned reference implementation is acknowledged as Store reference evidence; physical status remains `NOT_CLAIMED` and no commissioning is inferred |
+| C-05 | published five-tool D-001 names T1/T2/T3 router roles; current research intent describes two richer bounded routers plus one simpler cleanup/taper function | preserve published T1/T2/T3 reference names; record newer role interpretation as research hypothesis only; final physical arrangement unresolved |
+| C-06 | Stage-2 D-001 contains exact fixture coordinates/travels/feeds while current machine program says physical machine is not established | exact Stage-2 numbers remain reference/model values attached to their pin; physical commissioning must measure its own values |
+| C-07 | S-001 software reference uses a centered 48 × 36 field; physical engineering plan says usable field may shrink | 48 × 36 remains software/reference envelope only; actual physical field unresolved until engineering/commissioning |
+| C-08 | historical Window Seat/Sarah material depicts a richer dual-stream fabrication story; current governed source is simulation-only | historical story remains donor/context; current path preserves STOP/review/revision and does not claim production execution |
+| C-09 | patent architecture is broader than the current bounded research cell | patent correspondence is preserved; current implementation may intentionally narrow it and must label the narrowing |
+| C-10 | price/material fixtures are concrete enough to look commercial | every price/stock/economic section retains fixture/budgetary/non-live status; no seller-of-record promise is created |
+
+---
+
+## 28. Consolidated unresolved register
+
+Open questions are grouped by owner/type so they cannot disappear in prose.
+
+### 28.1 Unresolved Store semantics / Store implementation
+
+- long-term repository placement of the pinned executable Store assets relative to current documentary `main`;
+- any Store-visible capability promotion after future physical evidence;
+- real Store owner/delegation implementation beyond the modeled authority roles;
+- live supplier/special-order semantics and service agreements;
+- live inventory, reservation, seller-of-record, payment and carrier integration — all presently not implemented/claimed;
+- actual yard secondary-service catalog, if one is later offered;
+- future real Store freshness/expiration rules beyond fixture clocks.
+
+### 28.2 Unresolved D-001 machine engineering
+
+- exact physical frame/travel/geometry;
+- actual manipulating-roller count and mechanism;
 - workpiece slip/reference-retention sensing;
-- third manipulating roller need;
-- exact miter range;
+- whether a third manipulating roller is justified;
+- exact miter range and actuation;
 - exact pilot/drill envelope beyond the fixed 3/16-in reference functions;
-- unsupported overhang/support geometry;
-- final router/tool arrangement and which router carries the simpler cleanup/taper role;
-- exact controller;
-- exact drives;
-- fieldbus/I/O;
-- guarding/safety engineering;
+- external support/overhang arrangement;
+- final router/tool arrangement and which function carries cleanup/taper;
+- exact tool/spindle/motor selections;
+- local controller/drives/I/O/fieldbus;
 - dust/extraction;
-- measured cycle times;
-- measured tolerances/repeatability;
-- calibration and maintenance burden;
-- production eligibility.
+- guarding, restraint, stopping, reset and isolation engineering.
 
-### S-001 engineering / commissioning
+### 28.3 Unresolved S-001 machine engineering
 
 - first physical frame/support architecture;
 - final motion split between sheet and tooling;
@@ -1055,23 +1342,133 @@ A Store-visible capability change requires deliberate versioned Store promotion 
 - spindle/router/cutter;
 - sacrificial backing;
 - physical usable work field;
-- depth control/reference;
+- depth-control/reference implementation;
 - controller/drives/I/O;
-- sensing/reference invalidation;
+- sensing and position invalidation;
 - guards/interlocks/E-stop/restart/isolation;
 - dust/chip management;
-- tab policy proven against real material;
-- geometric acceptance tolerance and inspection method;
-- commissioning authority/reviewer;
-- measured cycle time;
-- production eligibility.
+- tab policy validated against actual material.
 
-Unresolved does not mean forgotten. It means the Store file refuses to invent the answer.
+### 28.4 Unresolved physical commissioning / measurement
+
+- actual D-001 cut-length accuracy and repeatability;
+- actual board displacement versus commanded roller displacement;
+- actual pilot-position accuracy;
+- actual miter/profile accuracy;
+- actual S-001 opening/profile error;
+- physical tab retention;
+- measured cycle times;
+- measured setup/operator touches/recovery burden;
+- calibration frequency;
+- maintenance burden;
+- scrap/rework behavior;
+- physical acceptance tolerances not already declared by an owning source;
+- production eligibility;
+- commissioned safety evidence.
+
+### 28.5 Unresolved research choices
+
+- which capability gaps occur frequently enough to justify local capital;
+- whether the third roller creates enough value to keep/test;
+- whether the simpler cleanup/taper function is worth the extra tooling/guarding/maintenance;
+- whether bounded miter belongs in an early local cell or outside service;
+- when supplier/special-order/secondary work is economically better than local automation;
+- whether a two-machine dimensional/sheet research cell is justified by actual demand and evidence;
+- what the smallest useful S-001 physical experiment should become after support/workholding/safety constraints are known.
+
+Unknown tolerance = unresolved, not guessed. Unknown frequency = not yet measured, not estimated for appearance.
 
 ---
 
-## 23. Safety invariant
+## 29. Implementation manifest
+
+The canonical file is the semantic front door. Executable assets remain where they have actual implementation force.
+
+### 29.1 Store current documentary baseline
+
+| Canonical subject | Implementation/source asset | Repository | Exact pin | Role / status |
+|---|---|---|---|---|
+| Store canonical definition | `STORE-ZERO.md` | `GeorgePlattDemo/scan-to-build-store` | branch `build/store-zero-canonical-0.1` | canonical semantic master created by this consolidation |
+| translation baseline | `DEFINITIONS.md` | Store | `3620b35369d70cf49733bbb0b62c0f3d9969b738` | current documentary definitions |
+| source/implementation navigation | `STORE-ASSET-TO-IMPLEMENTATION-MAP.md` | Store | same current Store pin | documentary source map |
+| worked Store/Cell example | `STORE-JOB-001.md` | Store | same current Store pin | documentary worked Store/cell chain |
+
+### 29.2 Pinned Store executable/reference family
+
+| Canonical subject | Implementation/source asset | Exact Store pin | Role / status |
+|---|---|---|---|
+| active reference catalog | `store-zero-catalog.json` | `4402abeb6b0299a5b6db2eec85ed04c3b0236bcc` | 92-offering machine-readable fixture |
+| price observations | `store-zero-observations.json` | same | fixture observation basis |
+| Store economics | `store-zero-pricing-engine.mjs` | same | `STB-STORE-ZERO-PRICE-1` v0.2.2 + D-001 modeled cycle |
+| Store question / dispositions | `store-zero-stage2-store.mjs` | same | callable deterministic Store evaluator |
+| catalog/economics regression | `store-zero-stage2.test.mjs` | same | catalog count, price basis, Alcove evaluation regression |
+| disposition regression | `store-zero-disposition.test.mjs` | same | Store disposition behavior |
+| D-001 Stage-2 envelope prose | `D-001-STAGE2-ENVELOPE-0.1.md` | same | reference/model envelope document |
+| D-001 Stage-2 evaluator | `d001-stage2-envelope.mjs` | same | machine-readable reference envelope |
+| D-001 envelope regression | `d001-stage2-envelope.test.mjs` | same | deterministic envelope test |
+| D-001 milling regression | `d-001-stage2-mill.test.mjs` | same | mill-envelope regression |
+| D-001 five-tool prose | `D-001-FIVE-TOOL-REFERENCE-0.1.md` | same | published bounded reference candidate |
+| D-001 five-tool evaluator | `d001-five-tool.mjs` | same | machine-readable five-tool reference |
+| D-001 five-tool regression | `d001-five-tool.test.mjs` | same | refusal/supportability regression |
+| S-001 Mode-2 prose | `S-001-MODE2-ENVELOPE-0.1.md` | same | reference Mode-2 envelope |
+| S-001 Mode-2 evaluator | `s001-mode2-envelope.mjs` | same | machine-readable Mode-2 reference |
+| S-001 Mode-2 regression | `s001-mode2-envelope.test.mjs` | same | support/refusal regression |
+| S-001 arched prose | `S-001-MODE2-ARCHED-APERTURE-0.1.md` | same | centered arched reference |
+| S-001 arched evaluator | `s001-mode2-arched.mjs` | same | curvilinear/field evaluator |
+| S-001 arched regression | `s001-mode2-arched.test.mjs` | same | canonical arch + negative cases |
+| curve math | `circular-segment.mjs` | same | bounded circular-segment derivation |
+| stencil/tab policy prose | `STENCIL-TAB-POLICY-0.1.md` | same | reference retention policy |
+| stencil/tab policy implementation | `stencil-tab-policy.mjs` | same | deterministic tab planning; physical retention not measured |
+| Store/Cell evidence stages | `STB-STORE-CELL-STAGES-0.1.md` | same | reference evidence vocabulary |
+
+The earlier Stage-2 pin `b40cdc60a405d6c2a63d846f2c2e89cddc5bb95d` remains path-specific provenance for the Stage-2 D-001 foundation. The later `4402abeb...` pin is used above because it contains that foundation plus the published D-001/S-001 proof family. This does not make either pin a universal project constant.
+
+### 29.3 System / governed sources materially used
+
+| Subject | Source | Repository / pin | Role |
+|---|---|---|---|
+| Store boundary | `docs/store/CURRENT-STORE-FOUNDATION.md` | System `138d0c01...` | current authority/membrane/disposition summary |
+| cell mechanics/control | `source-library/machine-cell/STB-CELL-0.1.md` | System `138d0c01...` | descriptive/candidate D-001/S-001 mechanics and source discrepancies |
+| lowering boundary | `source-library/atlas-research/STB-ATLAS-04-NEUTRAL-OPS-TO-MACHINE-0.1.md` | System pin | donor/field survey; not adopted capability |
+| bounded capability ladder | `source-library/atlas-research/STB-ATLAS-05-ENVELOPE-LADDER-0.1.md` | System pin | donor/field survey; not runtime state |
+| controls/iron survey | `source-library/atlas-research/STB-ATLAS-06-IRON-0.1.md` | System pin | donor/field survey; not BOM/safety design |
+| machine-source map | `docs/machine/POST-APP-MECHANICAL-SOURCE-MAP.md` | System pin | current source-admission map |
+| physical research program | `work/machines/MACHINE-BUILD-PROGRAM-0.1.md` | System pin | manual control case + Build 1–4 research sequence |
+| dimensional staging | `work/machines/staging/DIMENSIONAL-MACHINE-STAGING-0.1.md` | System pin | present physical truth and first bridge question |
+| sheet physical plan | `work/machines/engineering/sheet/SHEET-MACHINE-BUILD-0.1.md` | System pin | first bounded S-001 physical candidate; no capability claimed |
+| completion/secondary ops | `work/capability-bridge/COMPLETION-PATH-0.1.md` | System pin | residual-operation, steward/operator, label/stage/closeout boundaries |
+| Window Seat edge case | `work/capability-bridge/WINDOW-SEAT-EDGE-CASE-JOURNEY-0.1.md` | System pin | STOP/review/revision example; no production claim |
+| patent discipline | `docs/patents/PATENT-ALIGNMENT-GATE.md` | System pin | correspondence labels and patent firewall |
+| issued patents | `docs/patents/source/US9720401B2.pdf`, `docs/patents/source/US10768609B2.pdf` | System pin | primary patent sources |
+| governed authority | `README.md` + controlling governed documents | governed reference `18949f163718a937f072f4be3a654bb303e53160` | simulation-only/default-deny production boundary |
+
+---
+
+## 30. Canonical reading rules
+
+A cold reader or AI given only this file should preserve the following rules before drawing any conclusion:
+
+1. **Store Zero is a reference Store, not a real dealer.**
+2. **Fixture stock is not live inventory.**
+3. **Fixture price and Q are not commercial quotes.**
+4. **A Store `SUPPORTABLE` answer is not production authorization.**
+5. **D-001/S-001 reference envelopes are not commissioned machines.**
+6. **Axis/servo position is not proof of workpiece position.**
+7. **`POSITION_VALID` is local workpiece-reference validity, not a universal readiness flag.**
+8. **Machine-neutral operations are not G-code/controller programs.**
+9. **Secondary work does not rescue an unsupported Store result unless the split path was explicitly admitted.**
+10. **Patent correspondence does not establish safety, commissioning or legal conclusions.**
+11. **A historical demonstration does not become current authority because it is visually complete.**
+12. **Unresolved is an acceptable result. Refusal is an acceptable result. Negative research evidence is evidence.**
+13. **The smallest justified capability increment is preferred over silent conversion into generic CNC.**
+14. **Physical evidence must be earned separately.**
+
+---
+
+## 31. Safety invariant
 
 **NO BLOOD ON WOOD.**
 
-Nothing in Store supportability, budgetary economics, patent correspondence, a WorkPacket, simulation, machine-neutral operations, a modeled envelope, or this canonical file establishes safe physical operation or production readiness.
+Nothing in Store supportability, budgetary economics, patent correspondence, a WorkPacket, simulation, machine-neutral operations, a modeled envelope, a UI rendering, or this canonical file establishes safe physical operation or production readiness.
+
+A future physical build must separately resolve competent mechanical, electrical, controls, guarding, interlock, stopping, workholding, sensing, dust/extraction, commissioning and risk-assessment requirements before powered production use.
