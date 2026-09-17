@@ -131,18 +131,7 @@ NEW VERSIONED STORE CAPABILITY
 
 Store Zero does not autonomously design a machine. It preserves evidence about the missing Store function. Engineering decides whether a capability increment is justified.
 
-Valid outcomes include:
-
-- use the existing Store process;
-- use current declared machine capability;
-- split an explicitly admitted machine contribution and secondary operation;
-- route to a supplier or special order;
-- outsource;
-- test a bounded new capability;
-- modify a candidate capability;
-- defer;
-- refuse;
-- conclude that the machine addition is economically unjustified.
+Valid outcomes include use of the existing Store process, use of current declared capability, an explicitly admitted secondary operation, supplier/special order, outsourcing, a bounded test, modification, deferral, refusal, or a conclusion that a machine addition is economically unjustified.
 
 Negative results are valid research results.
 
@@ -154,12 +143,9 @@ The research objective is not to replace a lumberyard with a universal CNC facto
 
 The objective is to test whether an ordinary independent lumberyard can be economically augmented by bounded local digital fabrication that uses, where applicable:
 
-- the existing site;
-- existing stock and supplier relationships;
-- existing material handling;
-- existing receiving and covered storage;
-- existing staging and will-call;
-- existing pickup/delivery paths;
+- the existing site, stock and supplier relationships;
+- existing material handling, receiving and covered storage;
+- existing staging, will-call, pickup and delivery paths;
 - existing labor and operator roles;
 - a familiar machine footprint;
 - bounded additional machine capability;
@@ -171,11 +157,9 @@ The objective is to test whether an ordinary independent lumberyard can be econo
 
 The useful middle under study is between ordinary tape/pencil/manual processing and high-capability factory automation.
 
-The machine-design principle is:
-
 > make the material move rather than making every tool infinitely capable.
 
-That principle is a research hypothesis, not a commissioned-machine fact.
+That is a research principle, not a commissioned-machine fact.
 
 ---
 
@@ -183,26 +167,21 @@ That principle is a research hypothesis, not a commissioned-machine fact.
 
 Store Zero begins with an ordinary lumberyard operating model. The following are Store Zero fixture declarations used to create a coherent research context; they are not claims that every lumberyard has identical practices or assets.
 
-### Declared ordinary Store functions
+Declared ordinary Store functions include pro/counter sales, product/catalog information, covered storage and yard storage, receiving, staging, will-call, loading and ordinary material handling, pickup, delivery as a modeled fulfillment path, an employee-operated square-crosscut baseline, supplier relationships, special-order handling, contractor/takeoff workflow, and ordinary human Store roles.
 
-- pro/counter sales;
-- product/catalog information;
-- covered storage and yard storage;
-- receiving;
-- staging;
-- will-call;
-- loading and ordinary material handling;
-- pickup;
-- delivery as a modeled fulfillment path;
-- existing limited material processing, including an employee-operated square-crosscut baseline;
-- supplier relationships;
-- special-order handling;
-- contractor/takeoff workflow;
-- ordinary human Store roles.
+The physical comparison case for the present dimensional-machine research remains manual:
 
-The physical comparison case for the present dimensional-machine research remains manual: board → radial-arm saw → eyes/tape/pencil/operator judgment → manual positioning/cut. A Stage-2 D-001 fixture is not evidence that this physical comparison case has already been replaced.
+```text
+board
+  ↓
+radial-arm saw
+  ↓
+eyes + tape measure + pencil + operator judgment
+  ↓
+manual positioning and cut
+```
 
-### Baseline rule
+A Stage-2 D-001 fixture is not evidence that this physical comparison case has already been replaced.
 
 Do not replace a useful existing Store asset merely because an automated method can be imagined. Start with the declared current asset, identify the real capability gap, add the smallest justified increment, and measure what changed.
 
@@ -210,33 +189,15 @@ Do not replace a useful existing Store asset merely because an automated method 
 
 ## 5. Store sovereignty and Store membrane
 
-The Store boundary follows one short rule:
-
 > **Ask for the answer, not the database.**
 
 A caller should ask bounded Store questions and receive bounded Store answers. Connected does not mean surrendered.
 
-Store Zero may expose answers about:
-
-- offered material/product identity;
-- availability and freshness context;
-- price/reference economics;
-- declared processing capability;
-- supportability or refusal;
-- supplier/special-order path;
-- fulfillment state;
-- relevant evidence/version identity.
+Store Zero may expose answers about offered material/product identity, availability and freshness, price/reference economics, declared processing capability, supportability/refusal, supplier/special-order path, fulfillment state, and relevant evidence/version identity.
 
 That does not imply disclosure or transfer of every internal Store record, supplier term, customer/account detail, machine-local configuration, controller state, or operating credential.
 
-### Information classes
-
-The Store architecture distinguishes, as applicable:
-
-- public/project information;
-- account/commercial information;
-- operational Store information;
-- machine-local information.
+The Store architecture distinguishes, as applicable, public/project information, account/commercial information, operational Store information, and machine-local information.
 
 The application should receive what it needs to present a Store answer. It does not need the entire Store database. The Store should receive an unambiguous project demand. It does not need application UI state. The machine should receive an admitted machine-neutral work description plus local lowering context. It does not need permission to rewrite project truth.
 
@@ -265,7 +226,7 @@ The current governed reference is simulation-only and states that production aut
 - project-to-capability evaluation;
 - machine-neutral operation requirements;
 - Store economics;
-- Store fulfillment and completion relationships within Store authority.
+- Store fulfillment/completion relationships within Store authority.
 
 ### Application owns
 
@@ -308,19 +269,15 @@ Network presence is not motion authority. Store supportability is not Cycle Star
 
 ## 7. Inbound Store demand
 
-Store Zero should not have to infer the project question from UI fragments. The project definition must make the demand unambiguous; Store evaluation determines the answer.
-
 > **Project definition must make the question unambiguous. Store evaluation determines the answer.**
 
 A consequential Store request should carry enough information to identify, as applicable:
 
-- project / request identity;
-- project revision;
-- part/component identity;
-- quantity;
+- project/request identity and revision;
+- part/component identity and quantity;
 - finished geometry relevant to Store resolution;
 - material requirement or provisional material identity;
-- required operation(s);
+- required operations;
 - secondary-operation expectation where deliberately split;
 - fulfillment requirement;
 - unresolved conditions;
@@ -334,8 +291,6 @@ Every consequential Store-relevant demand line must receive a disposition. Silen
 
 ## 8. Material system
 
-Store Zero preserves the following chain:
-
 ```text
 Material requirement
 → MaterialClass / material identity
@@ -346,11 +301,9 @@ Material requirement
 → stock / supply answer
 ```
 
-Material identity is not merchant identity.
+Material identity is not merchant identity. A `MaterialClass` or `MaterialSpec` is not a SKU. A SKU is a Store/channel offering identity.
 
-A `MaterialClass` or `MaterialSpec` is not a SKU. A SKU is a Store/channel offering identity. Mapping a provisional or project material requirement to a Store SKU is an explicit Store-resolution act; it is not silent material substitution.
-
-If a material is provisional or unresolved, Store Zero must not fabricate confidence by selecting a merchant SKU anyway. A later mapping may create a new Store question or project revision where the changed identity is consequential.
+Mapping a provisional or project material requirement to a Store SKU is an explicit Store-resolution act; it is not silent material substitution. If a material is provisional or unresolved, Store Zero must not fabricate confidence by selecting a merchant SKU anyway. A later mapping may create a new Store question or project revision where the changed identity is consequential.
 
 ---
 
@@ -363,20 +316,18 @@ The active published-job catalog contains **92 offered fixture items** at catalo
 Common rules:
 
 - `offered=true` means offered by the Store Zero fixture, not by a real dealer;
-- unit is `ea` unless the catalog line states a packaged hardware unit;
-- `list_reference` is an observed or calculated fixture reference as declared on the item;
-- Store Zero selling price = `ROUND(list_reference × 1.05, 2)`;
-- the 5% value is a mark-on rule, not a margin claim;
+- unit is `ea` unless a packaged hardware unit applies;
+- `list_reference` is observed or calculated as declared per item;
+- selling price = `ROUND(list_reference × 1.05, 2)`;
+- the 5% value is mark-on, not margin;
 - `onHand` is fixture-declared stock, not a physical count;
-- `allocated=0` in the active fixture;
-- supplier path is represented synthetically where present and does not cure an on-hand shortage;
+- active fixture allocation is zero;
+- a represented supplier path does not cure an on-hand shortage;
 - D-001/S-001 operation declarations are reference capability facts only.
 
-The compact tables below reproduce the active offering set. Each row is a Store offering. Dimensions are nominal unless an actual size is stated in the family note. `L/S/O` means list reference / Store Zero selling price / fixture on-hand quantity.
+`L / S / O` below means list reference / Store Zero selling price / fixture on-hand quantity.
 
 ### 9.2 SPF construction dimensional lumber — 22 offerings
-
-Material/form: SPF construction lumber; dimensional board. D-001 reference family. Normal 2x actual dimensions follow the catalog’s standard surfaced dimensional values; 4x4 actual section is 3.5 × 3.5 in. Reference capability and limitations remain item-specific in the executable catalog.
 
 | Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
 |---|---:|---:|
@@ -407,8 +358,6 @@ The 4×4 fixture is limited relative to the milling envelope; a Store offer does
 
 ### 9.3 Pine board offerings — 22 offerings
 
-Material/form: surfaced pine board families. Select pine families principally use D-001 crosscut/miter/drill and, for applicable widths, bounded mill operation declarations. Narrow 1×2/1×3 and lower-grade lines have narrower declared processing.
-
 | Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
 |---|---:|---:|
 | `STB-ZERO-PINE-1X2-72-001` | 1×2×72 | 1.59 / 1.67 / 20 |
@@ -434,11 +383,9 @@ Material/form: surfaced pine board families. Select pine families principally us
 | `STB-ZERO-PINEQ-1X8-96-001` | quality pine 1×8×96 | 11.98 / 12.58 / 22 |
 | `STB-ZERO-PINESTD-1X4-96-001` | standard/rustic pine 1×4×96 | 2.73 / 2.87 / 80 |
 
-The standard/rustic line is intentionally not treated as equivalent to select pine merely because nominal dimensions match.
+Select pine principally uses D-001 crosscut/miter/drill and, for applicable widths, bounded mill declarations. Narrow 1×2/1×3 and lower-grade lines have narrower declared processing. The standard/rustic line is not treated as equivalent to select pine merely because nominal dimensions match.
 
 ### 9.4 Poplar select — 12 offerings
-
-Material/form: select poplar surfaced board; D-001 reference family.
 
 | Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
 |---|---:|---:|
@@ -457,8 +404,6 @@ Material/form: select poplar surfaced board; D-001 reference family.
 
 ### 9.5 Red oak select — 9 offerings
 
-Material/form: select red-oak surfaced board; D-001 reference family.
-
 | Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
 |---|---:|---:|
 | `STB-ZERO-OAK-1X4-72-001` | 1×4×72 | 17.24 / 18.10 / 8 |
@@ -473,7 +418,7 @@ Material/form: select red-oak surfaced board; D-001 reference family.
 
 ### 9.6 Cherry select — 4 offerings
 
-Material/form: select cherry surfaced board. These values are derived fixture references in the active catalog rather than direct observed cherry price pegs; do not present them as live cherry prices.
+These values are derived fixture references rather than direct observed cherry price pegs; do not present them as live cherry prices.
 
 | Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
 |---|---:|---:|
@@ -484,19 +429,17 @@ Material/form: select cherry surfaced board. These values are derived fixture re
 
 ### 9.7 Sheet goods — 9 offerings
 
-Material/form: panel/sheet. S-001 reference family where the item declares routed-profile capability; `CROSSCUT`/`RIP` declarations alone do not imply the S-001 arched profile.
-
 | Store SKU | Declared sheet | L / S / O ($ / $ / ea) | Reference operation note |
 |---|---|---:|---|
 | `STB-ZERO-PLY-025-48X48-001` | 1/4 in plywood, 48×48 | 8.07 / 8.47 / 10 | crosscut/rip fixture path |
 | `STB-ZERO-PLY-025-48X96-001` | 1/4 in plywood, 48×96 | 13.91 / 14.61 / 14 | crosscut/rip/dado fixture path |
 | `STB-ZERO-PLY-038-48X48-001` | 3/8 in plywood, 48×48 | 10.56 / 11.09 / 10 | crosscut/rip fixture path |
-| `STB-ZERO-PLY-038-48X96-001` | 3/8 in fir ACX plywood, 48×96 | 18.21 / 19.12 / 14 | includes route-profile/tab reference operations |
-| `STB-ZERO-PLY-050-48X96-001` | 1/2 in 4-ply sheathing plywood, 48×96 | 25.29 / 26.55 / 18 | canonical S-001 arched study material; route-profile/tab reference operations |
-| `STB-ZERO-PLY-063-48X96-001` | 5/8 in fir BCX/sanded plywood, 48×96 | 47.89 / 50.28 / 12 | crosscut/rip/dado/groove/route/tab reference operations |
+| `STB-ZERO-PLY-038-48X96-001` | 3/8 in fir ACX plywood, 48×96 | 18.21 / 19.12 / 14 | route-profile/tab reference operations |
+| `STB-ZERO-PLY-050-48X96-001` | 1/2 in 4-ply sheathing plywood, 48×96 | 25.29 / 26.55 / 18 | canonical S-001 arched study material |
+| `STB-ZERO-PLY-063-48X96-001` | 5/8 in fir BCX/sanded plywood, 48×96 | 47.89 / 50.28 / 12 | crosscut/rip/dado/groove/route/tab |
 | `STB-ZERO-PLY-075-48X48-001` | 3/4 in plywood, 48×48 | 31.94 / 33.54 / 10 | crosscut/rip fixture path |
-| `STB-ZERO-PLY-075-48X96-001` | 3/4 in fir ACX/sanded plywood, 48×96 | 55.07 / 57.82 / 14 | includes route-profile/tab reference operations |
-| `STB-ZERO-OSB-075-48X96-001` | 3/4 in square-edge OSB, 48×96 | 27.10 / 28.46 / 20 | crosscut/rip only in active fixture |
+| `STB-ZERO-PLY-075-48X96-001` | 3/4 in fir ACX/sanded plywood, 48×96 | 55.07 / 57.82 / 14 | route-profile/tab reference operations |
+| `STB-ZERO-OSB-075-48X96-001` | 3/4 in square-edge OSB, 48×96 | 27.10 / 28.46 / 20 | crosscut/rip only |
 
 ### 9.8 Hardware — 8 offerings
 
@@ -515,8 +458,6 @@ Hardware is sourced Store material, not fabricated merely because it appears in 
 
 ### 9.9 Pressure-treated SYP — 6 offerings
 
-Material/form: pressure-treated southern yellow pine dimensional stock. Current fixture declarations are narrower than generic mill capability assumptions.
-
 | Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
 |---|---:|---:|
 | `STB-ZERO-PT-SYP-2X4-96-001` | 2×4×96 | 4.58 / 4.81 / 30 |
@@ -528,47 +469,31 @@ Material/form: pressure-treated southern yellow pine dimensional stock. Current 
 
 ### 9.10 Catalog evidence limits
 
-The compact canonical catalog above reproduces the active offering set, Store SKU, material/form description sufficient to distinguish the offering, dimensional variant, reference price, calculated Store Zero selling price, and fixture on-hand quantity. The machine-readable catalog remains controlling for its exact per-line `actualT`, `actualW`, assertion-basis, observation ID, operation list, supplier-path, source and limitation fields.
+The compact canonical catalog reproduces the active offering set, Store SKU, material/form description sufficient to distinguish the offering, dimensional variant, reference price, calculated Store Zero selling price, fixture on-hand quantity, and broad processing-family meaning.
 
-That implementation dependency is not a semantic escape hatch: this file contains enough data to understand the Store without hunting for the existence, price, stock quantity, material family, or broad processing family of any active offering.
+The machine-readable catalog remains controlling for exact per-line actual dimensions, assertion bases, observation IDs, supported-operation arrays, supplier paths, source fields and limitations. This is not a semantic escape hatch: this file contains enough data to understand the Store without hunting for the existence, price, stock quantity, material family, or broad processing family of any active offering.
 
 ---
 
 ## 10. Stock / availability fixture
 
-Stock is a time-bounded Store assertion, not a synonym for catalog existence.
-
-At the active fixture clock:
-
 ```text
 available = fixtureDeclaredOnHand - allocatedSimulated
 ```
 
-The active fixture uses `allocated=0` on the catalog lines represented above.
+The active fixture uses `allocated=0` on the represented catalog lines.
 
-Line stock meanings are:
+- `ON_HAND_SUFFICIENT` — fixture-available quantity >= requested quantity;
+- `ON_HAND_SHORT` — some fixture quantity exists, but less than requested;
+- `NOT_ON_HAND` — no fixture quantity is available for the line.
 
-- `ON_HAND_SUFFICIENT` — fixture-available quantity is greater than or equal to the requested quantity;
-- `ON_HAND_SHORT` — some fixture quantity is available, but less than the requested quantity;
-- `NOT_ON_HAND` — no fixture quantity is available for the requested line.
+These do not prove a physical count, reservation, piece-by-piece quality, commercial commitment, machine readiness, or project authorization.
 
-These do **not** prove:
-
-- a physical count at a real yard;
-- reservation;
-- fitness of each individual piece;
-- lot/grade confirmation beyond the fixture declaration;
-- commercial commitment;
-- machine readiness;
-- project authorization.
-
-A synthetic supplier or special-order path may be returned as useful context. It does not convert `ON_HAND_SHORT` or `NOT_ON_HAND` into `SUPPORTABLE` in the Stage-2 job evaluator.
+A synthetic supplier/special-order path does not convert `ON_HAND_SHORT` or `NOT_ON_HAND` into `SUPPORTABLE` in the Stage-2 evaluator.
 
 ---
 
 ## 11. Economics
-
-Store Zero economics are deliberately deterministic and deliberately non-commercial.
 
 ### 11.1 Price rule
 
@@ -576,25 +501,23 @@ Store Zero economics are deliberately deterministic and deliberately non-commerc
 sellingPrice = ROUND(list_reference × 1.05, 2)
 ```
 
-The 5% value is the declared fixture rule `SZ-MARK-ON-5`. It is a mark-on, not a statement of real dealer margin.
+The declared fixture rule is `SZ-MARK-ON-5`. It is a mark-on, not a real dealer margin claim.
 
 ### 11.2 D-001 modeled recovery
 
-The reference pricing engine declares:
+The reference engine declares:
 
-- setup charge: `$35.00`;
-- modeled machine-hour recovery: `$100.00/hour`;
-- job setup time: `8.0 min`;
-- load/seat allowance: `0.6 min` per modeled stick cycle;
-- release/label allowance: `0.4 min` per modeled stick cycle;
-- cycle model: `STB-D001-CYCLE-MODEL-S2-0.1`;
-- basis: `CALCULATED`;
-- measured: `false`;
-- commissioned: `false`.
+- setup charge `$35.00`;
+- modeled machine-hour recovery `$100.00/hour`;
+- job setup `8.0 min`;
+- load/seat allowance `0.6 min` per modeled stick cycle;
+- release/label allowance `0.4 min` per modeled stick cycle;
+- cycle model `STB-D001-CYCLE-MODEL-S2-0.1`;
+- basis `CALCULATED`;
+- measured `false`;
+- commissioned `false`.
 
-The engine also contains explicit saw/drill/mill timing assumptions tied to the Stage-2 envelope. Those assumptions are model parameters, not measured production behavior.
-
-For an admitted dimensional job:
+The engine also contains explicit saw/drill/mill timing assumptions tied to the Stage-2 envelope. They are model parameters, not measured production behavior.
 
 ```text
 material = Σ fixture selling-price extensions
@@ -606,9 +529,7 @@ Q = material + cell_recovery + hardware
 
 ### 11.3 S-001 economics
 
-For the current S-001 Mode-2 and arched-aperture reference paths, material price may be returned as `BUDGETARY_MATERIAL_ONLY`. Process time and fabrication Q remain unresolved. The Store must not invent a process price merely because the material line can be priced.
-
-### 11.4 Economics non-claims
+The current S-001 Mode-2 and arched-aperture reference paths may return `BUDGETARY_MATERIAL_ONLY`. Process time and fabrication Q remain unresolved. The Store must not invent a process price because the material line can be priced.
 
 Fixture prices are not live prices. Modeled cycle time is not measured machine time. A budgetary estimate is not seller-of-record commitment. A price does not authorize production.
 
@@ -618,69 +539,443 @@ Fixture prices are not live prices. Modeled cycle time is not measured machine t
 
 The Stage-2 aggregate Store job dispositions are:
 
-- `SUPPORTABLE`;
-- `UNRESOLVED`;
-- `REFUSED`;
-- `UNAVAILABLE`.
+- `SUPPORTABLE` — every consequential evaluated line has a recognized offering, resolvable price, declared capability for the request, and sufficient fixture-declared on-hand stock;
+- `UNRESOLVED` — a required Store answer cannot be established from declared state, including missing/unresolved identity or evaluator-defined unresolved geometry/definition;
+- `REFUSED` — the request exceeds the declared offering/capability/envelope rule;
+- `UNAVAILABLE` — the offering exists and may otherwise be processable, but fixture-declared available stock is short or zero.
 
-Current Stage-2 meaning:
+`SUPPORTABLE` does not mean authorized, machine-ready, commissioned, paid, reserved, or fabricated.
 
-### `SUPPORTABLE`
+Every consequential Store-relevant demand line must receive a disposition. No omitted line may be interpreted as supported, priced, available, fulfilled, or authorized.
 
-Every consequential evaluated line has a recognized offering, resolvable reference price, declared capability for the requested operation within the evaluated reference envelope, and sufficient fixture-declared on-hand stock.
-
-`SUPPORTABLE` means the Store reference can support the declared request. It does not mean authorized, machine-ready, physically commissioned, paid, reserved, or fabricated.
-
-### `UNRESOLVED`
-
-A required Store answer cannot be established from the declared state—for example, missing/unresolved SKU, missing price, or an admitted evaluator path that explicitly returns unresolved geometry/definition status.
-
-### `REFUSED`
-
-The request exceeds the declared Store offering or capability rule—for example, no offering, unsupported operation, unsupported geometry/envelope, or explicit capability refusal.
-
-### `UNAVAILABLE`
-
-The offered line exists and may otherwise be processable, but fixture-declared available stock is short or zero for the requested quantity.
-
-### Coverage rule
-
-Every consequential Store-relevant demand line must receive a disposition. No omitted line may be interpreted as implicitly supported, priced, available, fulfilled, or authorized.
-
-Protocol/implementation failure is not silently converted into a Store business disposition. If the evaluator itself cannot complete correctly, that failure must remain distinguishable from `UNRESOLVED`, `REFUSED`, or `UNAVAILABLE` as Store meanings.
+Protocol/implementation failure must remain distinguishable from a Store business disposition.
 
 ---
 
-## 13. Machine capability — canonical boundary summary
+## 13. D-001 — dimensional machine
 
-Detailed D-001/S-001 declaration, sensing/reference, evidence, and acceptance content belongs in this same canonical file and follows the same boundary:
+### 13.1 Evidence layers must stay separate
 
-- Store owns a bounded capability declaration sufficient to answer the Store question;
-- machine/cell engineering owns installed iron, exact travel, station geometry, control, sensing, interlocks, and measured behavior;
-- reference/model capability is not commissioned capability;
-- patent correspondence is not commissioning or safety evidence;
-- no application or Store path emits live-motion commands or remote Cycle Start.
+D-001 currently exists in several evidence layers that must not be collapsed:
 
-The active pinned reference families are `D001-STAGE2-ENVELOPE-0.2`, `D001_FEATURED_BOARD_V0`, `SHEET_MODE2_STENCIL_V1`, and `SHEET_MODE2_ARCHED_APERTURE_V0`. Their deeper consolidated definitions are added without changing those ownership boundaries.
+1. **Patent correspondence** — issued dimensional-machine disclosure includes support/frame, table/support plane, fence, clamping, servo-controlled manipulating roller(s), longitudinal stock movement, sawing, and additional tooling-way functions.
+2. **Stage-2 Store reference** — `D001-STAGE2-ENVELOPE-0.2` supplies deterministic fixture numbers for Store evaluation and economics.
+3. **Published five-tool reference** — `D001_FEATURED_BOARD_V0` preserves a bounded two-saw/five-tool candidate and refuses unadmitted functions.
+4. **Present machine-build research** — the actual physical comparison case remains manual radial-arm-saw work; the first physical experiment is a much smaller digital cut-to-length bridge.
+5. **Present bounded implementation hypothesis for later capability research** — two manipulating rollers, two end saws, two 3/16-in pilot/spot functions, three bounded router/mill functions, local sensing/reference validation, local lowering, and local Cycle Start. This is research intent, not commissioned fact.
+
+The fact that the patent discloses a broader exemplary machine, the Stage-2 fixture models one envelope, and the five-tool reference lists a bounded tool set does not make any of those descriptions installed hardware.
+
+### 13.2 D-001 research purpose
+
+D-001 tests whether useful digital processing can be packed into approximately the footprint and material-handling pattern of familiar lumberyard saw/infeed/outfeed equipment without turning the site into a general CNC factory.
+
+The useful measure is capability per unit of footprint, handling, rereferencing, operator burden, maintenance and cost.
+
+A fixed or bounded tool may be valuable because it eliminates another machine, another material transfer, another setup, another manual layout, another reference establishment, or another operator interpretation.
+
+### 13.3 Present bounded physical hypothesis
+
+The present bounded research concept includes:
+
+- fixed support/table reference;
+- fixed fence/reference;
+- longitudinal workpiece motion;
+- **two servo-controlled manipulating rollers** in the present bounded implementation hypothesis;
+- two end saw stations;
+- five additional bounded tool functions:
+  - two fixed 3/16-in pilot/spotting drill functions;
+  - two router/mill functions with the richer bounded positioning needed for useful top/side work;
+  - one simpler bounded router/mill function intended for a narrow cleanup/end/side/taper operation where justified;
+- local sensing/reference validation;
+- machine-local lowering;
+- local operator Ready/Cycle Start.
+
+This hypothesis does **not** add an automatic tool changer, universal gantry, arbitrary general CNC, broad 5-axis function, invented travel, invented motor sizing, invented tool models, or invented safety category.
+
+### 13.4 Reconciliation with the published five-tool reference
+
+The published `D001_FEATURED_BOARD_V0` reference names five operator-configured machining tools in addition to the two saws:
+
+- T1 center horizontal router — edge/notch family retained demand; detailed envelope unresolved;
+- T2 transverse router from below — full-width dado/transverse-groove family inside inherited Stage-2 limits;
+- T3 end router — routed-end family retained demand; detailed envelope unresolved;
+- T4 vertical pilot drill — fixed 3/16-in face pilot;
+- T5 horizontal pilot drill — fixed 3/16-in edge pilot.
+
+The present consolidation does not silently rename that published reference. It records the current research interpretation that the three router-class functions should be evaluated as **two richer bounded positioning functions plus one simpler cleanup/taper-oriented function**. Exact mechanical assignment and final tool arrangement remain unresolved engineering. Until adopted in an owning capability source, that interpretation is a research hypothesis, not a wider Store evaluator.
+
+### 13.5 Why the simpler third router/tool function exists
+
+It is not justified merely as a speed optimization.
+
+The research question is whether one narrow additional function can eliminate a material transfer, flip, manual layout or rereferencing event for a bounded feature such as end/side cleanup or controlled taper while remaining inside the compact processing footprint.
+
+That is a topology/reference-preservation question as much as a cycle-time question. It must be evaluated by evidence, not assumed useful because a tool can be mounted.
+
+### 13.6 Manipulating-roller reconciliation
+
+The patent exemplary dimensional-machine description includes three commonly controlled manipulating rollers. The Stage-2 fixture and current bounded research hypothesis use two named manipulating rollers. The present machine-build program has not yet selected final roller count for a physical machine.
+
+Therefore:
+
+- patent three-roller disclosure = patent correspondence;
+- Stage-2 two-roller model = reference implementation choice;
+- present two-roller hypothesis = bounded research starting point;
+- a third roller = capability-increment candidate, not current Store capability;
+- physical roller count, pressure, sensing and slip behavior remain engineering/commissioning questions.
+
+### 13.7 Stage-2 reference geometry and limits
+
+The following are **reference fixture values**, useful for deterministic Store tests and economics. They are not measured or commissioned physical-machine values:
+
+- fixed fence/table coordinate concept: X along fence, Y=0 at fence, Z=0 at support plane;
+- named Stage-2 stations include two saws, two manipulating rollers and bounded mill stations;
+- reference base length: 72 in;
+- reference maximum parent length without external support: 96 in;
+- reference maximum stock width: 12 in;
+- reference loaded X feed maximum: 480 in/min;
+- reference mill cutting feed: 48 in/min;
+- reference longitudinal-profile maximum: 60 in;
+- reference mill depth per pass: 0.375 in;
+- reference longitudinal mill cut width maximum: 1.0 in;
+- reference end-mill reach: 8 in;
+- reference end-mill depth maximum: 0.5 in.
+
+These numbers stay attached to the Stage-2 pin. They do not become a promise about the first physical bridge or a future commissioned D-001.
+
+### 13.8 D-001 operation families
+
+Current source families recognize or preserve demand for:
+
+- square crosscut;
+- bounded single-plane miter;
+- 3/16-in pilot/spotting;
+- dado;
+- groove;
+- rabbet;
+- bounded longitudinal profile;
+- bounded end profile;
+- bounded taper/cleanup where later supported;
+- label/identity;
+- explicitly represented secondary completion.
+
+Do not widen those names into arbitrary machining. A nominal operation name still has to fit the active material, feature and envelope declaration.
+
+The published five-tool reference explicitly refuses a pilot diameter other than 0.1875 in unless another admitted path exists. Miter numeric range remains unresolved where not explicitly published.
 
 ---
 
-## 14. Fulfillment and completion — canonical boundary summary
+## 14. D-001 reference and sensing model
 
-A machine result is not automatically a completed customer project. Where a bounded primary machine contribution leaves a declared residual operation, the residual must be explicit and independently resolved.
+Three questions must remain separate:
 
-Current admitted secondary-operation classes are intentionally narrow:
+```text
+1. MACHINE / AXIS POSITION CONFIRMED
+2. MACHINE REFERENCE ESTABLISHED
+3. WORKPIECE REFERENCE ESTABLISHED AND RETAINED
+```
 
-- D-001: `FINAL_DRILL_TO_DIAMETER` only where a declared pilot contribution and larger finished-hole requirement are explicitly represented;
-- S-001: `REMOVE_RETAINED_TABS` for the admitted Mode-2 retained-tab path.
+A servo encoder can show that an axis or manipulating roller moved. It does not, by itself, prove that the wood moved identically.
 
-A Store result other than `SUPPORTABLE` does not become supportable merely because a person could perform additional work later.
+> Motor position is not wood position.
 
-Labels, staging, pickup/delivery readiness, closeout record, and custody transfer remain distinct Store/completion states. Payment/live-commerce capability is not created by this file.
+The research problem includes whether ordinary, economical sensing and workholding can establish and retain the actual workpiece relationship required by the active operation.
+
+### `POSITION_VALID`
+
+`POSITION_VALID` is a **machine-local workpiece-reference validity condition**.
+
+It is not:
+
+- authorization;
+- full readiness;
+- safety approval;
+- Store supportability;
+- proof of finished-part conformance.
+
+For Job 001’s dimensional operating narrative, length-dependent work uses the Store rule that the first cleanup cut establishes the longitudinal origin. Patent centering/jog remains patent correspondence, not a replacement Store rule.
+
+Applicable invalidation classes include:
+
+- loss of required fence/table/plate/contact relationship;
+- workholding release;
+- observed or estimated slip outside the admitted condition;
+- axis/tool fault;
+- incomplete cycle;
+- abort;
+- E-stop;
+- mode change;
+- operator declaration that stock moved or is no longer the seated workpiece.
+
+Exact sensing architecture remains unresolved. This document does not choose an encoder arrangement, optical sensor, pressure threshold, probe, fieldbus, or slip-detection algorithm simply to complete a diagram.
+
+### Machine-local control firewall
+
+Keep separate:
+
+- local manual/jog;
+- local automatic execution;
+- network communication.
+
+Network may deliver a validated/lowered job identity and receive status. It is not the real-time motion loop and it does not own stopping. No remote Cycle Start is created here.
 
 ---
 
-## 15. Determinism and provenance
+## 15. D-001 acceptance / physical evidence surface
+
+A modeled/reference capability cannot be promoted by assertion. A physical program should be able to record, where applicable:
+
+- commanded cut length and measured cut length;
+- commanded pilot-hole position and measured position;
+- workpiece-reference repeatability;
+- commanded manipulating-roller displacement versus actual board displacement;
+- bidirectional return behavior;
+- commanded versus measured miter;
+- commanded routed profile versus measured deviation;
+- setup time;
+- operator touches;
+- cycle time;
+- reference-loss events;
+- recovery time;
+- scrap/rework;
+- calibration frequency;
+- maintenance burden.
+
+No acceptance tolerance is invented here. If an owning current source does not state the tolerance, the tolerance is **unresolved**.
+
+The first physical dimensional research experiment is intentionally narrower than full D-001. It asks whether one digital finished-length requirement can become one measured cut-to-length result without the operator recreating the cut location with tape/pencil at the saw.
+
+---
+
+## 16. S-001 — sheet machine
+
+### 16.1 Evidence status
+
+The current S-001 paths are reference/model capability declarations. They are not a commissioned physical sheet machine.
+
+Current identifiers:
+
+- base Mode-2 capability: `SHEET_MODE2_STENCIL_V1`;
+- base envelope: `S001-MODE2-STENCIL-V1`;
+- arched-aperture child: `SHEET_MODE2_ARCHED_APERTURE_V0`;
+- arched envelope: `S001-MODE2-ARCHED-APERTURE-V0`;
+- evidence class: `REFERENCE`;
+- physical status: `NOT_CLAIMED`;
+- measured: `false`;
+- commissioned: `false`.
+
+### 16.2 Mode-2 relationship
+
+The reference Mode-2 concept preserves:
+
+- sheet material supplies one controlled material-motion axis;
+- the tooling platform supplies the other working axis;
+- the router has bounded depth engagement;
+- coordinated sheet/tool motion permits bounded 2-D profile work;
+- selected tabs/attach points retain material during primary routing;
+- secondary separation may remain separate;
+- this is not generic full-sheet CNC.
+
+Current machine-neutral operation family:
+
+```text
+LOAD
+SEAT / REGISTER
+ROUTE_PROFILE
+RETAIN_TABS
+RELEASE
+SECONDARY_SEPARATION
+LABEL
+```
+
+No G-code, controller dialect, or remote Cycle Start belongs in the Store answer.
+
+### 16.3 Parent sheet and working field
+
+The canonical arched study uses:
+
+- parent sheet: 48 × 96 in;
+- first study SKU: `STB-ZERO-PLY-050-48X96-001`;
+- reference material: nominal 1/2-in plywood fixture;
+- centered software/reference work field: 48 × 36 in;
+- reserved reference regions in the published proof: 24 in at each long end and 6 in at top/bottom around the centered field.
+
+The centered 48 × 36 reference field must **not** be silently reinterpreted as commissioned whole-sheet edge-machining capability. The current physical engineering plan explicitly says the eventual physical usable field may be smaller after support, workholding, travel, tooling, guarding and control geometry are known.
+
+### 16.4 Canonical arched-aperture proof geometry
+
+The published reference proof includes:
+
+- opening width: 36 in;
+- straight-side height: 24 in;
+- arch rise: 12 in;
+- derived circular-segment radius: 19.5 in;
+- total opening height: 36 in;
+- retained tabs/attach points;
+- downstream secondary separation.
+
+This is a bounded reference geometry, not a generic free-form contour promise.
+
+### 16.5 S-001 admitted/refused meanings
+
+The base Mode-2 evaluator admits declared straight-rectangular or reconstructable curvilinear profile paths inside the reference envelope. A generic “curvilinear” request without sufficient reconstructable geometry may be `UNRESOLVED` rather than guessed.
+
+The path refuses or stops on conditions such as unsupported material/form/thickness, unsupported profile/depth, geometry outside the admitted field, unestablished reference/workholding, unadmitted operation, or controller/live-motion material inserted where machine-neutral geometry belongs.
+
+The current S-001 completion path does **not** admit sheet drilling in this round.
+
+### 16.6 S-001 physical research questions
+
+Physical engineering still must resolve, among other things:
+
+- fixed-sheet/moving-tool versus one-axis sheet + one-axis tool motion split;
+- exact support/backing geometry;
+- workholding/yoke/carrier arrangement;
+- bottom/reference support;
+- spindle/router/cutter;
+- usable travel after guards/tool/workholding clearances;
+- sacrificial backing for through work;
+- reference sensing and invalidation events;
+- controller/drives/I/O;
+- guards, interlocks, E-stop, restart and isolation;
+- dust/chip control;
+- measured geometric acceptance criteria;
+- tab width/count/placement validated against actual material.
+
+Unknown physical values stay unknown.
+
+### 16.7 S-001 evidence target
+
+A later physical experiment should preserve, at minimum, the project revision, actual material, machine/envelope version, reference/workholding establishment, local operator/local Cycle Start, completed profile without silent geometry change, measured opening geometry, observed tab condition, defects/deviations, actual secondary separation, label/identity, and outcome record.
+
+Patent or reference correspondence never substitutes for that evidence.
+
+---
+
+## 17. Secondary operations and completion
+
+> bounded machine contribution may be useful even when it does not complete every operation.
+
+That principle does not permit an unsupported job to become supportable by after-the-fact wording.
+
+### Current admitted residual classes
+
+- D-001: `FINAL_DRILL_TO_DIAMETER` — only when the primary contribution is an explicitly admitted pilot and the larger finished requirement/residual is explicitly represented;
+- S-001: `REMOVE_RETAINED_TABS` — for the admitted Mode-2 retained-tab path.
+
+Example:
+
+```text
+FINISHED REQUIREMENT
+3/8 in hole
+
+PRIMARY MACHINE CONTRIBUTION
+3/16 in pilot
+
+RESIDUAL OPERATION
+final drill to 3/8 in
+```
+
+The record must not say `hole complete` after the pilot.
+
+S-001 drilling is not admitted in the current completion round. Sanding, countersink, edge treatment, finishing, assembly and other services are not implied merely because a completion layer exists.
+
+A secondary operation appears only when the actual declared project/result produces a real residual operation.
+
+### Store firewall
+
+A Store result other than `SUPPORTABLE` does not become supportable because a secondary operation is conceivable.
+
+Permitted: Store evaluates the admitted 3/16-in pilot contribution and a separate completion plan carries final drilling.
+
+Not permitted: Store refuses a 3/8-in drill request and the application silently relabels the refused job `SUPPORTABLE` because a person could drill it later.
+
+---
+
+## 18. Resolution authority
+
+Determinism does not remove human authority.
+
+### Customer
+
+May choose or decline an offered completion option. Does not change Store disposition, widen a machine envelope, waive a refusal, create yard capability, or authorize motion.
+
+### Cell steward / delegated Store authority
+
+May, within an already declared Store process, accept/reject a completion plan, accept/reject a declared yard secondary service, confirm secondary completion, record inspection, confirm identity labeling, stage, mark pickup-ready/delivery-arranged, prepare closeout record, record custody transfer, and close the Store-side project state.
+
+This role does not override the governed layer, widen machine capability, bypass safety, or invent controller programs.
+
+### Operator
+
+May **STOP WORK** and **REPORT CONDITION**. An operator may physically perform prescribed work under an already accepted/released local process, but does not thereby gain authority to rewrite the job, change price, waive a gate, widen capability, promote inspection/staging/fulfillment state, or create production authorization.
+
+> **An operator may stop or report. An operator may not promote state.**
+
+### Machine-local authority
+
+The commissioned machine/cell owns local readiness, active mode, local references, interlocks, stopping, local Cycle Start, and cycle outcome under the governing physical/safety system.
+
+### Non-overridable boundaries
+
+No Store/customer/steward/operator action may convert:
+
+- missing production authority into production authority;
+- false `POSITION_VALID` into true by administrative preference;
+- a failed safety/interlock condition into permission to move;
+- an uncommissioned function into commissioned capability;
+- an unresolved material identity into a known material;
+- a Store refusal into supportability without a new valid basis.
+
+---
+
+## 19. Fulfillment
+
+Current modeled completion/fulfillment relationships may include:
+
+- material only;
+- Store-processed material;
+- admitted secondary work or an accepted assignment of residual work;
+- identity labels;
+- staging;
+- pickup ready;
+- delivery arranged;
+- closeout packet/record;
+- custody transfer;
+- owner/outcome record linkage.
+
+A completed machine cycle is not automatically a completed customer handoff.
+
+The completion path distinguishes:
+
+```text
+PRIMARY MACHINE OUTCOME
+        ↓
+SELECTIVE SECONDARY OPERATIONS / ASSIGNMENTS
+        ↓
+INSPECTION / COMPLETION CHECK
+        ↓
+MANDATORY IDENTIFICATION / LABEL
+        ↓
+STAGED
+        ↓
+PICKUP_READY or DELIVERY_ARRANGED
+        ↓
+CLOSEOUT_RECORD_PREPARED
+        ↓
+CUSTODY TRANSFER
+        ↓
+CLOSED
+```
+
+Labels bind atoms back to the durable project record. A label is not proof that the part is conforming. Pickup/delivery are fulfillment states, not machine states.
+
+No live payment, seller-of-record, carrier integration, reservation or commercial order authority is invented by this file.
+
+---
+
+## 20. Determinism and provenance
 
 A Store Zero answer should retain, as applicable:
 
@@ -694,30 +989,22 @@ A Store Zero answer should retain, as applicable:
 - exact source commit and path-specific dependency pin;
 - response digest where the implementation produces one.
 
-The record should make it possible to answer both directions:
-
 ```text
-What facts produced this Store answer?
-What later result depended on this Store answer?
+same request
++ same declared Store state
++ same implementation
+= same answer
 ```
 
-A Store Zero response is reproducible only within its declared state. Changing stock, price, capability, implementation, material identity, or request revision can legitimately change the answer. That change must be visible rather than silently overwritten.
+Changing stock, price, capability, implementation, material identity, or request revision may legitimately change the answer. The record must identify the changed basis rather than silently overwriting the earlier answer.
 
 ---
 
-## 16. Promotion rule
+## 21. Change and promotion rule
 
-A capability does not become Store Zero capability merely because:
+A proposed capability does not become Store Zero capability merely because it was discussed, appears in a patent figure, appears in Atlas research, rendered in HTML, simulated successfully, or is theoretically supported by a controller.
 
-- it was discussed;
-- it appears in a patent figure;
-- it appears in Atlas research;
-- an HTML visualization rendered;
-- a simulation succeeded;
-- a controller theoretically supports it;
-- a model produced a favorable cycle time.
-
-The evidence ladder used by the current Store/machine work is directional:
+Directional evidence ladder:
 
 ```text
 DECLARED / REFERENCE
@@ -731,14 +1018,60 @@ MEASURED
 COMMISSIONED
 ```
 
-Exact owning-source vocabulary controls where already defined. This ladder is not a new runtime state machine.
+Use the owning source’s vocabulary where already defined. This is not a new runtime state machine.
 
-A Store-visible promotion requires a deliberate, versioned Store declaration with the appropriate evidence basis. Physical commissioning and safety require their own competent engineering evidence.
+A Store-visible capability change requires deliberate versioned Store promotion with appropriate evidence. Physical commissioning, production authorization and safety each require their own independent basis.
 
 ---
 
-## 17. Safety invariant
+## 22. Current machine unresolved register
+
+### D-001 engineering / commissioning
+
+- exact physical travel/geometry;
+- actual first physical roller count and mechanism;
+- workpiece slip/reference-retention sensing;
+- third manipulating roller need;
+- exact miter range;
+- exact pilot/drill envelope beyond the fixed 3/16-in reference functions;
+- unsupported overhang/support geometry;
+- final router/tool arrangement and which router carries the simpler cleanup/taper role;
+- exact controller;
+- exact drives;
+- fieldbus/I/O;
+- guarding/safety engineering;
+- dust/extraction;
+- measured cycle times;
+- measured tolerances/repeatability;
+- calibration and maintenance burden;
+- production eligibility.
+
+### S-001 engineering / commissioning
+
+- first physical frame/support architecture;
+- final motion split between sheet and tooling;
+- physical workholding/reference chain;
+- physical Mode-2 registration;
+- spindle/router/cutter;
+- sacrificial backing;
+- physical usable work field;
+- depth control/reference;
+- controller/drives/I/O;
+- sensing/reference invalidation;
+- guards/interlocks/E-stop/restart/isolation;
+- dust/chip management;
+- tab policy proven against real material;
+- geometric acceptance tolerance and inspection method;
+- commissioning authority/reviewer;
+- measured cycle time;
+- production eligibility.
+
+Unresolved does not mean forgotten. It means the Store file refuses to invent the answer.
+
+---
+
+## 23. Safety invariant
 
 **NO BLOOD ON WOOD.**
 
-Nothing in Store supportability, budgetary economics, patent correspondence, a WorkPacket, simulation, machine-neutral operations, or this canonical file establishes safe physical operation or production readiness.
+Nothing in Store supportability, budgetary economics, patent correspondence, a WorkPacket, simulation, machine-neutral operations, a modeled envelope, or this canonical file establishes safe physical operation or production readiness.
