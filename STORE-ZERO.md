@@ -389,18 +389,18 @@ Select pine principally uses D-001 crosscut/miter/drill and, for applicable widt
 
 | Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
 |---|---:|---:|
-| `STB-ZERO-POPLAR-1X4-72-001` | 1×4×72 | 13.49 / 14.16 / 12 |
-| `STB-ZERO-POPLAR-1X4-96-001` | 1×4×96 | 17.99 / 18.89 / 16 |
-| `STB-ZERO-POPLAR-1X4-120-001` | 1×4×120 | 22.49 / 23.61 / 12 |
-| `STB-ZERO-POPLAR-1X4-144-001` | 1×4×144 | 26.98 / 28.33 / 12 |
-| `STB-ZERO-POPLAR-1X6-72-001` | 1×6×72 | 22.99 / 24.14 / 18 |
-| `STB-ZERO-POPLAR-1X6-96-001` | 1×6×96 | 30.65 / 32.18 / 12 |
-| `STB-ZERO-POPLAR-1X6-120-001` | 1×6×120 | 38.32 / 40.24 / 12 |
-| `STB-ZERO-POPLAR-1X6-144-001` | 1×6×144 | 45.98 / 48.28 / 12 |
-| `STB-ZERO-POPLAR-1X8-72-001` | 1×8×72 | 28.02 / 29.42 / 12 |
-| `STB-ZERO-POPLAR-1X8-96-001` | 1×8×96 | 37.36 / 39.23 / 12 |
-| `STB-ZERO-POPLAR-1X8-120-001` | 1×8×120 | 46.70 / 49.04 / 8 |
-| `STB-ZERO-POPLAR-1X8-144-001` | 1×8×144 | 56.04 / 58.84 / 12 |
+| `STB-ZERO-POP-1X4-72-001` | 1×4×72 | 13.49 / 14.16 / 12 |
+| `STB-ZERO-POP-1X4-96-001` | 1×4×96 | 17.99 / 18.89 / 16 |
+| `STB-ZERO-POP-1X4-120-001` | 1×4×120 | 22.49 / 23.61 / 12 |
+| `STB-ZERO-POP-1X4-144-001` | 1×4×144 | 26.98 / 28.33 / 12 |
+| `STB-ZERO-POP-1X6-72-001` | 1×6×72 | 22.99 / 24.14 / 18 |
+| `STB-ZERO-POP-1X6-96-001` | 1×6×96 | 30.65 / 32.18 / 12 |
+| `STB-ZERO-POP-1X6-120-001` | 1×6×120 | 38.32 / 40.24 / 12 |
+| `STB-ZERO-POP-1X6-144-001` | 1×6×144 | 45.98 / 48.28 / 12 |
+| `STB-ZERO-POP-1X8-72-001` | 1×8×72 | 28.02 / 29.42 / 12 |
+| `STB-ZERO-POP-1X8-96-001` | 1×8×96 | 37.36 / 39.23 / 12 |
+| `STB-ZERO-POP-1X8-120-001` | 1×8×120 | 46.70 / 49.04 / 8 |
+| `STB-ZERO-POP-1X8-144-001` | 1×8×144 | 56.04 / 58.84 / 12 |
 
 ### 9.5 Red oak select — 9 offerings
 
@@ -422,10 +422,10 @@ These values are derived fixture references rather than direct observed cherry p
 
 | Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
 |---|---:|---:|
-| `STB-ZERO-CHERRY-1X4-72-001` | 1×4×72 | 27.59 / 28.97 / 6 |
-| `STB-ZERO-CHERRY-1X4-96-001` | 1×4×96 | 36.78 / 38.62 / 6 |
-| `STB-ZERO-CHERRY-1X6-72-001` | 1×6×72 | 39.98 / 41.98 / 6 |
-| `STB-ZERO-CHERRY-1X6-96-001` | 1×6×96 | 53.31 / 55.98 / 6 |
+| `STB-ZERO-CHR-1X4-72-001` | 1×4×72 | 27.59 / 28.97 / 6 |
+| `STB-ZERO-CHR-1X4-96-001` | 1×4×96 | 36.78 / 38.62 / 6 |
+| `STB-ZERO-CHR-1X6-72-001` | 1×6×72 | 39.98 / 41.98 / 6 |
+| `STB-ZERO-CHR-1X6-96-001` | 1×6×96 | 53.31 / 55.98 / 6 |
 
 ### 9.7 Sheet goods — 9 offerings
 
@@ -460,12 +460,12 @@ Hardware is sourced Store material, not fabricated merely because it appears in 
 
 | Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
 |---|---:|---:|
-| `STB-ZERO-PT-SYP-2X4-96-001` | 2×4×96 | 4.58 / 4.81 / 30 |
-| `STB-ZERO-PT-SYP-2X4-120-001` | 2×4×120 | 5.72 / 6.01 / 18 |
-| `STB-ZERO-PT-SYP-2X4-144-001` | 2×4×144 | 6.87 / 7.21 / 12 |
-| `STB-ZERO-PT-SYP-4X4-96-001` | 4×4×96 | 9.49 / 9.96 / 10 |
-| `STB-ZERO-PT-SYP-4X4-120-001` | 4×4×120 | 11.86 / 12.45 / 10 |
-| `STB-ZERO-PT-SYP-4X4-144-001` | 4×4×144 | 14.23 / 14.94 / 10 |
+| `STB-ZERO-PT-2X4-96-001` | 2×4×96 | 4.58 / 4.81 / 30 |
+| `STB-ZERO-PT-2X4-120-001` | 2×4×120 | 5.72 / 6.01 / 18 |
+| `STB-ZERO-PT-2X4-144-001` | 2×4×144 | 6.87 / 7.21 / 12 |
+| `STB-ZERO-PT-4X4-96-001` | 4×4×96 | 9.49 / 9.96 / 10 |
+| `STB-ZERO-PT-4X4-120-001` | 4×4×120 | 11.86 / 12.45 / 10 |
+| `STB-ZERO-PT-4X4-144-001` | 4×4×144 | 14.23 / 14.94 / 10 |
 
 ### 9.10 Catalog evidence limits
 
@@ -1386,8 +1386,8 @@ The canonical file is the semantic front door. Executable assets remain where th
 
 ### 29.1 Store current documentary baseline
 
-| Canonical subject | Implementation/source asset | Repository | Exact pin | Role / status |
-|---|---|---|---|---|
+| Canonical subject | Implementation/source asset | Identity / pin | Role / status |
+|---|---|---|---|
 | Store canonical definition | `STORE-ZERO.md` | `GeorgePlattDemo/scan-to-build-store` | branch `build/store-zero-canonical-0.1` | canonical semantic master created by this consolidation |
 | translation baseline | `DEFINITIONS.md` | Store | `3620b35369d70cf49733bbb0b62c0f3d9969b738` | current documentary definitions |
 | source/implementation navigation | `STORE-ASSET-TO-IMPLEMENTATION-MAP.md` | Store | same current Store pin | documentary source map |
