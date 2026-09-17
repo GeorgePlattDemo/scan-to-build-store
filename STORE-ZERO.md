@@ -1,1390 +1,744 @@
-# Store Zero
+# STORE ZERO — Canonical Reference Store
 
-## Reference Lumberyard and Store Membrane
-
-Store Zero is the fictional lumber and building-materials dealer used to develop, test, and audit the Scan-to-Build Store.
-
-It is intentionally ordinary.
-
-Store Zero already sells material, receives trucks, maintains stock, buys from suppliers, serves homeowners and contractors, prepares orders, stages pickups, delivers to jobsites, handles special orders, and performs limited material-processing services.
-
-Scan-to-Build does not replace those functions.
-
-It adds a bounded path by which an incomplete but governed project requirement can ask those existing systems and people useful questions before the requirement has already been reduced to a conventional SKU, takeoff, quote, or order.
-
-The principal architectural boundary is the **Store membrane**.
-
-> **The Store membrane allows outside demand to call selected Store capabilities without giving the outside world possession of the Store.**
-
-Publicly callable does not mean publicly visible.
-
-Connected does not mean surrendered.
+**Canonical document:** `STORE-ZERO.md`  
+**Canonical consolidation:** `STORE-ZERO-CANONICAL-0.1`  
+**Status:** REFERENCE / research fixture; not a live dealer, commercial promise, physical inventory record, production release, or commissioned machine declaration  
+**Consolidation date:** 2026-09-17  
+**Safety invariant:** **NO BLOOD ON WOOD**
 
 ---
 
-# 1. Status of Store Zero
+## 0. Document identity and source state
 
-Store Zero is a controlled reference fixture.
+This file is the human-readable and AI-readable semantic master for Store Zero. It consolidates the present Store definition, reference data, machine-capability declarations, economics, authority boundaries, research questions, patent lineage, worked paths, evidence status, and implementation references in one place.
 
-Its physical assets, software systems, stock, supplier relationships, employees, commercial practices, machine capabilities, and limitations are fictional declarations created to make the Scan-to-Build Store concrete and testable.
+The executable or machine-readable assets named here remain implementation assets. This file does not delete or supersede code, JSON fixtures, schemas, evaluators, tests, machine engineering documents, or issued patent sources.
 
-They shall be treated as Store Zero facts, not lumberyard-industry facts.
+### Repository state used for this consolidation
 
-A different lumberyard may:
+| Subject | Repository / source | Exact identity | Role here |
+|---|---|---|---|
+| Store current default branch | `GeorgePlattDemo/scan-to-build-store` | `3620b35369d70cf49733bbb0b62c0f3d9969b738` | current documentary Store baseline |
+| System current default branch | `GeorgePlattDemo/scan-to-build-system` | `138d0c01b62193012e5c5c891723b7dd47407119` | current Store/machine/completion research context |
+| Governed reference | `GeorgePlattDemo/scan-to-build-governed-reference` | `18949f163718a937f072f4be3a654bb303e53160` | project semantics, gates, provenance, simulation/production authority |
+| Stage-2 Store Zero implementation | Store repository, path-specific pin | `b40cdc60a405d6c2a63d846f2c2e89cddc5bb95d` | D-001 Stage-2 catalog, stock, economics, evaluator, tests |
+| Published-job / S-001 proof | Store repository, path-specific pin | `4402abeb6b0299a5b6db2eec85ed04c3b0236bcc` | five-tool D-001 reference, S-001 Mode-2 reference, published job and tests |
 
-- use different software;
-- expose different information;
-- stock different products;
-- use different suppliers;
-- provide different services;
-- own different equipment;
-- organize employees differently;
-- accept different work;
-- refuse different work.
+### Important repository-state finding
 
-A conforming future Store does not have to look like Store Zero.
+The current Store default branch at the pin above contains the documentary Store files but does not contain the executable Stage-2 catalog/evaluator/test family that exists at the two path-specific Store pins. That is represented here as a provenance fact, not silently “repaired.”
 
-Store Zero exists so the first implementation has something specific to integrate with.
+Accordingly:
+
+- current Store `main` is the documentary front door used by this consolidation;
+- Stage-2 and published-job executable facts are incorporated only with their exact path-specific pins;
+- this pass does not restore, copy, delete, or relocate those executable assets;
+- no path-specific pin is promoted into a universal project constant.
+
+### Reference clocks and engine identities
+
+| Reference | Identity / value | Meaning |
+|---|---|---|
+| Catalog clock | `2026-09-10` | Store Zero fixture catalog state |
+| Stock answer clock | `2026-09-10` | fixture-declared on-hand state; not a physical count |
+| Pricing engine | `STB-STORE-ZERO-PRICE-1` v`0.2.2` | deterministic budgetary economics engine |
+| Pricing engine clock | `2026-09-10` | reference engine state |
+| D-001 cycle model | `STB-D001-CYCLE-MODEL-S2-0.1` | CALCULATED / MODELED; not measured; not commissioned |
+| D-001 Stage-2 envelope | `D001-STAGE2-ENVELOPE-0.2` | reference Store evaluation envelope at Stage-2 pin |
+| D-001 featured-board reference | `D001_FEATURED_BOARD_V0` | reference five-tool candidate at published-job pin |
+| S-001 Mode-2 envelope | `S001-MODE2-STENCIL-V1` | reference sheet Mode-2 envelope; physical status not claimed |
+| S-001 arched-aperture envelope | `S001-MODE2-ARCHED-APERTURE-V0` | centered arched-aperture reference; physical status not claimed |
+
+Same request + same declared Store state + same implementation = same answer. If the declared state or implementation changes, the answer may change, and the retained record must identify what changed.
 
 ---
 
-# 2. The Operating Problem
+## 1. Store Zero in one page
 
-A functioning lumberyard can usually act efficiently once the customer request has been translated into language its existing systems recognize.
+**Store Zero is a declared reference lumberyard and the controlled answering surface for the Scan-to-Build research program.**
 
-Examples include:
+It exists because a governed project requirement needs something specific, deterministic, and inspectable to ask. Store Zero gives that requirement a bounded material, stock, capability, economics, and fulfillment context without pretending a real merchant or commissioned production cell already exists.
 
-- SKU;
-- item;
-- quantity;
-- unit of measure;
-- material list;
-- takeoff;
-- quote;
-- sales order;
-- special order;
-- purchase order;
-- pick ticket;
-- delivery.
+Its primary question is:
 
-The difficult interval is earlier.
+> Given this exact governed demand, what can this Store provide, source, process, make, partially complete, stage, fulfill, defer or refuse, and why?
 
-A person may instead begin with:
+Its second question is equally important:
 
-> I need shelves in this opening.
+> When Store Zero cannot satisfy a useful demand, what exactly is missing, what burden does that gap create, and what evidence would justify—or reject—the smallest capability increment?
 
-> I have a drawing.
+Store Zero is therefore both:
 
-> I measured this space.
+1. a deterministic reference Store implementation; and
+2. a controlled research instrument for evaluating the technical and economic value of additional local capability.
 
-> Can this be made from something you carry?
+Store Zero is **not**:
 
-> Can you get the material?
+- a real dealer;
+- a seller of record;
+- a commercial promise;
+- live inventory;
+- a production release;
+- a commissioned physical cell;
+- a fake retailer screenshot;
+- a generic Store API abstraction;
+- a universal model of every lumberyard;
+- authority to move a machine;
+- evidence that a modeled part was physically fabricated.
 
-> Can you cut any of it here?
+A failed answer is useful. `UNRESOLVED`, `REFUSED`, and `UNAVAILABLE` are research results when they identify the actual reason the path stops.
 
-> Is there another local path if you cannot?
+---
 
-That information represents demand, but it is not yet an ordinary lumberyard transaction.
-
-The Store problem is therefore not primarily an inventory problem, machine problem, or e-commerce problem.
-
-It is a **translation and controlled-access problem**.
+## 2. Central research loop
 
 ```text
-INCOMPLETE PROJECT REQUIREMENT
-             |
-             v
-     GOVERNED DEFINITION
-             |
-             v
-       STORE MEMBRANE
-             |
-             v
- EXISTING STORE SYSTEMS
- material / stock / supply /
- capability / commerce /
- fulfillment
-             |
-             v
-       BOUNDED ANSWER
+REALISTIC PROJECT DEMAND
+        ↓
+STORE ZERO
+        ↓
+EXISTING STORE ASSETS
+        ↓
+MATERIAL / STOCK / SUPPLY
+        ↓
+CURRENT PROCESS + MACHINE CAPABILITY
+        ↓
+ECONOMIC + FULFILLMENT EVALUATION
+        ↓
+SUPPORTABLE
+        → supported Store path
+
+or
+
+UNRESOLVED / REFUSED / UNAVAILABLE
+        ↓
+NAMED GAP
+        ↓
+FREQUENCY / CONSEQUENCE / HANDLING BURDEN
+        ↓
+CAPABILITY-INCREMENT CANDIDATE
+        ↓
+COST / COMPLEXITY / FOOTPRINT /
+LABOR / SENSING / SAFETY / MAINTENANCE
+        ↓
+TEST / DEFER / OUTSOURCE / REJECT
+        ↓
+PHYSICAL EVIDENCE
+        ↓
+IF EARNED:
+NEW VERSIONED STORE CAPABILITY
 ```
+
+Store Zero does not autonomously design a machine. It preserves evidence about the missing Store function. Engineering decides whether a capability increment is justified.
+
+Valid outcomes include:
+
+- use the existing Store process;
+- use current declared machine capability;
+- split an explicitly admitted machine contribution and secondary operation;
+- route to a supplier or special order;
+- outsource;
+- test a bounded new capability;
+- modify a candidate capability;
+- defer;
+- refuse;
+- conclude that the machine addition is economically unjustified.
+
+Negative results are valid research results.
 
 ---
 
-# 3. Store Sovereignty
+## 3. Research thesis
 
-Store Zero owns and controls its operational information.
+The research objective is not to replace a lumberyard with a universal CNC factory.
 
-That includes its:
+The objective is to test whether an ordinary independent lumberyard can be economically augmented by bounded local digital fabrication that uses, where applicable:
 
-- inventory system;
+- the existing site;
+- existing stock and supplier relationships;
+- existing material handling;
+- existing receiving and covered storage;
+- existing staging and will-call;
+- existing pickup/delivery paths;
+- existing labor and operator roles;
+- a familiar machine footprint;
+- bounded additional machine capability;
+- off-the-shelf components where practical;
+- open or openly inspectable control technology where practical;
+- simple local operator interaction;
+- local machine authority;
+- independent engineering and safety work.
+
+The useful middle under study is between ordinary tape/pencil/manual processing and high-capability factory automation.
+
+The machine-design principle is:
+
+> make the material move rather than making every tool infinitely capable.
+
+That principle is a research hypothesis, not a commissioned-machine fact.
+
+---
+
+## 4. Existing Store baseline
+
+Store Zero begins with an ordinary lumberyard operating model. The following are Store Zero fixture declarations used to create a coherent research context; they are not claims that every lumberyard has identical practices or assets.
+
+### Declared ordinary Store functions
+
+- pro/counter sales;
+- product/catalog information;
+- covered storage and yard storage;
+- receiving;
+- staging;
+- will-call;
+- loading and ordinary material handling;
+- pickup;
+- delivery as a modeled fulfillment path;
+- existing limited material processing, including an employee-operated square-crosscut baseline;
 - supplier relationships;
-- purchase history;
-- costs;
-- margins;
-- customer accounts;
-- pricing rules;
-- reservations;
-- employee information;
-- warehouse operations;
-- equipment;
-- machine controls;
-- maintenance information;
-- commercial decisions.
+- special-order handling;
+- contractor/takeoff workflow;
+- ordinary human Store roles.
 
-Scan-to-Build does not require ownership of those systems or unrestricted access to their contents.
+The physical comparison case for the present dimensional-machine research remains manual: board → radial-arm saw → eyes/tape/pencil/operator judgment → manual positioning/cut. A Stage-2 D-001 fixture is not evidence that this physical comparison case has already been replaced.
 
-It requires sufficiently reliable answers to bounded questions.
+### Baseline rule
 
-The preferred principle is:
+Do not replace a useful existing Store asset merely because an automated method can be imagined. Start with the declared current asset, identify the real capability gap, add the smallest justified increment, and measure what changed.
+
+---
+
+## 5. Store sovereignty and Store membrane
+
+The Store boundary follows one short rule:
 
 > **Ask for the answer, not the database.**
 
-For example, Scan-to-Build may need to know whether Store Zero has enough suitable stock for a project.
+A caller should ask bounded Store questions and receive bounded Store answers. Connected does not mean surrendered.
 
-It does not automatically need to know:
+Store Zero may expose answers about:
 
-- every item in the warehouse;
-- every rack location;
-- Store Zero's acquisition cost;
-- reorder levels;
-- competing customer orders;
-- margin;
-- shrink adjustments;
-- supplier contract terms.
+- offered material/product identity;
+- availability and freshness context;
+- price/reference economics;
+- declared processing capability;
+- supportability or refusal;
+- supplier/special-order path;
+- fulfillment state;
+- relevant evidence/version identity.
 
-The Store may answer:
+That does not imply disclosure or transfer of every internal Store record, supplier term, customer/account detail, machine-local configuration, controller state, or operating credential.
 
-> Matching material is represented.
+### Information classes
 
-> It is on hand.
+The Store architecture distinguishes, as applicable:
 
-> Current represented quantity is sufficient for this request.
+- public/project information;
+- account/commercial information;
+- operational Store information;
+- machine-local information.
 
-> This answer is current through the stated freshness limit.
-
-That can be sufficient.
-
-The internal facts used to produce the answer remain under Store Zero's control.
-
----
-
-# 4. Store Zero — Physical Baseline
-
-Store Zero is modeled as one independent LBM branch serving both professional contractors and ordinary retail customers.
-
-These are fixture declarations, not universal yard requirements.
-
-| Store Zero asset | Existing purpose | Relevance to Scan-to-Build |
-|---|---|---|
-| Customer counter / pro desk | Product inquiry, quotes, orders, contractor service | Existing commercial point where a resolved project can become business |
-| Retail/catalog area | Presents stocked and orderable products | Existing product-facing public interface |
-| Covered warehouse | Receives and stores weather-sensitive material | Physical source for applicable stock |
-| Lumber yard | Stores and handles bulk/long material | Existing dimensional-material infrastructure |
-| Receiving area | Reconciles incoming material against purchase orders | Existing point where supplier facts become local stock facts |
-| Staging area | Holds picked orders before pickup or delivery | Existing project/order convergence point |
-| Will-call / pickup path | Customer pickup of prepared material | Existing local fulfillment path |
-| Loading area | Loads customer and delivery vehicles | Existing material handoff |
-| Material-handling equipment | Moves units, bundles, pallets, and pieces | Existing labor/productivity infrastructure |
-| Delivery capability | Moves orders to customer/jobsite | Existing fulfillment network |
-| Limited cut service | Performs bounded material preparation | First existing productive capability to evaluate before new machinery |
-| Supplier network | Sources stock and non-stock material | Extends Store capability beyond what is physically on hand |
-| Special-order relationships | Obtains products outside normal stock | Existing route for project requirements that exceed local inventory |
-
-Store Zero does **not** begin with a Scan-to-Build automated fabrication cell.
-
-That absence is intentional.
-
-The first machine question remains:
-
-> What can Store Zero already do, and what is the smallest additional capability justified by the work it cannot presently serve?
+The application should receive what it needs to present a Store answer. It does not need the entire Store database. The Store should receive an unambiguous project demand. It does not need application UI state. The machine should receive an admitted machine-neutral work description plus local lowering context. It does not need permission to rewrite project truth.
 
 ---
 
-# 5. Store Zero — People and Operating Roles
+## 6. Ownership and authority
 
-Store Zero already contains human capability that shall not disappear merely because software is added.
+### Governed layer owns
 
-| Role | Existing responsibility |
-|---|---|
-| Counter / inside sales | Customer inquiry, item selection, quotes, orders |
-| Contractor / project sales | Larger jobs, takeoffs, account pricing, staged requirements |
-| Buyer / purchasing | Supplier relationships, purchase orders, replenishment, special orders |
-| Receiving | Confirms incoming material against expected receipts |
-| Yard / warehouse staff | Put-away, stock movement, picking, staging, loading |
-| Material-service operator | Performs permitted existing cutting/material-preparation work |
-| Dispatcher | Organizes truck runs and delivery sequence |
-| Driver | Delivers material and records delivery result |
-| Accounts receivable / credit | Customer accounts, invoices, payment, credit terms |
-| Store manager | Local operational and commercial authority |
+- canonical project/record semantics;
+- unresolved/refusal behavior at the governed layer;
+- gate meaning;
+- authorization rules;
+- WorkPacket meaning;
+- provenance/integrity;
+- simulation versus production authority.
 
-Scan-to-Build may make portions of those responsibilities more callable.
+The current governed reference is simulation-only and states that production authorization is not issuable.
 
-It does not silently transfer their authority to software.
+### Store owns
 
----
+- Store offerings;
+- stock assertions;
+- supplier/special-order path;
+- process/machine capability declarations exposed at the Store boundary;
+- project-to-capability evaluation;
+- machine-neutral operation requirements;
+- Store economics;
+- Store fulfillment and completion relationships within Store authority.
 
-# 6. Current Store Zero Systems
+### Application owns
 
-Store Zero is modeled with the system classes commonly found in current LBM operations.
+- journeys;
+- capture/configuration interaction;
+- presentation;
+- resume/continuity;
+- presentation of Store answers.
 
-The names below are Store Zero fixture labels, not proposed Scan-to-Build canonical object names.
+The application does not decide that the Store supports a job merely because the UI can render it.
 
-## S0-ERP — Dealer ERP / POS
+### Machine / cell owns
 
-The Store's principal commercial system of record.
+- installed physical mechanism;
+- commissioned local geometry and station map;
+- local lowering;
+- controller program/state;
+- work offsets and machine references;
+- real-time motion;
+- interlocks and stopping;
+- local Cycle Start;
+- machine-local workpiece reference validity;
+- physical observations and cycle outcome.
 
-It represents functions such as:
-
-- item/SKU master;
-- units of measure;
-- locations;
-- inventory;
-- purchasing;
-- receiving;
-- vendor records;
-- quotes;
-- sales orders;
-- special orders;
-- customer accounts;
-- account pricing;
-- invoices;
-- accounts receivable;
-- accounts payable;
-- transaction history.
-
-This is the system used at the counter.
-
-Scan-to-Build does not replace it.
-
----
-
-## S0-YARD — Yard / Warehouse Operations
-
-The operational layer used to move material through the branch.
-
-Typical functions include:
-
-- receiving;
-- barcode scanning;
-- inventory counts;
-- tally entry;
-- put-away;
-- stock location;
-- picking;
-- pick tickets;
-- staging;
-- loading;
-- quantity reconciliation.
-
-A yard may implement these functions inside its ERP, a warehouse-management system, mobile applications, paper processes, or some combination.
-
-Store Zero models the functions rather than depending on one vendor architecture.
-
----
-
-## S0-SUPPLY — Supplier / Purchasing Connections
-
-Store Zero already has electronic and human connections to suppliers.
-
-These may include:
-
-- vendor catalogs;
-- electronic data interchange;
-- buying-group connections;
-- supplier portals;
-- emailed or phoned orders;
-- price files;
-- purchase orders;
-- purchase-order acknowledgments;
-- advance ship notices;
-- invoices;
-- availability inquiries;
-- special-order workflows.
-
-The supplier connection is already a membrane.
-
-The supplier does not hand Store Zero its entire company.
-
-It answers agreed commercial questions and exchanges agreed transaction documents.
-
-Scan-to-Build should learn from that pattern.
-
----
-
-## S0-PORTAL — Customer / Contractor Digital Access
-
-Store Zero has a product-centric digital channel representing some combination of:
-
-- product catalog;
-- product search;
-- customer account;
-- customer-specific pricing;
-- quote access;
-- ordering;
-- order history;
-- invoices;
-- payment;
-- pickup;
-- delivery;
-- order status.
-
-The important limitation is that this interface generally begins with **products and transactions**.
-
-It is good at:
-
-> Find this item.
-
-> Check my price.
-
-> Reorder this product.
-
-> Accept this quote.
-
-> Deliver this order.
-
-It is not designed primarily for:
-
-> Here is an opening in my house. What useful path can this yard offer?
-
-That is the new upstream connection.
-
----
-
-## S0-TAKEOFF — Contractor Project / Estimating Path
-
-Store Zero can accept sufficiently developed contractor information such as:
-
-- plans;
-- drawings;
-- material lists;
-- takeoffs;
-- project phases;
-- job names;
-- quantities.
-
-The result may become:
+### Never collapse
 
 ```text
-PLAN
-  ↓
-TAKEOFF
-  ↓
-MATERIAL LIST
-  ↓
-QUOTE
-  ↓
-SALES ORDER
-  ↓
-PICK / DELIVERY
+project requirement
+≠ material offering
+≠ stock availability
+≠ machine capability
+≠ machine readiness
+≠ authorization
+≠ physical execution
 ```
 
-This is an important neighboring capability.
-
-It proves that yards already translate project information into commerce.
-
-Scan-to-Build begins one step earlier when the requirement is not yet a conventional takeoff.
+Network presence is not motion authority. Store supportability is not Cycle Start. Machine readiness is not project authorization. A successful simulation is not a fabricated part.
 
 ---
 
-## S0-DISPATCH — Delivery and Proof of Fulfillment
+## 7. Inbound Store demand
 
-Once an order exists, Store Zero can prepare material for delivery through functions such as:
+Store Zero should not have to infer the project question from UI fragments. The project definition must make the demand unambiguous; Store evaluation determines the answer.
 
-- pick;
-- stage;
-- load;
-- manifest;
-- route;
-- delivery sequence;
-- delivery status;
-- signature;
-- photograph;
-- timestamp;
-- proof of delivery.
+> **Project definition must make the question unambiguous. Store evaluation determines the answer.**
 
-This is another existing boundary between Store data and the outside world.
+A consequential Store request should carry enough information to identify, as applicable:
 
-A driver does not need the Store's entire ERP.
+- project / request identity;
+- project revision;
+- part/component identity;
+- quantity;
+- finished geometry relevant to Store resolution;
+- material requirement or provisional material identity;
+- required operation(s);
+- secondary-operation expectation where deliberately split;
+- fulfillment requirement;
+- unresolved conditions;
+- provenance/currentness.
 
-The driver needs the information required to make the assigned delivery.
+The application is not required to know Store-internal facts such as current SKU, stock quantity, supplier path, price, or actual supported machine envelope before asking. Those are Store answers.
 
-That same principle informs the Store membrane.
+Every consequential Store-relevant demand line must receive a disposition. Silence never means supported, priced, available, or authorized.
 
 ---
 
-# 7. Existing Industry Transaction Chain
+## 8. Material system
 
-A normal stocked-material transaction may already look roughly like:
+Store Zero preserves the following chain:
 
 ```text
-CUSTOMER REQUEST
-      ↓
-COUNTER / PORTAL
-      ↓
-QUOTE
-      ↓
-SALES ORDER
-      ↓
-PICK TICKET
-      ↓
-PICK / STAGE
-      ↓
-WILL-CALL
-    or
-DELIVERY MANIFEST
-      ↓
-HANDOFF
-      ↓
-PROOF OF DELIVERY
-      ↓
-INVOICE / ACCOUNT RECORD
+Material requirement
+→ MaterialClass / material identity
+→ MaterialSpec / use-specific material requirement
+→ form
+→ Store offering
+→ Store SKU
+→ stock / supply answer
 ```
 
-A non-stock requirement may instead create:
+Material identity is not merchant identity.
+
+A `MaterialClass` or `MaterialSpec` is not a SKU. A SKU is a Store/channel offering identity. Mapping a provisional or project material requirement to a Store SKU is an explicit Store-resolution act; it is not silent material substitution.
+
+If a material is provisional or unresolved, Store Zero must not fabricate confidence by selecting a merchant SKU anyway. A later mapping may create a new Store question or project revision where the changed identity is consequential.
+
+---
+
+## 9. Complete active Store Zero catalog
+
+### 9.1 Catalog semantics
+
+The active published-job catalog contains **92 offered fixture items** at catalog clock `2026-09-10`.
+
+Common rules:
+
+- `offered=true` means offered by the Store Zero fixture, not by a real dealer;
+- unit is `ea` unless the catalog line states a packaged hardware unit;
+- `list_reference` is an observed or calculated fixture reference as declared on the item;
+- Store Zero selling price = `ROUND(list_reference × 1.05, 2)`;
+- the 5% value is a mark-on rule, not a margin claim;
+- `onHand` is fixture-declared stock, not a physical count;
+- `allocated=0` in the active fixture;
+- supplier path is represented synthetically where present and does not cure an on-hand shortage;
+- D-001/S-001 operation declarations are reference capability facts only.
+
+The compact tables below reproduce the active offering set. Each row is a Store offering. Dimensions are nominal unless an actual size is stated in the family note. `L/S/O` means list reference / Store Zero selling price / fixture on-hand quantity.
+
+### 9.2 SPF construction dimensional lumber — 22 offerings
+
+Material/form: SPF construction lumber; dimensional board. D-001 reference family. Normal 2x actual dimensions follow the catalog’s standard surfaced dimensional values; 4x4 actual section is 3.5 × 3.5 in. Reference capability and limitations remain item-specific in the executable catalog.
+
+| Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
+|---|---:|---:|
+| `STB-ZERO-SPF-2X4-72-001` | 2×4×72 | 2.98 / 3.13 / 60 |
+| `STB-ZERO-SPF-2X4-96-001` | 2×4×96 | 3.98 / 4.18 / 84 |
+| `STB-ZERO-SPF-2X4-108-001` | 2×4×108 | 4.48 / 4.70 / 20 |
+| `STB-ZERO-SPF-2X4-120-001` | 2×4×120 | 5.42 / 5.69 / 48 |
+| `STB-ZERO-SPF-2X4-144-001` | 2×4×144 | 6.48 / 6.80 / 36 |
+| `STB-ZERO-SPF-2X4-168-001` | 2×4×168 | 6.96 / 7.31 / 12 |
+| `STB-ZERO-SPF-2X4-192-001` | 2×4×192 | 7.96 / 8.36 / 8 |
+| `STB-ZERO-SPF-2X6-72-001` | 2×6×72 | 5.39 / 5.66 / 28 |
+| `STB-ZERO-SPF-2X6-96-001` | 2×6×96 | 7.19 / 7.55 / 40 |
+| `STB-ZERO-SPF-2X6-120-001` | 2×6×120 | 8.99 / 9.44 / 22 |
+| `STB-ZERO-SPF-2X6-144-001` | 2×6×144 | 10.79 / 11.33 / 18 |
+| `STB-ZERO-SPF-2X6-192-001` | 2×6×192 | 14.38 / 15.10 / 8 |
+| `STB-ZERO-SPF-2X8-96-001` | 2×8×96 | 9.48 / 9.95 / 24 |
+| `STB-ZERO-SPF-2X8-120-001` | 2×8×120 | 11.85 / 12.44 / 16 |
+| `STB-ZERO-SPF-2X8-144-001` | 2×8×144 | 14.22 / 14.93 / 12 |
+| `STB-ZERO-SPF-2X8-192-001` | 2×8×192 | 18.96 / 19.91 / 6 |
+| `STB-ZERO-SPF-2X10-96-001` | 2×10×96 | 12.09 / 12.69 / 8 |
+| `STB-ZERO-SPF-2X10-120-001` | 2×10×120 | 15.12 / 15.88 / 8 |
+| `STB-ZERO-SPF-2X10-144-001` | 2×10×144 | 18.14 / 19.05 / 8 |
+| `STB-ZERO-SPF-4X4-96-001` | 4×4×96 | 8.76 / 9.20 / 20 |
+| `STB-ZERO-SPF-4X4-120-001` | 4×4×120 | 10.95 / 11.50 / 12 |
+| `STB-ZERO-SPF-4X4-144-001` | 4×4×144 | 13.13 / 13.79 / 10 |
+
+The 4×4 fixture is limited relative to the milling envelope; a Store offer does not imply every D-001 feature is supportable on the section.
+
+### 9.3 Pine board offerings — 22 offerings
+
+Material/form: surfaced pine board families. Select pine families principally use D-001 crosscut/miter/drill and, for applicable widths, bounded mill operation declarations. Narrow 1×2/1×3 and lower-grade lines have narrower declared processing.
+
+| Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
+|---|---:|---:|
+| `STB-ZERO-PINE-1X2-72-001` | 1×2×72 | 1.59 / 1.67 / 20 |
+| `STB-ZERO-PINE-1X2-96-001` | 1×2×96 | 2.12 / 2.23 / 20 |
+| `STB-ZERO-PINE-1X3-72-001` | 1×3×72 | 3.65 / 3.83 / 20 |
+| `STB-ZERO-PINE-1X3-96-001` | 1×3×96 | 4.87 / 5.11 / 20 |
+| `STB-ZERO-PINE-1X4-72-001` | 1×4×72 | 8.24 / 8.65 / 30 |
+| `STB-ZERO-PINE-1X4-96-001` | 1×4×96 | 10.99 / 11.54 / 36 |
+| `STB-ZERO-PINE-1X4-120-001` | 1×4×120 | 13.74 / 14.43 / 18 |
+| `STB-ZERO-PINE-1X4-144-001` | 1×4×144 | 16.48 / 17.30 / 10 |
+| `STB-ZERO-PINE-1X6-72-001` | 1×6×72 | 14.99 / 15.74 / 30 |
+| `STB-ZERO-PINE-1X6-96-001` | 1×6×96 | 19.99 / 20.99 / 36 |
+| `STB-ZERO-PINE-1X6-120-001` | 1×6×120 | 24.99 / 26.24 / 18 |
+| `STB-ZERO-PINE-1X6-144-001` | 1×6×144 | 29.98 / 31.48 / 10 |
+| `STB-ZERO-PINE-1X8-72-001` | 1×8×72 | 19.76 / 20.75 / 30 |
+| `STB-ZERO-PINE-1X8-96-001` | 1×8×96 | 26.35 / 27.67 / 36 |
+| `STB-ZERO-PINE-1X8-120-001` | 1×8×120 | 32.94 / 34.59 / 18 |
+| `STB-ZERO-PINE-1X8-144-001` | 1×8×144 | 39.53 / 41.51 / 10 |
+| `STB-ZERO-PINE-1X10-96-001` | 1×10×96 | 33.62 / 35.30 / 8 |
+| `STB-ZERO-PINE-1X10-120-001` | 1×10×120 | 42.02 / 44.12 / 8 |
+| `STB-ZERO-PINE-1X10-144-001` | 1×10×144 | 50.43 / 52.95 / 8 |
+| `STB-ZERO-PINEQ-1X4-96-001` | quality pine 1×4×96 | 5.97 / 6.27 / 50 |
+| `STB-ZERO-PINEQ-1X8-96-001` | quality pine 1×8×96 | 11.98 / 12.58 / 22 |
+| `STB-ZERO-PINESTD-1X4-96-001` | standard/rustic pine 1×4×96 | 2.73 / 2.87 / 80 |
+
+The standard/rustic line is intentionally not treated as equivalent to select pine merely because nominal dimensions match.
+
+### 9.4 Poplar select — 12 offerings
+
+Material/form: select poplar surfaced board; D-001 reference family.
+
+| Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
+|---|---:|---:|
+| `STB-ZERO-POPLAR-1X4-72-001` | 1×4×72 | 13.49 / 14.16 / 12 |
+| `STB-ZERO-POPLAR-1X4-96-001` | 1×4×96 | 17.99 / 18.89 / 16 |
+| `STB-ZERO-POPLAR-1X4-120-001` | 1×4×120 | 22.49 / 23.61 / 12 |
+| `STB-ZERO-POPLAR-1X4-144-001` | 1×4×144 | 26.98 / 28.33 / 12 |
+| `STB-ZERO-POPLAR-1X6-72-001` | 1×6×72 | 22.99 / 24.14 / 18 |
+| `STB-ZERO-POPLAR-1X6-96-001` | 1×6×96 | 30.65 / 32.18 / 12 |
+| `STB-ZERO-POPLAR-1X6-120-001` | 1×6×120 | 38.32 / 40.24 / 12 |
+| `STB-ZERO-POPLAR-1X6-144-001` | 1×6×144 | 45.98 / 48.28 / 12 |
+| `STB-ZERO-POPLAR-1X8-72-001` | 1×8×72 | 28.02 / 29.42 / 12 |
+| `STB-ZERO-POPLAR-1X8-96-001` | 1×8×96 | 37.36 / 39.23 / 12 |
+| `STB-ZERO-POPLAR-1X8-120-001` | 1×8×120 | 46.70 / 49.04 / 8 |
+| `STB-ZERO-POPLAR-1X8-144-001` | 1×8×144 | 56.04 / 58.84 / 12 |
+
+### 9.5 Red oak select — 9 offerings
+
+Material/form: select red-oak surfaced board; D-001 reference family.
+
+| Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
+|---|---:|---:|
+| `STB-ZERO-OAK-1X4-72-001` | 1×4×72 | 17.24 / 18.10 / 8 |
+| `STB-ZERO-OAK-1X4-96-001` | 1×4×96 | 22.99 / 24.14 / 12 |
+| `STB-ZERO-OAK-1X4-120-001` | 1×4×120 | 28.74 / 30.18 / 8 |
+| `STB-ZERO-OAK-1X6-72-001` | 1×6×72 | 24.99 / 26.24 / 10 |
+| `STB-ZERO-OAK-1X6-96-001` | 1×6×96 | 33.32 / 34.99 / 8 |
+| `STB-ZERO-OAK-1X6-120-001` | 1×6×120 | 41.65 / 43.73 / 8 |
+| `STB-ZERO-OAK-1X8-72-001` | 1×8×72 | 32.94 / 34.59 / 8 |
+| `STB-ZERO-OAK-1X8-96-001` | 1×8×96 | 43.92 / 46.12 / 8 |
+| `STB-ZERO-OAK-1X8-120-001` | 1×8×120 | 54.90 / 57.65 / 8 |
+
+### 9.6 Cherry select — 4 offerings
+
+Material/form: select cherry surfaced board. These values are derived fixture references in the active catalog rather than direct observed cherry price pegs; do not present them as live cherry prices.
+
+| Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
+|---|---:|---:|
+| `STB-ZERO-CHERRY-1X4-72-001` | 1×4×72 | 27.59 / 28.97 / 6 |
+| `STB-ZERO-CHERRY-1X4-96-001` | 1×4×96 | 36.78 / 38.62 / 6 |
+| `STB-ZERO-CHERRY-1X6-72-001` | 1×6×72 | 39.98 / 41.98 / 6 |
+| `STB-ZERO-CHERRY-1X6-96-001` | 1×6×96 | 53.31 / 55.98 / 6 |
+
+### 9.7 Sheet goods — 9 offerings
+
+Material/form: panel/sheet. S-001 reference family where the item declares routed-profile capability; `CROSSCUT`/`RIP` declarations alone do not imply the S-001 arched profile.
+
+| Store SKU | Declared sheet | L / S / O ($ / $ / ea) | Reference operation note |
+|---|---|---:|---|
+| `STB-ZERO-PLY-025-48X48-001` | 1/4 in plywood, 48×48 | 8.07 / 8.47 / 10 | crosscut/rip fixture path |
+| `STB-ZERO-PLY-025-48X96-001` | 1/4 in plywood, 48×96 | 13.91 / 14.61 / 14 | crosscut/rip/dado fixture path |
+| `STB-ZERO-PLY-038-48X48-001` | 3/8 in plywood, 48×48 | 10.56 / 11.09 / 10 | crosscut/rip fixture path |
+| `STB-ZERO-PLY-038-48X96-001` | 3/8 in fir ACX plywood, 48×96 | 18.21 / 19.12 / 14 | includes route-profile/tab reference operations |
+| `STB-ZERO-PLY-050-48X96-001` | 1/2 in 4-ply sheathing plywood, 48×96 | 25.29 / 26.55 / 18 | canonical S-001 arched study material; route-profile/tab reference operations |
+| `STB-ZERO-PLY-063-48X96-001` | 5/8 in fir BCX/sanded plywood, 48×96 | 47.89 / 50.28 / 12 | crosscut/rip/dado/groove/route/tab reference operations |
+| `STB-ZERO-PLY-075-48X48-001` | 3/4 in plywood, 48×48 | 31.94 / 33.54 / 10 | crosscut/rip fixture path |
+| `STB-ZERO-PLY-075-48X96-001` | 3/4 in fir ACX/sanded plywood, 48×96 | 55.07 / 57.82 / 14 | includes route-profile/tab reference operations |
+| `STB-ZERO-OSB-075-48X96-001` | 3/4 in square-edge OSB, 48×96 | 27.10 / 28.46 / 20 | crosscut/rip only in active fixture |
+
+### 9.8 Hardware — 8 offerings
+
+Hardware is sourced Store material, not fabricated merely because it appears in a Store job.
+
+| Store SKU | Description | L / S / O ($ / $ / ea/package) |
+|---|---|---:|
+| `STB-ZERO-HW-SHELFPIN-5MM-12-001` | 5 mm shelf pins, 12 pack | 2.49 / 2.61 / 40 |
+| `STB-ZERO-HW-SHELFPIN-5MM-100-001` | 5 mm shelf pins, 100 pack | 14.52 / 15.25 / 8 |
+| `STB-ZERO-HW-SCREW-8X150-110-001` | #8 × 1-1/2 in screw pack, 110 | 14.29 / 15.00 / 20 |
+| `STB-ZERO-HW-ALCOVE-PACK-001` | alcove hardware pack | 17.14 / 18.00 / 25 |
+| `STB-ZERO-HW-PICNIC-BOLT-PACK-001` | picnic hardware bolt pack | 12.50 / 13.13 / 15 |
+| `STB-ZERO-HW-HINGE-CONCEAL-2-001` | concealed hinge pair | 8.99 / 9.44 / 20 |
+| `STB-ZERO-HW-SCREW-10X300-LB-001` | #10 × 3 in screw package | 11.98 / 12.58 / 12 |
+| `STB-ZERO-HW-CARR-BOLT-516-4-001` | 5/16 × 4 in carriage-bolt package | 6.49 / 6.81 / 18 |
+
+### 9.9 Pressure-treated SYP — 6 offerings
+
+Material/form: pressure-treated southern yellow pine dimensional stock. Current fixture declarations are narrower than generic mill capability assumptions.
+
+| Store SKU | Nominal size × length | L / S / O ($ / $ / ea) |
+|---|---:|---:|
+| `STB-ZERO-PT-SYP-2X4-96-001` | 2×4×96 | 4.58 / 4.81 / 30 |
+| `STB-ZERO-PT-SYP-2X4-120-001` | 2×4×120 | 5.72 / 6.01 / 18 |
+| `STB-ZERO-PT-SYP-2X4-144-001` | 2×4×144 | 6.87 / 7.21 / 12 |
+| `STB-ZERO-PT-SYP-4X4-96-001` | 4×4×96 | 9.49 / 9.96 / 10 |
+| `STB-ZERO-PT-SYP-4X4-120-001` | 4×4×120 | 11.86 / 12.45 / 10 |
+| `STB-ZERO-PT-SYP-4X4-144-001` | 4×4×144 | 14.23 / 14.94 / 10 |
+
+### 9.10 Catalog evidence limits
+
+The compact canonical catalog above reproduces the active offering set, Store SKU, material/form description sufficient to distinguish the offering, dimensional variant, reference price, calculated Store Zero selling price, and fixture on-hand quantity. The machine-readable catalog remains controlling for its exact per-line `actualT`, `actualW`, assertion-basis, observation ID, operation list, supplier-path, source and limitation fields.
+
+That implementation dependency is not a semantic escape hatch: this file contains enough data to understand the Store without hunting for the existence, price, stock quantity, material family, or broad processing family of any active offering.
+
+---
+
+## 10. Stock / availability fixture
+
+Stock is a time-bounded Store assertion, not a synonym for catalog existence.
+
+At the active fixture clock:
 
 ```text
-CUSTOMER REQUEST
-      ↓
-QUOTE / SPECIAL ORDER
-      ↓
-PURCHASE ORDER
-      ↓
-SUPPLIER ACKNOWLEDGMENT
-      ↓
-SHIPMENT / RECEIVING
-      ↓
-LOCAL STOCK OR DIRECT FULFILLMENT
-      ↓
-CUSTOMER ORDER
+available = fixtureDeclaredOnHand - allocatedSimulated
 ```
 
-A contractor project may begin:
+The active fixture uses `allocated=0` on the catalog lines represented above.
 
-```text
-PLANS
-  ↓
-TAKEOFF
-  ↓
-JOB MATERIAL LIST
-  ↓
-QUOTE
-  ↓
-ORDER
-  ↓
-STAGED DELIVERIES
-```
+Line stock meanings are:
 
-Scan-to-Build adds another entrance:
+- `ON_HAND_SUFFICIENT` — fixture-available quantity is greater than or equal to the requested quantity;
+- `ON_HAND_SHORT` — some fixture quantity is available, but less than the requested quantity;
+- `NOT_ON_HAND` — no fixture quantity is available for the requested line.
 
-```text
-HUMAN NEED
-   ↓
-SITE / REQUIREMENT EVIDENCE
-   ↓
-GOVERNED PROJECT DEFINITION
-   ↓
-STORE MEMBRANE
-   ↓
-EXISTING MATERIAL / STOCK /
-SUPPLY / CAPABILITY SYSTEMS
-   ↓
-BOUNDED STORE ANSWER
-```
+These do **not** prove:
 
-It does not need to replace what happens after the request becomes conventional.
-
----
-
-# 8. The Store Membrane
-
-The Store membrane is the controlled boundary between Store Zero's internal operating reality and an external caller.
-
-It is not necessarily one API.
-
-It is an architectural rule governing what may cross the boundary.
-
-The membrane may eventually be implemented through:
-
-- API;
-- dealer-system adapter;
-- EDI;
-- event feed;
-- scheduled export;
-- vendor-supported connector;
-- scoped database view;
-- file exchange;
-- staff-confirmed response;
-- or another bounded mechanism.
-
-The Store membrane has four jobs:
-
-### Receive a bounded question
-
-The outside caller specifies what it needs to know.
-
-### Consult authoritative Store sources
-
-The Store decides which internal source is responsible for the answer.
-
-### Project only the needed answer
-
-Internal operational detail does not automatically leave the Store.
-
-### Preserve source and freshness
-
-The receiving system can determine what the answer represents and when it ceases to be usable.
-
----
-
-# 9. The Membrane Is a Projection Boundary
-
-The same internal Store fact may be projected differently depending on the caller.
-
-Example: inventory.
-
-The ERP may internally contain:
-
-```text
-SKU
-exact quantity
-warehouse
-rack
-unit cost
-average cost
-supplier
-open PO
-customer allocations
-reorder point
-last count
-adjustments
-margin
-```
-
-An anonymous project inquiry may receive only:
-
-```text
-material match: YES
-local stock state: ON_HAND
-requested quantity: SUFFICIENT
-freshness: CURRENT
-```
-
-An authenticated customer account may additionally receive:
-
-```text
-customer price
-orderable quantity
-pickup option
-delivery option
-```
-
-Store personnel may see the full internal record.
-
-The underlying inventory did not change.
-
-Only the **projection through the membrane** changed.
-
----
-
-# 10. Publicly Callable ≠ Publicly Visible
-
-Store Zero may permit the public to ask a question without publishing the data used to answer it.
-
-For example:
-
-> Can Store Zero presently satisfy a requirement for three panel blanks of the declared material class and dimensions?
-
-The Store may return:
-
-**YES — represented from current local stock**
-
-without publishing:
-
-> There are exactly 31 sheets in rack P-17, average cost $37.42, 12 allocated to Contractor X, next PO arriving Thursday.
-
-This distinction is central.
-
-Scan-to-Build needs useful access.
-
-It does not need surveillance access.
-
----
-
-# 11. Membrane Access Classes
-
-Store Zero uses different information boundaries for different actors.
-
-| Access class | Typical caller | Permitted scope |
-|---|---|---|
-| Public | Anonymous visitor | General offerings, services, bounded capability, public inquiry results |
-| Project-scoped | Governed project holder | Answers relevant to the submitted requirement |
-| Account-scoped | Store customer / contractor account | Account pricing, quotes, orders, delivery, invoices as permitted by existing Store systems |
-| Store operational | Authorized Store staff | Internal systems appropriate to role |
-| Supplier/trading partner | Supplier or buying network | Agreed catalog, purchase, shipment, invoice, and related transactions |
-| Machine-local | Authorized Store/machine-side system | Only information required for bounded machine evaluation or later physical execution |
-
-These classes describe the boundary.
-
-They do not create authentication or authorization implementations by themselves.
-
----
-
-# 12. What Scan-to-Build Needs From Stock
-
-Scan-to-Build does **not** require blanket access to all Store Zero inventory.
-
-The first useful stock interface should answer a requirement rather than expose an inventory dump.
-
-For a requested material line, useful answers may include:
-
-**Material match** — Does represented stock correspond to the requested material identity/form?
-
-**Dimension match** — Does usable represented stock meet the dimensional requirement?
-
-**Quantity sufficiency** — Is represented quantity sufficient for the requested quantity?
-
-**Location/channel** — Is the answer local stock, another branch, supplier, or special order?
-
-**Freshness** — When was the answer established and when should it no longer be relied upon?
-
-**Limitations** — What does this stock answer not prove?
-
-Exact quantity may be exposed when Store Zero chooses to expose it.
-
-It is not required merely to answer whether the current request is supportable.
-
----
-
-# 13. What Must Remain Distinct in Stock
-
-The following states shall not collapse:
-
-```text
-CATALOGED
-    ≠
-OFFERED
-    ≠
-ON HAND
-    ≠
-SUFFICIENT FOR REQUEST
-    ≠
-ALLOCATED
-    ≠
-RESERVED
-    ≠
-PICKED
-    ≠
-STAGED
-    ≠
-LOADED
-    ≠
-DELIVERED
-```
-
-A Store interface that reduces those states to one boolean named `available` loses consequential information.
-
----
-
-# 14. Supplier and Special-Order Membrane
-
-Store Zero's supplier network is one of its most valuable existing assets.
-
-Scan-to-Build should make that capability callable without requiring disclosure of the underlying commercial relationship.
-
-The Store may know internally:
-
-- supplier identity;
-- supplier account;
-- negotiated cost;
-- buying-group terms;
-- freight terms;
-- rebate structure;
-- purchase minimums;
-- lead times;
-- cancellation rules;
-- return rules.
-
-The project may need only:
-
-> Matching material is not presently represented from local stock.
-
-> A special-order route is represented.
-
-> Supplier confirmation is required.
-
-> Expected lead-time information is available / unavailable.
-
-> Customer price requires a Store quote.
-
-The relationship remains Store Zero's.
-
-The **ability to use the relationship** becomes callable.
-
----
-
-# 15. Existing EDI Pattern
-
-Store Zero's supplier systems provide a useful precedent for the Scan-to-Build membrane.
-
-Trading partners already exchange bounded documents rather than exposing entire internal systems.
-
-Common supply-chain messages include the equivalents of:
-
-```text
-PRODUCT / CATALOG DATA
-        ↓
-PURCHASE ORDER
-        ↓
-PURCHASE ORDER ACKNOWLEDGMENT
-        ↓
-SHIP NOTICE / MANIFEST
-        ↓
-RECEIPT
-        ↓
-INVOICE
-        ↓
-PAYMENT / REMITTANCE
-```
-
-The lesson for Scan-to-Build is architectural:
-
-> **Share the transaction or answer required by the relationship, not the entire source system.**
-
----
-
-# 16. Price and Commercial Sovereignty
-
-Store Zero retains authority over:
-
-- cost;
-- margin;
-- customer-specific pricing;
-- contract pricing;
-- discounts;
-- credit;
-- quote validity;
-- taxes;
-- payment;
-- commercial terms.
-
-Scan-to-Build may carry or present a merchant-generated price or quote.
-
-It shall not infer one from private cost information.
-
-The following remain distinct:
-
-```text
-PRICE OBSERVATION
-    ≠
-CUSTOMER PRICE
-    ≠
-ESTIMATE
-    ≠
-QUOTE
-    ≠
-ORDER
-    ≠
-PAYMENT
-```
-
-The Store membrane may expose different commercial information to different customer/account classes.
-
----
-
-# 17. Capability Membrane
-
-Physical capability follows the same sovereignty pattern as stock.
-
-Store Zero may internally know:
-
-- exact machine;
-- manufacturer;
-- model;
-- maintenance condition;
-- workholding;
-- tooling;
-- calibration;
-- operator schedule;
-- guarding;
-- controller;
-- machine coordinates;
-- internal operating procedure.
-
-The outside project does not automatically need those details.
-
-It may need:
-
-> Material family supported.
-
-> Square crosscut represented.
-
-> Maximum usable stock envelope.
-
-> Operator required.
-
-> Current readiness requires Store confirmation.
-
-> These refusal conditions apply.
-
-A **capability projection** is not a machine-control interface.
-
----
-
-# 18. Store Zero Existing Processing Baseline
-
-Store Zero declares one existing bounded employee-operated material-preparation capability.
-
-Its initial purpose is to represent the kind of light processing already found in many building-material operations without declaring a future Scan-to-Build machine design.
-
-Baseline declaration:
-
-**Service family** — employee-operated material preparation.
-
-**Represented operation** — bounded square crosscut.
-
-**Material family** — dimensional stock within later-declared limits.
-
-**Operator** — required.
-
-**Automation** — none assumed.
-
-**Remote motion** — absent.
-
-**Production API** — absent.
-
-**Machine-specific geometry** — not yet declared.
-
-**Readiness** — Store-controlled.
-
-This declaration allows the first Store analysis to ask:
-
-> Can the project be fulfilled using a resolved packet plus processing Store Zero already performs?
-
-Only demonstrated gaps justify an additional machine capability.
-
----
-
-# 19. What Scan-to-Build Adds
-
-Store Zero already has systems for conventional commerce.
-
-Scan-to-Build adds the missing upstream connection.
-
-| Existing Store capability | Scan-to-Build addition |
-|---|---|
-| Product catalog | Project requirement can exist before product selection |
-| SKU/item master | Governed material requirement can be matched to merchant products |
-| Inventory | Project-specific bounded stock inquiry |
-| Supplier catalogs | Project-specific special-order inquiry |
-| Counter sales | New inbound project channel |
-| Takeoff | Earlier requirement formation before conventional takeoff |
-| Quote | Resolved requirement can later request merchant quote |
-| Cut service | Capability becomes explicitly queryable |
-| Yard knowledge | Refusal conditions can be made visible |
-| Delivery | Fulfillment option can be attached to the resolved path |
-| Historical failed inquiries | Refusal/defer reasons can be preserved rather than disappearing |
-
----
-
-# 20. What Scan-to-Build Does Not Add at Baseline
-
-Store Zero does not initially add:
-
-- a replacement ERP;
-- replacement POS;
-- replacement WMS;
-- replacement accounting;
-- replacement customer-credit system;
-- new payment system;
-- universal inventory database;
-- public view of internal inventory;
-- public supplier contracts;
-- public Store costs or margins;
-- unrestricted CAD service;
-- unrestricted custom manufacturing;
-- live machine control;
-- production authorization;
-- automated stock reservation;
-- automated purchasing;
-- automatic material substitution.
-
-Those functions may later connect where justified.
-
-They are not prerequisites for proving the Store boundary.
-
----
-
-# 21. Store Membrane Integration Modes
-
-A future real yard shall not be disqualified merely because it lacks a modern REST API.
-
-The Store membrane should be capable of adapting to several implementation modes.
-
-## Native API
-
-Preferred when the dealer system exposes a supported bounded interface.
-
-Useful for:
-
-- catalog;
-- stock inquiry;
-- customer account;
-- quote/order status;
-- other current data.
-
-## EDI
-
-Natural fit for established supplier and trading-partner transactions.
-
-Useful for:
-
-- catalog/item data;
-- purchase orders;
-- acknowledgments;
-- shipment notices;
-- invoices;
-- remittance.
-
-## Supported connector
-
-Vendor or third-party integration layer between Store systems and outside applications.
-
-## Controlled export/import
-
-CSV, JSON, or another file representation where no live interface is required.
-
-The export must preserve source and freshness.
-
-## Staff-confirmed adapter
-
-A human Store participant supplies or confirms the answer.
-
-This is a legitimate implementation path.
-
-Manual does not mean invalid.
-
-## Fixture adapter
-
-Synthetic Store Zero data used for deterministic testing.
-
-No fixture result is represented as live Store data.
-
----
-
-# 22. Direct Database Access Is Not the Architecture
-
-A direct database connection may occasionally be technically possible.
-
-It is not the assumed Scan-to-Build integration model.
-
-Direct coupling risks:
-
-- exposing irrelevant information;
-- bypassing Store business rules;
-- coupling Scan-to-Build to one vendor schema;
-- weakening Store control;
-- making system upgrades fragile;
-- confusing internal state with externally authorized facts.
-
-The preferred boundary is a Store-controlled projection or adapter.
-
----
-
-# 23. Freshness
-
-Some Store facts change slowly.
-
-Others change by the minute.
-
-Examples:
-
-**Material definition** — relatively stable.
-
-**Store service declaration** — moderately stable.
-
-**Machine capability envelope** — stable until equipment/configuration changes.
-
-**Supplier route** — may change.
-
-**Price** — may change quickly.
-
-**On-hand quantity** — may change immediately after a sale, pick, receipt, adjustment, or reservation.
-
-Therefore a Store answer must carry enough temporal context for a receiving system to know whether it may still be relied upon.
-
-A stale answer does not silently become current because no newer answer is available.
-
----
-
-# 24. Write Authority
-
-The initial Store membrane should be primarily **read/query oriented**.
-
-Scan-to-Build may ask:
-
-- what material is represented;
-- what stock state is represented;
-- what supplier route exists;
-- what service/capability exists;
-- what fulfillment paths are represented.
-
-It does not initially:
-
-- change inventory;
-- reserve stock;
-- create purchase orders;
-- alter customer accounts;
-- modify Store pricing;
-- allocate trucks;
-- issue machine commands.
-
-Those are later integrations that must earn explicit authority.
-
----
-
-# 25. The Public Inbound Path
-
-The Store membrane should eventually support useful anonymous or low-identity inquiry.
-
-A person should be able to discover whether a relevant path appears to exist without first becoming:
-
-- a sales lead;
-- a contractor account;
-- a purchase order;
-- or a fully specified customer.
-
-Example:
-
-```text
-"I need shelves that fit this opening."
-          ↓
-bounded project definition
-          ↓
-Store Zero inquiry
-          ↓
-material class represented?
-stock route represented?
-special-order route represented?
-processing capability represented?
-          ↓
-useful answer
-```
-
-Only when the person chooses to proceed does the process need to cross into the applicable commercial/account path.
-
-This preserves the distinction between **demand formation** and **customer acquisition**.
-
----
-
-# 26. Existing Product Portal vs Scan-to-Build Door
-
-Store Zero's conventional digital portal begins approximately here:
-
-```text
-KNOW PRODUCT
-    ↓
-SEARCH
-    ↓
-PRICE
-    ↓
-CART / QUOTE
-    ↓
-ORDER
-```
-
-Scan-to-Build begins earlier:
-
-```text
-KNOW NEED
-    ↓
-DESCRIBE / CAPTURE
-    ↓
-RESOLVE REQUIREMENT
-    ↓
-ASK STORE WHAT IS POSSIBLE
-    ↓
-THEN, IF APPROPRIATE:
-PRODUCT / QUOTE / MAKE / REFER / DEFER / REFUSE
-```
-
-The two channels should converge rather than compete.
-
----
-
-# 27. The Membrane Between Project and Commerce
-
-The governed project remains upstream of Store commerce.
-
-A project may exist before:
-
-- Store selection;
-- product selection;
-- SKU selection;
-- price;
-- quote;
+- a physical count at a real yard;
 - reservation;
-- order.
+- fitness of each individual piece;
+- lot/grade confirmation beyond the fixture declaration;
+- commercial commitment;
+- machine readiness;
+- project authorization.
 
-Once the Store has returned a usable answer, the project may deliberately enter the yard's existing commercial workflow.
+A synthetic supplier or special-order path may be returned as useful context. It does not convert `ON_HAND_SHORT` or `NOT_ON_HAND` into `SUPPORTABLE` in the Stage-2 job evaluator.
+
+---
+
+## 11. Economics
+
+Store Zero economics are deliberately deterministic and deliberately non-commercial.
+
+### 11.1 Price rule
 
 ```text
-GOVERNED PROJECT
-       ↓
-STORE MEMBRANE
-       ↓
-MATERIAL / CAPABILITY MATCH
-       ↓
-OWNER CHOICE
-       ↓
-EXISTING STORE COMMERCE
-QUOTE → ORDER → PICK → FULFILL
+sellingPrice = ROUND(list_reference × 1.05, 2)
 ```
 
-The Store does not own the project merely because the project queried it.
+The 5% value is the declared fixture rule `SZ-MARK-ON-5`. It is a mark-on, not a statement of real dealer margin.
 
----
+### 11.2 D-001 modeled recovery
 
-# 28. The Membrane Between Store and Machine
+The reference pricing engine declares:
 
-The machine boundary is narrower still.
+- setup charge: `$35.00`;
+- modeled machine-hour recovery: `$100.00/hour`;
+- job setup time: `8.0 min`;
+- load/seat allowance: `0.6 min` per modeled stick cycle;
+- release/label allowance: `0.4 min` per modeled stick cycle;
+- cycle model: `STB-D001-CYCLE-MODEL-S2-0.1`;
+- basis: `CALCULATED`;
+- measured: `false`;
+- commissioned: `false`.
 
-A future machine-side component should receive only the information necessary to evaluate or perform its bounded responsibility.
+The engine also contains explicit saw/drill/mill timing assumptions tied to the Stage-2 envelope. Those assumptions are model parameters, not measured production behavior.
 
-It does not need:
-
-- customer credit;
-- Store margin;
-- unrelated project history;
-- unrelated inventory;
-- supplier negotiations;
-- marketing information.
-
-Conceptually:
+For an admitted dimensional job:
 
 ```text
-GOVERNED WORK REQUIREMENT
-          +
-STORE MATERIAL / STOCK SELECTION
-          +
-DECLARED MACHINE CAPABILITY
-          ↓
-BOUNDED MACHINE-SIDE EVALUATION
+material = Σ fixture selling-price extensions
+cell_recovery = setup_charge + machine_hour_rate × modeled_hours
+Q = material + cell_recovery + hardware
 ```
 
-Machine capability does not override Store, owner, or governed authority.
+`Q` / `BudgetaryEstimate` is not a commercial quote.
+
+### 11.3 S-001 economics
+
+For the current S-001 Mode-2 and arched-aperture reference paths, material price may be returned as `BUDGETARY_MATERIAL_ONLY`. Process time and fabrication Q remain unresolved. The Store must not invent a process price merely because the material line can be priced.
+
+### 11.4 Economics non-claims
+
+Fixture prices are not live prices. Modeled cycle time is not measured machine time. A budgetary estimate is not seller-of-record commitment. A price does not authorize production.
 
 ---
 
-# 29. Store Zero Information Classes
+## 12. Store dispositions and coverage rule
 
-Store Zero information is divided conceptually into five exposure classes.
+The Stage-2 aggregate Store job dispositions are:
 
-| Class | Example | Default posture |
-|---|---|---|
-| Public | Store services, public product information | May be exposed |
-| Project-scoped | Material/capability answer for one requirement | Expose only to applicable project interaction |
-| Account/commercial | Contract pricing, quote, invoice, account information | Authenticated Store relationship |
-| Operational | Exact inventory details, purchase state, internal allocations, staff workflow | Store internal |
-| Sensitive/control | Credentials, private contracts, detailed machine controls, security data | Do not expose through public Store interface |
+- `SUPPORTABLE`;
+- `UNRESOLVED`;
+- `REFUSED`;
+- `UNAVAILABLE`.
 
-An implementation may refine these classes later.
+Current Stage-2 meaning:
 
----
+### `SUPPORTABLE`
 
-# 30. Store Zero Asset-to-Membrane Map
+Every consequential evaluated line has a recognized offering, resolvable reference price, declared capability for the requested operation within the evaluated reference envelope, and sufficient fixture-declared on-hand stock.
 
-| Internal asset | Holder | What Scan-to-Build may need | What may remain private |
-|---|---|---|---|
-| Item master | Store | Material/product match | Full internal taxonomy |
-| SKU | Store/merchant | Merchant product identity | Internal merchandising notes |
-| Inventory | Store | On-hand/sufficiency/freshness | Full counts if unnecessary, rack data, costs |
-| Supplier catalog | Supplier/Store | Special-order match | Negotiated supplier relationship |
-| Purchase system | Store | Whether supply route exists | Cost, PO history, purchasing strategy |
-| Pricing | Store | Applicable customer-facing price when offered | Cost and margin |
-| Contractor account | Store/customer | Applicable quote/order relationship | Other projects, credit history |
-| Cut service | Store | Declared operation/envelope/refusal | Internal procedures not needed by caller |
-| Machine | Store | Capability projection | Controller internals and maintenance detail |
-| Staff knowledge | Responsible employee | Confirmed capability/refusal/exception | Unrelated employee information |
-| Dispatch | Store | Available fulfillment mode/status | Fleet operations not relevant to project |
-| Delivery record | Store | Project delivery result | Other customer routes |
-| Refusal history | Store/project | Relevant refusal and reason | Unrelated customer information |
+`SUPPORTABLE` means the Store reference can support the declared request. It does not mean authorized, machine-ready, physically commissioned, paid, reserved, or fabricated.
 
----
+### `UNRESOLVED`
 
-# 31. First Store Zero Questions
+A required Store answer cannot be established from the declared state—for example, missing/unresolved SKU, missing price, or an admitted evaluator path that explicitly returns unresolved geometry/definition status.
 
-Before implementing a project fixture, Store Zero should be able to answer these questions about itself:
+### `REFUSED`
 
-**Material** — What material classes/forms does Store Zero represent?
+The request exceeds the declared Store offering or capability rule—for example, no offering, unsupported operation, unsupported geometry/envelope, or explicit capability refusal.
 
-**On hand** — Which relevant offerings have current local stock evidence?
+### `UNAVAILABLE`
 
-**Supplier** — What can Store Zero obtain through existing special-order channels?
+The offered line exists and may otherwise be processable, but fixture-declared available stock is short or zero for the requested quantity.
 
-**Commercial** — What information can be exposed publicly, project-scoped, or only after a customer/account relationship exists?
+### Coverage rule
 
-**Capability** — What bounded processing does Store Zero already perform?
+Every consequential Store-relevant demand line must receive a disposition. No omitted line may be interpreted as implicitly supported, priced, available, fulfilled, or authorized.
 
-**People** — Which acts still require Store personnel?
-
-**Fulfillment** — What can be picked up, delivered, referred, or otherwise fulfilled?
-
-**Refusal** — What will Store Zero not do?
-
-**Freshness** — Which answers require current confirmation?
-
-**Authority** — Who inside Store Zero owns each answer?
-
-If Store Zero cannot answer one of those questions, the absence itself is a useful implementation finding.
+Protocol/implementation failure is not silently converted into a Store business disposition. If the evaluator itself cannot complete correctly, that failure must remain distinguishable from `UNRESOLVED`, `REFUSED`, or `UNAVAILABLE` as Store meanings.
 
 ---
 
-# 32. First Project After the Store Baseline
+## 13. Machine capability — canonical boundary summary
 
-The first project brought to Store Zero should remain the constrained-space shelving case.
+Detailed D-001/S-001 declaration, sensing/reference, evidence, and acceptance content belongs in this same canonical file and follows the same boundary:
 
-The private implementation does not require a fictional customer character.
+- Store owns a bounded capability declaration sufficient to answer the Store question;
+- machine/cell engineering owns installed iron, exact travel, station geometry, control, sensing, interlocks, and measured behavior;
+- reference/model capability is not commissioned capability;
+- patent correspondence is not commissioning or safety evidence;
+- no application or Store path emits live-motion commands or remote Cycle Start.
 
-The useful spine is:
+The active pinned reference families are `D001-STAGE2-ENVELOPE-0.2`, `D001_FEATURED_BOARD_V0`, `SHEET_MODE2_STENCIL_V1`, and `SHEET_MODE2_ARCHED_APERTURE_V0`. Their deeper consolidated definitions are added without changing those ownership boundaries.
+
+---
+
+## 14. Fulfillment and completion — canonical boundary summary
+
+A machine result is not automatically a completed customer project. Where a bounded primary machine contribution leaves a declared residual operation, the residual must be explicit and independently resolved.
+
+Current admitted secondary-operation classes are intentionally narrow:
+
+- D-001: `FINAL_DRILL_TO_DIAMETER` only where a declared pilot contribution and larger finished-hole requirement are explicitly represented;
+- S-001: `REMOVE_RETAINED_TABS` for the admitted Mode-2 retained-tab path.
+
+A Store result other than `SUPPORTABLE` does not become supportable merely because a person could perform additional work later.
+
+Labels, staging, pickup/delivery readiness, closeout record, and custody transfer remain distinct Store/completion states. Payment/live-commerce capability is not created by this file.
+
+---
+
+## 15. Determinism and provenance
+
+A Store Zero answer should retain, as applicable:
+
+- request/project identity;
+- revision;
+- Store Zero document/state identity;
+- catalog clock;
+- stock clock;
+- capability-envelope identity/version;
+- economics engine identity/version;
+- exact source commit and path-specific dependency pin;
+- response digest where the implementation produces one.
+
+The record should make it possible to answer both directions:
 
 ```text
-EXISTING CONSTRAINED SPACE
-          ↓
-RECORDED SITE EVIDENCE
-          ↓
-OWNER REQUIREMENTS / PREFERENCES
-          ↓
-BOUNDED SHELF CONFIGURATION
-          ↓
-MATERIAL REQUIREMENT
-          ↓
-STORE ZERO MEMBRANE
-          ↓
-LOCAL STOCK?
-SUPPLIER PATH?
-EXISTING CUT SERVICE?
-ADDITIONAL MACHINE CAPABILITY?
-          ↓
-RESULT
+What facts produced this Store answer?
+What later result depended on this Store answer?
 ```
 
-The Store Zero file does not define the final shelf fixture.
-
-That fixture is a later artifact.
-
-Its job will be to exercise the Store Zero model established here.
+A Store Zero response is reproducible only within its declared state. Changing stock, price, capability, implementation, material identity, or request revision can legitimately change the answer. That change must be visible rather than silently overwritten.
 
 ---
 
-# 33. Audit Requirement
+## 16. Promotion rule
 
-A reviewer examining a Store Zero result should be able to determine:
+A capability does not become Store Zero capability merely because:
 
-- what came from the project;
-- what came from Store Zero;
-- what came from a supplier;
-- which Store system or person supplied the answer;
-- whether the answer was synthetic, observed, calculated, or otherwise represented;
-- when the answer was current;
-- which information remained private;
-- what was unresolved;
-- why the Store accepted, deferred, or refused the inquiry;
-- whether any new capability was actually required.
+- it was discussed;
+- it appears in a patent figure;
+- it appears in Atlas research;
+- an HTML visualization rendered;
+- a simulation succeeded;
+- a controller theoretically supports it;
+- a model produced a favorable cycle time.
 
-The reviewer should not need access to Store Zero's fictional internal database to understand the decision.
+The evidence ladder used by the current Store/machine work is directional:
 
-That is one of the purposes of the membrane.
+```text
+DECLARED / REFERENCE
+        ↓
+MODELED
+        ↓
+BENCH-OBSERVED
+        ↓
+MEASURED
+        ↓
+COMMISSIONED
+```
 
----
+Exact owning-source vocabulary controls where already defined. This ladder is not a new runtime state machine.
 
-# 34. Contributor Requirement
-
-A future contributor may replace a Store Zero subsystem without redefining Scan-to-Build.
-
-Examples:
-
-- replace the synthetic ERP adapter with BisTrack;
-- replace it with Spruce;
-- replace it with Frameworks;
-- replace it with Agility;
-- connect a different dealer-management system;
-- use an EDI provider;
-- use a vendor catalog;
-- use a file export;
-- use a manual staff-confirmation path.
-
-The implementation may change.
-
-The Store question should remain understandable.
+A Store-visible promotion requires a deliberate, versioned Store declaration with the appropriate evidence basis. Physical commissioning and safety require their own competent engineering evidence.
 
 ---
 
-# 35. Real-World System Families Informing Store Zero
+## 17. Safety invariant
 
-The Store Zero model is informed by current LBM software and integration patterns.
+**NO BLOOD ON WOOD.**
 
-Examples include:
-
-**Dealer ERP / POS** — purpose-built systems combining sales, inventory, purchasing, customer accounts, accounting, and related dealer operations.
-
-**Warehouse / yard tools** — mobile receiving, barcode scanning, counts, tallies, put-away, picking, staging, and loading.
-
-**Supplier EDI / catalogs** — digital product data, price files, purchase orders, acknowledgments, shipment notices, invoices, and related trading-partner documents.
-
-**Product information management (PIM)** — curated product/catalog information suitable for publishing through multiple digital channels.
-
-**E-commerce / contractor portals** — catalog, account pricing, quotes, orders, invoices, payment, will-call, delivery, and account history.
-
-**Takeoff / estimating systems** — translation from plans and project documents into material quantities, quote lines, and orders.
-
-**Dispatch / proof-of-delivery systems** — route planning, manifests, delivery status, signatures, photographs, and delivery records.
-
-**In-house production modules** — millwork, remanufacturing, cut optimization, production scheduling, or other dealer-specific value-added work.
-
-These system families are reference context.
-
-Store Zero does not depend on any specific vendor.
-
----
-
-# 36. Design Principle
-
-Store Zero should become more digitally callable without becoming less independent.
-
-Its systems remain its systems.
-
-Its relationships remain its relationships.
-
-Its machines remain its machines.
-
-Its employees retain their roles.
-
-Its private commercial information remains private unless the Store deliberately exposes it.
-
-Scan-to-Build contributes a new way for useful demand to arrive.
-
-The membrane is successful when a project can receive an honest answer from the Store while the Store retains control of the systems and assets that produced that answer.
-
----
-
-# 37. Baseline
-
-Store Zero therefore begins as:
-
-> **A fictional but realistic independent lumber and building-materials yard with ordinary commercial systems, local stock, supplier relationships, contractor and retail channels, limited existing processing, pickup and delivery capability, and a controlled digital membrane through which Scan-to-Build may ask bounded questions without taking ownership of Store operations.**
-
-The first implementation objective is not to automate Store Zero.
-
-It is to make Store Zero **truthfully callable**.
-
-From that baseline:
-
-**map the existing asset  
-→ declare its holder  
-→ define what may cross the membrane  
-→ ask the bounded question  
-→ preserve the answer and its limits  
-→ expose the actual gap  
-→ add only what the gap justifies.**
+Nothing in Store supportability, budgetary economics, patent correspondence, a WorkPacket, simulation, machine-neutral operations, or this canonical file establishes safe physical operation or production readiness.
