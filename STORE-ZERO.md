@@ -473,7 +473,7 @@ The compact canonical catalog reproduces the active offering set, Store SKU, mat
 
 The machine-readable catalog remains controlling for exact per-line actual dimensions, assertion bases, observation IDs, supplier paths, source fields and limitations. Historical supported-operation arrays remain evidence of the pinned implementation state; they do not override a later deliberately versioned canonical capability declaration.
 
-For `MILL_EDGE_BOUNDED`, the current canonical Store meaning is additionally declared in `D001-BOARD-EDGE-MILL-REFERENCE-0.1.md` (`D001-BOARD-EDGE-MILL-REF-0.1`). That declaration removes the separate 60 in edge-milling length cap and admits the operation across the current 3/4 in Select Pine, Select Poplar, Select Red Oak and Select Cherry solid-board families, subject to its retained width/pass limits and the active parent-handling/support condition. Future adapters that claim the current canonical Store state must consume that declaration rather than silently reusing the older 60 in limit or older per-line omission.
+For `MILL_EDGE_BOUNDED`, the current canonical Store meaning is declared in `D001-BOARD-EDGE-MILL-REFERENCE-0.2.md` (`D001-BOARD-EDGE-MILL-REF-0.2`). That declaration removes the separate 60 in edge-milling length cap, removes unsupported parent span as a Store supportability gate, and admits the operation across the current 3/4 in Select Pine, Select Poplar, Select Red Oak and Select Cherry solid-board families, subject to its retained machining limits. Future adapters that claim the current canonical Store state must consume that declaration rather than silently reusing the older 60 in limit, the older 96 in unsupported-parent gate, or older per-line omission.
 
 This is not a semantic escape hatch: this file contains enough data to understand the Store without hunting for the existence, price, stock quantity, material family, or broad processing family of any active offering.
 
@@ -636,11 +636,11 @@ The following are **reference fixture values**, useful for deterministic Store t
 - fixed fence/table coordinate concept: X along fence, Y=0 at fence, Z=0 at support plane;
 - named Stage-2 stations include two saws, two manipulating rollers and bounded mill stations;
 - reference base length: 72 in;
-- reference maximum parent length without external support: 96 in;
+- historical Stage-2 unsupported-parent reference: 96 in; current canonical Store evaluation does not use unsupported span as an operation-supportability limit — Store material handling/support is assumed for the full length of stock the Store offers;
 - reference maximum stock width: 12 in;
 - reference loaded X feed maximum: 480 in/min;
 - reference mill cutting feed: 48 in/min;
-- no separate longitudinal edge-milling length maximum for `MILL_EDGE_BOUNDED`; that operation may extend over the full length of any parent admitted by the active Store material-handling/support condition, per `D001-BOARD-EDGE-MILL-REF-0.1`;
+- no separate longitudinal edge-milling length maximum for `MILL_EDGE_BOUNDED`; that operation may extend over the full offered parent length, per `D001-BOARD-EDGE-MILL-REF-0.2`;
 - reference mill depth per pass: 0.375 in;
 - reference longitudinal mill cut width maximum: 1.0 in;
 - reference end-mill reach: 8 in;
@@ -666,7 +666,7 @@ Current source families recognize or preserve demand for:
 
 ### 13.8.1 Current bounded full-length edge-milling declaration
 
-`D001-BOARD-EDGE-MILL-REF-0.1` is the current canonical Store Zero declaration for the specific operation `MILL_EDGE_BOUNDED` — **Mill edge to finished width**.
+`D001-BOARD-EDGE-MILL-REF-0.2` is the current canonical Store Zero declaration for the specific operation `MILL_EDGE_BOUNDED` — **Mill edge to finished width**.
 
 For that operation:
 
@@ -675,12 +675,12 @@ For that operation:
 - material is removed from the opposing longitudinal edge;
 - the board is fed longitudinally in one direction;
 - there is no separate 60 in cutting-length cap;
-- cutting length may equal the full parent length admitted by the active stock-handling/support condition;
+- cutting length may equal the full offered parent length;
 - the existing 12 in maximum stock width, 1.0 in maximum total edge removal, 0.375 in mill depth per pass and 48 in/min reference cutting feed remain;
-- the current no-external-support parent limit remains 96 in;
+- adequate infeed/outfeed/material support is an ordinary Store handling responsibility for offered stock and does not make an otherwise supportable operation unresolved;
 - current 3/4 in Select Pine, Select Poplar, Select Red Oak and Select Cherry solid-board offerings may use this reference operation where geometry otherwise fits and no more-specific limitation is declared.
 
-This is a versioned reference/model capability declaration, not a commissioned-machine claim. Physical workholding, fence retention, clamping/manipulating rollers or equivalent retention, sensing, guarding, interlocks and acceptance evidence remain engineering/commissioning responsibilities.
+This is a versioned reference/model capability declaration, not a commissioned-machine claim. The reference Store assumes adequate material support for the stock it offers. Physical workholding, fence retention, clamping/manipulating rollers or equivalent retention, sensing, guarding, interlocks and acceptance evidence remain engineering/commissioning responsibilities.
 
 Do not widen those names into arbitrary machining. A nominal operation name still has to fit the active material, feature and envelope declaration.
 
@@ -1076,7 +1076,7 @@ Do not invent population statistics. A structure may exist before frequency data
 | D-001 third manipulating roller | patent correspondence + current open question | does another contact/drive point materially improve retention, short-stock handling or recovery? | one additional manipulating roller if evidence earns it | not yet measured |
 | D-001 simple cleanup/taper function | retained demand + current research hypothesis | can one bounded tool avoid transfer/flip/layout/rereference? | narrow router/mill function, not universal axis expansion | not yet measured |
 | D-001 miter | disclosed/published family but numeric current physical range unresolved | when is bounded angle work worth carrying locally? | smallest declared miter actuation/range that answers real demand | not yet measured |
-| D-001 over-length stock | Stage-2 >96 in requires external support | handling may dominate usefulness | bounded external support/roller-stand solution | not yet measured |
+| D-001 full-length stock support | current canonical Store treats adequate support for offered stock as ordinary Store handling, not a machining-capability gate | what support/workholding is needed to retain the reference safely through the full offered length? | yard-appropriate infeed/outfeed/support and verified workpiece retention; exact physical arrangement remains engineering | not yet measured |
 | D-001 first digital bridge | manual control case remains current physical truth | can one digital finished length become one measured cut without tape/pencil layout? | controlled positioning + one cut-to-length path | planned physical experiment |
 | S-001 physical support/workholding | reference model only | can a sheet retain reference through the bounded profile? | smallest support/clamp/reference architecture | not yet measured |
 | S-001 physical work field | software/reference field 48 × 36 | what usable field remains after real guards/tool/workholding geometry? | physical frame/travel sufficient for the first research part | not yet measured |
