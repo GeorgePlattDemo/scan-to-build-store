@@ -471,7 +471,11 @@ Hardware is sourced Store material, not fabricated merely because it appears in 
 
 The compact canonical catalog reproduces the active offering set, Store SKU, material/form description sufficient to distinguish the offering, dimensional variant, reference price, calculated Store Zero selling price, fixture on-hand quantity, and broad processing-family meaning.
 
-The machine-readable catalog remains controlling for exact per-line actual dimensions, assertion bases, observation IDs, supported-operation arrays, supplier paths, source fields and limitations. This is not a semantic escape hatch: this file contains enough data to understand the Store without hunting for the existence, price, stock quantity, material family, or broad processing family of any active offering.
+The machine-readable catalog remains controlling for exact per-line actual dimensions, assertion bases, observation IDs, supplier paths, source fields and limitations. Historical supported-operation arrays remain evidence of the pinned implementation state; they do not override a later deliberately versioned canonical capability declaration.
+
+For `MILL_EDGE_BOUNDED`, the current canonical Store meaning is additionally declared in `D001-BOARD-EDGE-MILL-REFERENCE-0.1.md` (`D001-BOARD-EDGE-MILL-REF-0.1`). That declaration removes the separate 60 in edge-milling length cap and admits the operation across the current 3/4 in Select Pine, Select Poplar, Select Red Oak and Select Cherry solid-board families, subject to its retained width/pass limits and the active parent-handling/support condition. Future adapters that claim the current canonical Store state must consume that declaration rather than silently reusing the older 60 in limit or older per-line omission.
+
+This is not a semantic escape hatch: this file contains enough data to understand the Store without hunting for the existence, price, stock quantity, material family, or broad processing family of any active offering.
 
 ---
 
@@ -636,7 +640,7 @@ The following are **reference fixture values**, useful for deterministic Store t
 - reference maximum stock width: 12 in;
 - reference loaded X feed maximum: 480 in/min;
 - reference mill cutting feed: 48 in/min;
-- reference longitudinal-profile maximum: 60 in;
+- no separate longitudinal edge-milling length maximum for `MILL_EDGE_BOUNDED`; that operation may extend over the full length of any parent admitted by the active Store material-handling/support condition, per `D001-BOARD-EDGE-MILL-REF-0.1`;
 - reference mill depth per pass: 0.375 in;
 - reference longitudinal mill cut width maximum: 1.0 in;
 - reference end-mill reach: 8 in;
@@ -659,6 +663,24 @@ Current source families recognize or preserve demand for:
 - bounded taper/cleanup where later supported;
 - label/identity;
 - explicitly represented secondary completion.
+
+### 13.8.1 Current bounded full-length edge-milling declaration
+
+`D001-BOARD-EDGE-MILL-REF-0.1` is the current canonical Store Zero declaration for the specific operation `MILL_EDGE_BOUNDED` — **Mill edge to finished width**.
+
+For that operation:
+
+- one parent board remains one finished board;
+- the fence/reference edge is retained;
+- material is removed from the opposing longitudinal edge;
+- the board is fed longitudinally in one direction;
+- there is no separate 60 in cutting-length cap;
+- cutting length may equal the full parent length admitted by the active stock-handling/support condition;
+- the existing 12 in maximum stock width, 1.0 in maximum total edge removal, 0.375 in mill depth per pass and 48 in/min reference cutting feed remain;
+- the current no-external-support parent limit remains 96 in;
+- current 3/4 in Select Pine, Select Poplar, Select Red Oak and Select Cherry solid-board offerings may use this reference operation where geometry otherwise fits and no more-specific limitation is declared.
+
+This is a versioned reference/model capability declaration, not a commissioned-machine claim. Physical workholding, fence retention, clamping/manipulating rollers or equivalent retention, sensing, guarding, interlocks and acceptance evidence remain engineering/commissioning responsibilities.
 
 Do not widen those names into arbitrary machining. A nominal operation name still has to fit the active material, feature and envelope declaration.
 
