@@ -572,7 +572,7 @@ fixed_reference_fulfillment = $365.00
 
 cell_consumption
   = $60.00
-  × (modeled_cycle_minutes / 56.16)
+  × (modeled_cycle_minutes / 56.159065)
   × species_wear_factor
 
 fabrication_fulfillment_recovery
