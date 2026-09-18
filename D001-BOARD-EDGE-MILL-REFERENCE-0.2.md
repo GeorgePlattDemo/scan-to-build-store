@@ -99,8 +99,8 @@ For a project-required finished board width:
 3. calculate edge removal;
 4. if edge removal exceeds 1.0 in, refuse the bounded operation;
 5. if parent width exceeds 12 in, refuse the bounded operation;
-6. if parent length is not admitted by the active handling/support condition, return the appropriate unresolved/refused handling result;
-7. otherwise `MILL_EDGE_BOUNDED` may be evaluated over the full admitted parent length.
+6. do not reject or mark the machining operation unresolved solely because the parent length requires additional ordinary infeed/outfeed/material support;
+7. otherwise `MILL_EDGE_BOUNDED` may be evaluated over the full offered parent length.
 
 The Store must not rewrite the requested finished width to match an offered parent width.
 
