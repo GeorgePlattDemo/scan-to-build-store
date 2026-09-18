@@ -60,14 +60,16 @@ edge_milling_minutes
 For the default Window Seat definition:
 
 ```text
-total longitudinal milling travel = 2,165.28 in
+total longitudinal milling travel = 2,165.00 in
 
 Pine:
-  2,165.28 / 243 = 8.91 min edge milling
+  2,165.00 / 243 = 8.91 min edge milling
 
 Poplar / Red Oak / Cherry:
-  2,165.28 / 216 = 10.02 min edge milling
+  2,165.00 / 216 = 10.02 min edge milling
 ```
+
+The recovery calculation uses unrounded modeled time internally. Displayed minutes are rounded for readability.
 
 The current non-milling modeled time remains:
 
@@ -115,7 +117,7 @@ The cell-consumption component responds to modeled cycle time and a declared spe
 ```text
 cell_consumption
   = $60.00
-  × (modeled_cycle_minutes / 56.16)
+  × (modeled_cycle_minutes / 56.159065)
   × species_wear_factor
 
 fabrication_fulfillment_recovery
@@ -152,8 +154,8 @@ Default illustrative results:
 |---|---:|---:|---:|---:|
 | Select Pine | $698.66 | 56.16 min | $425.00 | $1,123.66 |
 | Select Poplar | $990.54 | 57.27 min | $429.25 | $1,419.79 |
-| Select Red Oak | $1,129.94 | 57.27 min | $435.36 | $1,565.30 |
-| Select Cherry | not mapped at required width | 57.27 min if mapped | $432.30 if mapped | NOT CALCULABLE FROM CURRENT OFFERING |
+| Select Red Oak | $1,129.94 | 57.27 min | $435.37 | $1,565.31 |
+| Select Cherry | not mapped at required width | 57.27 min if mapped | $432.31 if mapped | NOT CALCULABLE FROM CURRENT OFFERING |
 
 The material values above are fixture-dependent examples for the current default Window Seat definition and catalog state. They are not universal project constants.
 
