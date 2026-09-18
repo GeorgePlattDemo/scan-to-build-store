@@ -43,6 +43,7 @@ Accordingly:
 | Stock answer clock | `2026-09-10` | fixture-declared on-hand state; not a physical count |
 | Pricing engine | `STB-STORE-ZERO-PRICE-1` v`0.2.2` | deterministic budgetary economics engine |
 | Pricing engine clock | `2026-09-10` | reference engine state |
+| Window Seat recovery model | `STB-STORE-ZERO-WINDOW-SEAT-RECOVERY-0.1` | class-scoped declared-reference fabrication / fulfillment recovery; supersedes the `$35 + $100/hour` recovery only for `space_utilization.window_seat` |
 | D-001 cycle model | `STB-D001-CYCLE-MODEL-S2-0.1` | CALCULATED / MODELED; not measured; not commissioned |
 | D-001 Stage-2 envelope | `D001-STAGE2-ENVELOPE-0.2` | reference Store evaluation envelope at Stage-2 pin |
 | D-001 featured-board reference | `D001_FEATURED_BOARD_V0` | reference five-tool candidate at published-job pin |
@@ -507,9 +508,9 @@ sellingPrice = ROUND(list_reference × 1.05, 2)
 
 The declared fixture rule is `SZ-MARK-ON-5`. It is a mark-on, not a real dealer margin claim.
 
-### 11.2 D-001 modeled recovery
+### 11.2 Legacy / general D-001 modeled recovery
 
-The reference engine declares:
+The historical/general reference engine declares:
 
 - setup charge `$35.00`;
 - modeled machine-hour recovery `$100.00/hour`;
@@ -531,11 +532,78 @@ Q = material + cell_recovery + hardware
 
 `Q` / `BudgetaryEstimate` is not a commercial quote.
 
+**Window Seat exception:** this recovery formula is **not controlling** for `space_utilization.window_seat` once the class-scoped model `STB-STORE-ZERO-WINDOW-SEAT-RECOVERY-0.1` is selected. The old `$35 + $100/hour` terms remain visible as historical/general Store evidence rather than being silently rewritten.
+
 ### 11.3 S-001 economics
 
 The current S-001 Mode-2 and arched-aperture reference paths may return `BUDGETARY_MATERIAL_ONLY`. Process time and fabrication Q remain unresolved. The Store must not invent a process price because the material line can be priced.
 
 Fixture prices are not live prices. Modeled cycle time is not measured machine time. A budgetary estimate is not seller-of-record commitment. A price does not authorize production.
+
+### 11.4 Window Seat fabrication / fulfillment recovery
+
+For `space_utilization.window_seat`, the active declared-reference economics model is:
+
+`STB-STORE-ZERO-WINDOW-SEAT-RECOVERY-0.1`
+
+Controlling file:
+
+`STB-STORE-ZERO-WINDOW-SEAT-RECOVERY-0.1.md`
+
+The model deliberately separates mapped material from fabrication / fulfillment recovery and optional hardware.
+
+Longitudinal edge-milling feed is derived from:
+
+```text
+feed_rate_ipm = chip_load_in_per_tooth × cutting_edges × spindle_rpm
+```
+
+Current declared reference inputs use a 3/8-in two-flute cutter at 18,000 RPM:
+
+- Select Pine / SOFT WOOD: adjusted chip load `0.00675 IPT` → `243 IPM`;
+- Select Poplar / Red Oak / Cherry / HARD WOOD: adjusted chip load `0.00600 IPT` → `216 IPM`.
+
+The values are declared reference / unmeasured, not commissioned feeds.
+
+For the default Window Seat definition the reference recovery is:
+
+```text
+fixed_reference_fulfillment = $365.00
+
+cell_consumption
+  = $60.00
+  × (modeled_cycle_minutes / 56.16)
+  × species_wear_factor
+
+fabrication_fulfillment_recovery
+  = fixed_reference_fulfillment + cell_consumption
+
+reference_selling_basis
+  = mapped_material
+  + fabrication_fulfillment_recovery
+  + selected_hardware
+```
+
+Declared reference species wear factors:
+
+- Select Pine `1.00`;
+- Select Poplar `1.05`;
+- Select Cherry `1.10`;
+- Select Red Oak `1.15`.
+
+The Pine default is therefore `$425.00` fabrication / fulfillment recovery. The old `$35 setup + $100/hour` recovery is not added to this class-scoped result.
+
+The recovery components are shown separately:
+
+- cell consumption / wear reserve;
+- material handling / fabrication;
+- inspect / label / bundle / stage;
+- facility / admin / rework reserve;
+- service / commercial reserve.
+
+These are declared reference / unmeasured values. They are intended to be replaced by measured tooling, cycle, maintenance, handling and commercial evidence as the reference cell matures.
+
+A Store assortment gap remains a valid answer. If a selected species has no suitable offered parent width, the Store must expose the missing offering rather than invent a SKU or silently substitute material. A complete reference selling basis is not returned for that unmapped material requirement.
 
 ---
 
