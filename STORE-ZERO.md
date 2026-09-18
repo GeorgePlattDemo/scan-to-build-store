@@ -474,7 +474,7 @@ The compact canonical catalog reproduces the active offering set, Store SKU, mat
 
 The machine-readable catalog remains controlling for exact per-line actual dimensions, assertion bases, observation IDs, supplier paths, source fields and limitations. Historical supported-operation arrays remain evidence of the pinned implementation state; they do not override a later deliberately versioned canonical capability declaration.
 
-For `MILL_EDGE_BOUNDED`, the current canonical Store meaning is declared in `D001-BOARD-EDGE-MILL-REFERENCE-0.2.md` (`D001-BOARD-EDGE-MILL-REF-0.2`). That declaration removes the separate 60 in edge-milling length cap, removes unsupported parent span as a Store supportability gate, and admits the operation across the current 3/4 in Select Pine, Select Poplar, Select Red Oak and Select Cherry solid-board families, subject to its retained machining limits. Future adapters that claim the current canonical Store state must consume that declaration rather than silently reusing the older 60 in limit, the older 96 in unsupported-parent gate, or older per-line omission.
+For `MILL_EDGE_BOUNDED`, the current canonical Store meaning is declared in `D001-BOARD-EDGE-MILL-REFERENCE-0.3.md` (`D001-BOARD-EDGE-MILL-REF-0.3`). That declaration retains the full-offered-length rule, removes unsupported parent span as a Store supportability gate, admits the operation across the current 3/4 in Select Pine, Select Poplar, Select Red Oak and Select Cherry solid-board families, and replaces the fixed 48 in/min current modeling clock with declared chip-load-derived species feeds while retaining the width/removal/pass limits. Future adapters that claim the current canonical Store state must consume that declaration rather than silently reusing the older 60 in limit, the older 96 in unsupported-parent gate, the fixed 48 in/min economic clock, or older per-line omission.
 
 This is not a semantic escape hatch: this file contains enough data to understand the Store without hunting for the existence, price, stock quantity, material family, or broad processing family of any active offering.
 
@@ -707,8 +707,8 @@ The following are **reference fixture values**, useful for deterministic Store t
 - historical Stage-2 unsupported-parent reference: 96 in; current canonical Store evaluation does not use unsupported span as an operation-supportability limit — Store material handling/support is assumed for the full length of stock the Store offers;
 - reference maximum stock width: 12 in;
 - reference loaded X feed maximum: 480 in/min;
-- reference mill cutting feed: 48 in/min;
-- no separate longitudinal edge-milling length maximum for `MILL_EDGE_BOUNDED`; that operation may extend over the full offered parent length, per `D001-BOARD-EDGE-MILL-REF-0.2`;
+- historical Stage-2 reference mill cutting feed: 48 in/min; this remains provenance evidence, not the current Window Seat / canonical edge-milling economic clock;
+- no separate longitudinal edge-milling length maximum for `MILL_EDGE_BOUNDED`; that operation may extend over the full offered parent length, per `D001-BOARD-EDGE-MILL-REF-0.3`;
 - reference mill depth per pass: 0.375 in;
 - reference longitudinal mill cut width maximum: 1.0 in;
 - reference end-mill reach: 8 in;
@@ -734,7 +734,7 @@ Current source families recognize or preserve demand for:
 
 ### 13.8.1 Current bounded full-length edge-milling declaration
 
-`D001-BOARD-EDGE-MILL-REF-0.2` is the current canonical Store Zero declaration for the specific operation `MILL_EDGE_BOUNDED` — **Mill edge to finished width**.
+`D001-BOARD-EDGE-MILL-REF-0.3` is the current canonical Store Zero declaration for the specific operation `MILL_EDGE_BOUNDED` — **Mill edge to finished width**.
 
 For that operation:
 
@@ -744,7 +744,9 @@ For that operation:
 - the board is fed longitudinally in one direction;
 - there is no separate 60 in cutting-length cap;
 - cutting length may equal the full offered parent length;
-- the existing 12 in maximum stock width, 1.0 in maximum total edge removal, 0.375 in mill depth per pass and 48 in/min reference cutting feed remain;
+- the existing 12 in maximum stock width, 1.0 in maximum total edge removal and 0.375 in mill depth per pass remain;
+- current declared reference cycle feeds are derived from chip load at a 3/8-in, two-edge, 18,000-RPM reference: Select Pine 243 in/min; Select Poplar, Select Red Oak and Select Cherry 216 in/min;
+- the older 48 in/min Stage-2 figure remains historical provenance and is not the current Window Seat / canonical economic cycle clock;
 - adequate infeed/outfeed/material support is an ordinary Store handling responsibility for offered stock and does not make an otherwise supportable operation unresolved;
 - current 3/4 in Select Pine, Select Poplar, Select Red Oak and Select Cherry solid-board offerings may use this reference operation where geometry otherwise fits and no more-specific limitation is declared.
 
