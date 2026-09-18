@@ -27,6 +27,8 @@ The recovery model must expose the operating basis rather than burying it inside
 
 ## 2. Reference machining relationship
 
+Capability basis: `D001-BOARD-EDGE-MILL-REF-0.3`.
+
 For longitudinal edge milling:
 
 ```text
