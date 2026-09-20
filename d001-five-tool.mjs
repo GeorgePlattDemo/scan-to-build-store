@@ -57,9 +57,10 @@ export const D001_FIVE_TOOL_REFERENCE = Object.freeze({
     maxTransverseTravelIn: D001_STAGE2_ENVELOPE.motion.Y_MILL_TRAVEL_MAX_IN,
     maxDadoWidthIn: D001_STAGE2_ENVELOPE.millLong.maxCutWidthIn,
     maxDadoDepthIn: D001_STAGE2_ENVELOPE.millLong.maxDepthPerPassIn,
+    maxMiterAngleAbsDeg: D001_STAGE2_ENVELOPE.saw.miterAbsMaxDeg,
+    maxMiterStockWidthIn: D001_STAGE2_ENVELOPE.saw.maxMiterStockWidthIn,
   }),
   unresolved: Object.freeze([
-    "MITER_LIMITED numeric angle range",
     "T1 horizontal-router notch travel/depth envelope",
     "T3 end-router profile envelope",
     "pilot-hole physical starter depth",
@@ -207,8 +208,23 @@ function evaluateFeature(feature, item, keptLengthIn) {
       if (feature.angleDeg === 0) {
         return featureResult(feature, "SAW-L/SAW-R", "SUPPORTABLE", [], { processClass: "SQUARE_END" });
       }
-      return featureResult(feature, "SAW-L/SAW-R", "UNRESOLVED", ["MITER_RANGE_NOT_PUBLISHED"], {
+      if (Math.abs(feature.angleDeg) > D001_FIVE_TOOL_REFERENCE.publishedReferenceLimits.maxMiterAngleAbsDeg) {
+        return featureResult(feature, "SAW-L/SAW-R", "REFUSED", ["MITER_ANGLE_EXCEEDS_REFERENCE_ENVELOPE"], {
+          angleDeg: feature.angleDeg,
+          maxAbsDeg: D001_FIVE_TOOL_REFERENCE.publishedReferenceLimits.maxMiterAngleAbsDeg,
+        });
+      }
+      if (item.actualW > D001_FIVE_TOOL_REFERENCE.publishedReferenceLimits.maxMiterStockWidthIn) {
+        return featureResult(feature, "SAW-L/SAW-R", "REFUSED", ["MITER_STOCK_WIDTH_EXCEEDS_REFERENCE_ENVELOPE"], {
+          angleDeg: feature.angleDeg,
+          maxStockWidthIn: D001_FIVE_TOOL_REFERENCE.publishedReferenceLimits.maxMiterStockWidthIn,
+        });
+      }
+      return featureResult(feature, "SAW-L/SAW-R", "SUPPORTABLE", [], {
+        processClass: "FACE_MITER",
         angleDeg: feature.angleDeg,
+        miterPlane: D001_STAGE2_ENVELOPE.saw.miterPlane,
+        sawArchitecture: D001_STAGE2_ENVELOPE.saw.architecture,
       });
     }
     case "EDGE_NOTCH":
