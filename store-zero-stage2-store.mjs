@@ -234,6 +234,12 @@ export function resolveUserDefinedBoardMaterial(catalog, input = {}) {
 
   const candidates = [];
   for (const item of offerings) {
+    const baseFit = envelopeCheck(item, {
+      requiredOps: ["CROSSCUT"],
+      keptLengthIn: finishedLengthIn
+    });
+    if (baseFit.status === "REFUSED") continue;
+
     const cutWidth = cutPlane === "bevel-thickness" ? item.actualT : item.actualW;
     const endAllowanceIn = Math.abs(cutWidth * Math.tan(angleDeg * Math.PI / 180));
     const rows = firstFitRows(partQty, finishedLengthIn, item.stockL_in, endAllowanceIn);
