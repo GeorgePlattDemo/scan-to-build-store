@@ -203,6 +203,97 @@ export function estimateJob(catalog, { title, classId, pieces, hardwareSku = nul
   };
 }
 
+/**
+ * User-defined bounded mitered-board reference.
+ * Material amount and modeled minutes are returned separately.
+ * No class-scoped miter recovery model has been declared yet, so no complete Q is invented.
+ */
+export function estimateUserDefinedMiterReference(catalog, {
+  title = "User-defined mitered board parts",
+  classId = "user-defined-board.miter.v1",
+  materialResolution,
+  finishedLengthIn,
+  faceWidthIn
+} = {}) {
+  if (!materialResolution || materialResolution.status !== "MAPPED") {
+    return {
+      status: "UNRESOLVED",
+      reason: "MATERIAL_RESOLUTION_REQUIRED",
+      title,
+      classId,
+      documentKind: ENGINE.documentKind
+    };
+  }
+  const materialLine = extendLine(
+    catalog,
+    materialResolution.storeSku,
+    materialResolution.quantity
+  );
+  if (materialLine.status === "INCOMPLETE") {
+    return {
+      status: "UNRESOLVED",
+      reason: "MISSING_PRICE",
+      title,
+      classId,
+      documentKind: ENGINE.documentKind
+    };
+  }
+
+  const work = materialResolution.modeledWork || {};
+  const cutCount = Math.max(0, Number(work.cutCount) || 0);
+  const indexMoves = Math.max(0, Number(work.indexMoves) || 0);
+  const parentBoards = Math.max(0, Number(materialResolution.quantity) || 0);
+  const width = Math.max(0, Number(faceWidthIn) || 0);
+  const kept = Math.max(0, Number(finishedLengthIn) || 0);
+  const cutMinutes = cutCount * sawCycleMin(width);
+  const indexMinutes = indexMoves * indexMin(kept);
+  const handlingMinutes = parentBoards * (TOOLING.loadSeatMin + TOOLING.releaseLabelMin);
+  const cycleMin = round(TOOLING.jobSetupMin + handlingMinutes + cutMinutes + indexMinutes, 3);
+  const material = round(materialLine.extension, 2);
+
+  return {
+    status: "BUDGETARY_PARTIAL",
+    title,
+    classId,
+    documentKind: ENGINE.documentKind,
+    engine: ENGINE,
+    material_lines: [materialLine],
+    cycle: {
+      model: CYCLE_MODEL.id,
+      basis: CYCLE_MODEL.basis,
+      measured: false,
+      T_job_min: cycleMin,
+      T_job_hr: round(cycleMin / 60, 4),
+      parentBoards,
+      cutCount,
+      indexMoves,
+      note: "Modeled work only. The saw-cycle arithmetic is a normalized Stage-2 reference, not measured 20 in machine performance."
+    },
+    economics: {
+      model: null,
+      status: "UNRESOLVED_CLASS_SCOPED_RECOVERY",
+      reason: "No dimensional-miter recovery model has been declared for this class."
+    },
+    totals: {
+      material,
+      cell_recovery: null,
+      hardware: 0,
+      Q: null,
+      Q_basis: "PARTIAL_MATERIAL_ONLY",
+      note: "Material amount is resolved. Complete Store-derived value remains unresolved until a class-scoped miter recovery model exists."
+    },
+    not_claimed: [
+      "complete price",
+      "commercial quote",
+      "seller-of-record",
+      "physical fabrication",
+      "live motion",
+      "physical stock count",
+      "measured production cycle"
+    ]
+  };
+}
+
 /** Established pine alcove square-cut ticket. */
 export function estimatePineAlcove(catalog, shelfCount = 5) {
   const kept = 45.5 - 2 * 0.75 - 0.125;
