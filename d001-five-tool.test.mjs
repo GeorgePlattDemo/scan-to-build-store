@@ -76,8 +76,22 @@ const miter = evaluateD001FeaturedBoard(board, {
   keptLengthIn: 60,
   features: [{ kind: "ANGLED_END_SINGLE_PLANE", end: "RIGHT", angleDeg: 30 }],
 });
-assert.equal(miter.status, "UNRESOLVED");
-assert.ok(miter.unresolved.includes("ANGLED_END_SINGLE_PLANE:MITER_RANGE_NOT_PUBLISHED"));
+assert.equal(miter.status, "SUPPORTABLE");
+assert.equal(miter.featureResults[0].derived.processClass, "FACE_MITER");
+assert.equal(miter.featureResults[0].derived.sawArchitecture, "FIXED_STATION_DOWNSTROKE_MITER_CROSSCUT");
+
+const miter45 = evaluateD001FeaturedBoard(board, {
+  keptLengthIn: 60,
+  features: [{ kind: "ANGLED_END_SINGLE_PLANE", end: "LEFT", angleDeg: -45 }],
+});
+assert.equal(miter45.status, "SUPPORTABLE");
+
+const miterTooFar = evaluateD001FeaturedBoard(board, {
+  keptLengthIn: 60,
+  features: [{ kind: "ANGLED_END_SINGLE_PLANE", end: "RIGHT", angleDeg: 46 }],
+});
+assert.equal(miterTooFar.status, "REFUSED");
+assert.ok(miterTooFar.reasons.includes("ANGLED_END_SINGLE_PLANE:MITER_ANGLE_EXCEEDS_REFERENCE_ENVELOPE"));
 
 const notch = evaluateD001FeaturedBoard(board, {
   keptLengthIn: 60,
