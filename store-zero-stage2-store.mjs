@@ -16,7 +16,11 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { estimatePineAlcove, estimateJob } from "./store-zero-pricing-engine.mjs";
+import {
+  estimatePineAlcove,
+  estimateJob,
+  estimateUserDefinedMiterReference
+} from "./store-zero-pricing-engine.mjs";
 import { envelopeCheck } from "./d001-stage2-envelope.mjs";
 import { evaluateSheetMode2, sheetMode2NeutralOps, S001_MODE2_ENVELOPE } from "./s001-mode2-envelope.mjs";
 import {
@@ -160,6 +164,167 @@ export function evaluateJob(catalog, spec) {
   };
 }
 
+function nominalSize(sizeKey) {
+  const match = /^([124])x(\d+)$/.exec(String(sizeKey || ""));
+  if (!match) return null;
+  return { nominalT: Number(match[1]), nominalW: Number(match[2]) };
+}
+
+function firstFitRows(partQty, finishedLengthIn, stockLengthIn, endAllowanceIn) {
+  const rows = [];
+  for (let n = 0; n < partQty; n += 1) {
+    let placed = false;
+    for (const row of rows) {
+      const candidate = row.sum + finishedLengthIn + endAllowanceIn;
+      if (candidate <= stockLengthIn + 1e-9) {
+        row.parts += 1;
+        row.sum += finishedLengthIn;
+        row.run = candidate;
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      const run = finishedLengthIn + endAllowanceIn;
+      if (run > stockLengthIn + 1e-9) return null;
+      rows.push({ parts: 1, sum: finishedLengthIn, run });
+    }
+  }
+  return rows;
+}
+
+export function resolveUserDefinedBoardMaterial(catalog, input = {}) {
+  const size = nominalSize(input.sizeKey);
+  const finishedLengthIn = Number(input.finishedLengthIn);
+  const partQty = Number(input.partQty);
+  const angleDeg = Number(input.angleDeg || 0);
+  const cutPlane = String(input.cutPlane || "");
+  const endIdentity = String(input.endIdentity || "");
+  const endRelation = String(input.endRelation || "");
+  if (!size || !Number.isFinite(finishedLengthIn) || finishedLengthIn <= 0 ||
+      !Number.isInteger(partQty) || partQty <= 0) {
+    return { status: "UNRESOLVED", code: "INVALID_PART_DEMAND" };
+  }
+  if (endIdentity !== "both" || endRelation !== "parallel") {
+    return {
+      status: "UNRESOLVED",
+      code: "MATERIAL_NESTING_NOT_DECLARED_FOR_END_RELATION",
+      details: { endIdentity, endRelation }
+    };
+  }
+
+  const offerings = catalog.offerings.filter((item) =>
+    item?.offered === true &&
+    item.form === "board" &&
+    item.species === "spf" &&
+    item.grade === "construction" &&
+    item.nominalT === size.nominalT &&
+    item.nominalW === size.nominalW &&
+    Number.isFinite(item.stockL_in) &&
+    Number.isFinite(item.sellingPrice)
+  );
+
+  const candidates = [];
+  for (const item of offerings) {
+    const cutWidth = cutPlane === "bevel-thickness" ? item.actualT : item.actualW;
+    const endAllowanceIn = Math.abs(cutWidth * Math.tan(angleDeg * Math.PI / 180));
+    const rows = firstFitRows(partQty, finishedLengthIn, item.stockL_in, endAllowanceIn);
+    if (!rows) continue;
+    const quantity = rows.length;
+    const materialTotal = Math.round(quantity * item.sellingPrice * 100) / 100;
+    const cutCount = rows.reduce((sum, row) => sum + row.parts + (angleDeg ? 1 : 0), 0);
+    const indexMoves = rows.reduce((sum, row) => sum + row.parts, 0);
+    candidates.push({
+      status: "MAPPED",
+      form: "board",
+      storeSku: item.storeSku,
+      stockLengthIn: item.stockL_in,
+      quantity,
+      unitPrice: item.sellingPrice,
+      materialTotal,
+      rows,
+      endAllowanceIn,
+      actualW: item.actualW,
+      actualT: item.actualT,
+      supportedOps: item.supportedOps || [],
+      cellFamily: item.cellFamily || [],
+      modeledWork: {
+        parentBoards: quantity,
+        finishedParts: partQty,
+        cutCount,
+        indexMoves
+      }
+    });
+  }
+  if (!candidates.length) {
+    return { status: "UNRESOLVED", code: "STORE_STOCK_CONTAINMENT_UNRESOLVED" };
+  }
+  candidates.sort((a, b) =>
+    a.materialTotal - b.materialTotal ||
+    a.stockLengthIn - b.stockLengthIn
+  );
+  return candidates[0];
+}
+
+export function evaluateUserDefinedBoardJob(catalog, spec = {}) {
+  const materialResolution = resolveUserDefinedBoardMaterial(catalog, spec);
+  if (materialResolution.status !== "MAPPED") {
+    return {
+      status: "UNRESOLVED",
+      stage: 2,
+      store: "Store Zero",
+      jobType: "USER_DEFINED_BOARD_V1",
+      materialResolution,
+      capability: null,
+      estimate: null,
+      not_claimed: ["commercial quote", "physical fabrication", "Cycle Start"]
+    };
+  }
+  const item = findSku(catalog, materialResolution.storeSku);
+  const requiredOps = Number(spec.angleDeg) === 0 ? ["CROSSCUT"] : ["MITER_LIMITED"];
+  const miterPlane = spec.cutPlane === "miter-face" ? "FACE" :
+    spec.cutPlane === "bevel-thickness" ? "BEVEL" : null;
+  const capability = capabilityAnswer(item, requiredOps, {
+    keptLengthIn: Number(spec.finishedLengthIn),
+    miterAngleDeg: Number(spec.angleDeg),
+    miterPlane,
+    bevelAngleDeg: spec.cutPlane === "bevel-thickness" ? Number(spec.angleDeg) : 0
+  });
+  const stock = stockAnswer(item, materialResolution.quantity);
+  let status = "SUPPORTABLE";
+  if (capability.status === "REFUSED") status = "REFUSED";
+  else if (stock.status === "NOT_ON_HAND" || stock.status === "ON_HAND_SHORT") status = "UNAVAILABLE";
+
+  const estimate = status === "SUPPORTABLE"
+    ? estimateUserDefinedMiterReference(catalog, {
+        title: spec.title || "User-defined mitered board parts",
+        classId: "user-defined-board.miter.v1",
+        materialResolution,
+        finishedLengthIn: Number(spec.finishedLengthIn),
+        faceWidthIn: item.actualW
+      })
+    : null;
+
+  return {
+    status,
+    stage: 2,
+    store: "Store Zero",
+    jobType: "USER_DEFINED_BOARD_V1",
+    materialResolution,
+    stock,
+    capability,
+    estimate,
+    not_claimed: [
+      "complete price unless estimate supplies a class-scoped recovery",
+      "commercial quote",
+      "seller-of-record",
+      "physical fabrication",
+      "Cycle Start",
+      "physical stock count"
+    ]
+  };
+}
+
 export function pineAlcoveEvaluation(catalog) {
   const estimate = estimatePineAlcove(catalog);
   return evaluateJob(catalog, {
@@ -172,7 +337,7 @@ export function pineAlcoveEvaluation(catalog) {
   });
 }
 
-export { estimateJob, estimatePineAlcove };
+export { estimateJob, estimatePineAlcove, estimateUserDefinedMiterReference };
 
 const SHEET_NOT_CLAIMED = [
   "live ERP",
