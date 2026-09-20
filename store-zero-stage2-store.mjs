@@ -201,6 +201,7 @@ export function resolveUserDefinedBoardMaterial(catalog, input = {}) {
   const cutPlane = String(input.cutPlane || "");
   const endIdentity = String(input.endIdentity || "");
   const endRelation = String(input.endRelation || "");
+  const lengthDatum = String(input.lengthDatum || "");
   if (!size || !Number.isFinite(finishedLengthIn) || finishedLengthIn <= 0 ||
       !Number.isInteger(partQty) || partQty <= 0) {
     return { status: "UNRESOLVED", code: "INVALID_PART_DEMAND" };
@@ -210,6 +211,13 @@ export function resolveUserDefinedBoardMaterial(catalog, input = {}) {
       status: "UNRESOLVED",
       code: "MATERIAL_NESTING_NOT_DECLARED_FOR_END_RELATION",
       details: { endIdentity, endRelation }
+    };
+  }
+  if (lengthDatum !== "long-long-outer-edge") {
+    return {
+      status: "UNRESOLVED",
+      code: "MATERIAL_NESTING_NOT_DECLARED_FOR_LENGTH_DATUM",
+      details: { lengthDatum }
     };
   }
 
