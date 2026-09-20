@@ -131,7 +131,10 @@ export function evaluateJob(catalog, spec) {
     const cap = capabilityAnswer(item, line.requiredOps || ["CROSSCUT"], {
       keptLengthIn: line.keptLengthIn,
       millYIn: line.millYIn,
-      millDepthIn: line.millDepthIn
+      millDepthIn: line.millDepthIn,
+      miterAngleDeg: line.miterAngleDeg,
+      miterPlane: line.miterPlane,
+      bevelAngleDeg: line.bevelAngleDeg
     });
     if (!item || price.status === "UNRESOLVED") unresolved = true;
     if (cap.status === "REFUSED") refused = true;
