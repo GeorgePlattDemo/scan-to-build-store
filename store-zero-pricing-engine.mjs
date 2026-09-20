@@ -37,6 +37,10 @@ export const RECOVERY = {
 export const TOOLING = {
   saw: {
     diameterIn: 10,
+    cycleFixtureOnly: true,
+    physicalSawEnvelopeId: D001_STAGE2_ENVELOPE.saw.id,
+    physicalBladeDiameterIn: D001_STAGE2_ENVELOPE.saw.bladeDiameterIn,
+    note: "10 in / rpm / teeth values are the frozen normalized Stage-2 cycle-math fixture, not the physical D-001 saw specification. The declared physical reference saw is the 20 in fixed-station downstroke envelope.",
     rpm: 3450,
     teeth: 60,
     chipLoadCrossSoft: 0.003,
@@ -49,6 +53,7 @@ export const TOOLING = {
   loadSeatMin: 0.6,
   releaseLabelMin: 0.4,
   jobSetupMin: 8,
+  miterSetupPolicy: "bounded face-miter angle setup is included in jobSetupMin; no separate angled-cut premium is invented in Stage 2",
   drill: { rpm: 3000, ipr: 0.008 }
 };
 
