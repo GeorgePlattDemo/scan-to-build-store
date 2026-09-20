@@ -1,4 +1,4 @@
-# D-001 Stage-2 MachineEnvelope — 0.2
+# D-001 Stage-2 MachineEnvelope — 0.3
 
 Declared reference capability. **Not commissioned. Not Cycle Start. Not generic CNC.**
 
@@ -16,22 +16,24 @@ Three pictures exist. Do not smash them together.
 
 **Patent / cell spine correspondence** (`STB-CELL-0.1`, U.S. 10,768,609 FIG. 5): table and fence on a central base; **three** commonly-controlled manipulating rollers from above; idlers in the table; **a sawing station at each end** (chop, miter-capable); clamp rollers to the fence; vertical and horizontal ways that can carry drill/router heads.
 
-**Your working memory:** radial-arm on one end, chop/miter on the other, two symmetrical rotors in the center, routers not placed.
+**Earlier working memory:** radial-arm on one end, chop/miter on the other, two symmetrical rotors in the center, routers not placed.
 
-**This Stage-2 fixture:** two named rollers and two named mill functions, so Store can refuse and price without inventing Stage-3 iron.
+**This Stage-2 fixture now resolves the saw function:** both end stations are fixed-station commercial **downstroke** miter/crosscut heads in the 20 in blade class. The declared face-miter envelope is 0° through 45° left/right. The cutting-force intent is downward into the table and rearward toward the fence; positive hold-down and fence restraint are prerequisites before saw motion. Clamp actuation, clamp pressure, guarding design, stopping performance, and vendor/component selection remain Stage-3 work. Two named rollers and two named mill functions remain the bounded Stage-2 fixture so Store can refuse and price without inventing a commissioned machine.
 
 ```
 Y = 0  fence
 Z = 0  table
 X     along the fence, infeed → outfeed
 
-X=  0   SAW-L     chop / MITER_LIMITED
+X=  0   SAW-L     20 in fixed-station DOWNSTROKE miter/crosscut
+                  face miter 0→45° left/right
 X= 24   R1        manipulating roller (above)
 X= 36   MILL_LONG between the rollers, below/at the work
                   Y travel 0→14 in from fence
                   Z micro-adjust for groove / rabbet / backing
 X= 48   R2        manipulating roller (above)
-X= 72   SAW-R     square chop
+X= 72   SAW-R     20 in fixed-station DOWNSTROKE miter/crosscut
+                  face miter 0→45° left/right
 X= -6   MILL_END  outside roller interference
 
 Y tool travel          14.000 in   (spindle reach)
@@ -42,11 +44,21 @@ base length               72 in
 max parent w/o declared   96 in
   external support
 min controlled length     24 in    (R1–R2 spacing)
+
+SAW-L / SAW-R blade class       20 in
+saw stroke                      DOWNSTROKE
+square-crosscut stock width     ≤ 12.000 in
+face-miter stock width          ≤ 7.250 in
+face-miter stock thickness      ≤ 3.500 in
+declared face-miter range       -45°→+45°
+bevel / compound axis           NOT DECLARED
 ```
+
+The 7.25 in face-miter width is deliberately narrower than the 12 in square-crosscut width. It proves the 2×8 / 30° picnic-leg demand without claiming a wider 45° cut that Stage 3 has not validated.
 
 14 in reach is not a 14 in board. Two inches stay unclaimed for tool body, guard, and fence relationship that Stage 3 must actually design.
 
-**Named unresolved, not designed here:** third roller; whether SAW-R is a radial arm; a third vertical-way router/drill; numeric miter range; drill diameter/location envelope; external infeed/outfeed stands; one-roller short-stock mode.
+**Named unresolved, not designed here:** third roller; a third vertical-way router/drill; drill diameter/location envelope; external infeed/outfeed stands; one-roller short-stock mode; physical clamp actuation/pressure; guard/interlock architecture; stopping performance; final saw/vendor selection.
 
 Off-the-shelf names on a drawing are **CANDIDATE labels only** until Stage 3 selects them: commercial chop-saw head, commercial router spindle, pneumatic roller. Do not freeze SKUs here.
 
@@ -78,8 +90,8 @@ A pretty Q is not computed as a success path for a refused envelope.
 
 | Op | Declared | Refuse / unresolved |
 |---|---|---|
-| `CROSSCUT` | square cleanup + kept length | upstroke; compound miter |
-| `MITER_LIMITED` | single-plane limited miter | numeric angle range unresolved |
+| `CROSSCUT` | square cleanup + kept length on fixed downstroke saw | upstroke architecture; bevel/compound cut |
+| `MITER_LIMITED` | single-plane **face miter**, 0° through 45° left/right; ≤7.25 in face width; ≤3.5 in thickness | >45°; bevel/compound cut; wider miter stock |
 | `DRILL` | bounded holes | diameter/location envelope unresolved |
 | `DADO` / `GROOVE` / `RABBET` | only if the offering lists them | not implied by mill existence |
 | `MILL_LONGITUDINAL_PROFILE` | taper; groove/dado along length | any-path 2-axis; carving |
@@ -101,4 +113,4 @@ Unchanged: `STB-ZERO-SPF-2X4-96-001`, kept 28 in (≥ 24), longitudinal taper, o
 
 ## Stage-3 not designed here
 
-Physical support, restraint, workholding, guarding, access control, safety-rated controls, interlocks, stopping/restart, commissioning, measured feeds, PL/SIL, real spindle selection.
+Physical support details; clamp actuation/pressure; guarding; access control; safety-rated controls; interlocks; stopping/restart; commissioning; measured feeds/cycle times; PL/SIL; blade/tooth/vendor selection. Stage 2 declares the **functional** downstroke/fence/clamp requirement only; it does not claim a physically validated saw installation.
