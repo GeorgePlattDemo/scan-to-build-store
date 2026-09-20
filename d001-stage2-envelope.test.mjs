@@ -6,6 +6,12 @@ import { estimatePineAlcove, estimatePicnicLegTapered } from "./store-zero-prici
 const catalog = loadCatalog();
 assert.equal(D001_STAGE2_ENVELOPE.motion.Y_MILL_TRAVEL_MAX_IN, 14);
 assert.equal(D001_STAGE2_ENVELOPE.stock.maxWidthIn, 12);
+assert.equal(D001_STAGE2_ENVELOPE.saw.bladeDiameterIn, 20);
+assert.equal(D001_STAGE2_ENVELOPE.saw.strokeDirection, "DOWN");
+assert.equal(D001_STAGE2_ENVELOPE.saw.miterAbsMaxDeg, 45);
+assert.equal(D001_STAGE2_ENVELOPE.saw.maxMiterStockWidthIn, 7.25);
+assert.equal(D001_STAGE2_ENVELOPE.saw.workholding.positiveHoldDownRequired, true);
+assert.equal(D001_STAGE2_ENVELOPE.saw.workholding.fenceRestraintRequired, true);
 assert.equal(millPassesForDepth(0.75), 2);
 
 const pine = findSku(catalog, "STB-ZERO-PINE-1X6-96-001");
@@ -23,6 +29,48 @@ assert.ok(longCap.missing.includes("PARENT_LENGTH_REQUIRES_UNDECLARED_EXTERNAL_S
 const post = findSku(catalog, "STB-ZERO-SPF-4X4-96-001");
 assert.equal(capabilityAnswer(post, ["CROSSCUT"]).status, "SUPPORTABLE");
 assert.equal(capabilityAnswer(post, ["MILL_LONGITUDINAL_PROFILE"]).status, "REFUSED");
+
+const miter2x8 = findSku(catalog, "STB-ZERO-SPF-2X8-96-001");
+const miter30 = evaluateJob(catalog, {
+  title: "2x8 30 degree face miter",
+  lines: [{
+    storeSku: miter2x8.storeSku,
+    qty: 1,
+    requiredOps: ["MITER_LIMITED"],
+    keptLengthIn: 32.75,
+    miterAngleDeg: 30,
+    miterPlane: "FACE"
+  }]
+});
+assert.equal(miter30.status, "SUPPORTABLE");
+assert.equal(miter30.lines[0].capability.envelope.derived.millPasses, 1);
+
+const miter45 = envelopeCheck(miter2x8, {
+  requiredOps: ["MITER_LIMITED"],
+  keptLengthIn: 32.75,
+  miterAngleDeg: -45,
+  miterPlane: "FACE"
+});
+assert.equal(miter45.status, "SUPPORTABLE");
+
+const miterOver = envelopeCheck(miter2x8, {
+  requiredOps: ["MITER_LIMITED"],
+  keptLengthIn: 32.75,
+  miterAngleDeg: 45.5,
+  miterPlane: "FACE"
+});
+assert.equal(miterOver.status, "REFUSED");
+assert.ok(miterOver.reasons.includes("MITER_ANGLE_EXCEEDS_D001_STAGE2_ENVELOPE"));
+
+const compound = envelopeCheck(miter2x8, {
+  requiredOps: ["MITER_LIMITED"],
+  keptLengthIn: 32.75,
+  miterAngleDeg: 30,
+  miterPlane: "FACE",
+  bevelAngleDeg: 5
+});
+assert.equal(compound.status, "REFUSED");
+assert.ok(compound.reasons.includes("BEVEL_OR_COMPOUND_MITER_NOT_DECLARED"));
 
 const shortKept = evaluateJob(catalog, {
   title: "too short",
