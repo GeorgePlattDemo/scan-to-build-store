@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
-import { loadCatalog, findSku, capabilityAnswer, evaluateJob } from "./store-zero-stage2-store.mjs";
+import {
+  loadCatalog,
+  findSku,
+  capabilityAnswer,
+  evaluateJob,
+  evaluateUserDefinedBoardJob
+} from "./store-zero-stage2-store.mjs";
 import { envelopeCheck, millPassesForDepth, D001_STAGE2_ENVELOPE } from "./d001-stage2-envelope.mjs";
 import { estimatePineAlcove, estimatePicnicLegTapered } from "./store-zero-pricing-engine.mjs";
 
@@ -77,6 +83,28 @@ const shortKept = evaluateJob(catalog, {
   lines: [{ storeSku: "STB-ZERO-SPF-2X4-96-001", qty: 1, requiredOps: ["CROSSCUT"], keptLengthIn: 16 }]
 });
 assert.equal(shortKept.status, "REFUSED");
+
+const userLeg = evaluateUserDefinedBoardJob(catalog, {
+  title: "Claude Grab a Board default",
+  sizeKey: "2x8",
+  finishedLengthIn: 33.75,
+  partQty: 8,
+  angleDeg: 30,
+  cutPlane: "miter-face",
+  endIdentity: "both",
+  endRelation: "parallel"
+});
+assert.equal(userLeg.status, "SUPPORTABLE");
+assert.equal(userLeg.materialResolution.storeSku, "STB-ZERO-SPF-2X8-96-001");
+assert.equal(userLeg.materialResolution.quantity, 4);
+assert.equal(userLeg.materialResolution.materialTotal, 39.8);
+assert.equal(userLeg.materialResolution.modeledWork.cutCount, 12);
+assert.equal(userLeg.capability.status, "SUPPORTABLE");
+assert.equal(userLeg.estimate.status, "BUDGETARY_PARTIAL");
+assert.equal(userLeg.estimate.totals.material, 39.8);
+assert.equal(userLeg.estimate.totals.cell_recovery, null);
+assert.equal(userLeg.estimate.totals.Q, null);
+assert.equal(userLeg.estimate.economics.status, "UNRESOLVED_CLASS_SCOPED_RECOVERY");
 
 const ticket = estimatePineAlcove(catalog);
 assert.equal(ticket.totals.Q, 374.42);
