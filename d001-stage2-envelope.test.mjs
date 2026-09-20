@@ -92,7 +92,8 @@ const userLeg = evaluateUserDefinedBoardJob(catalog, {
   angleDeg: 30,
   cutPlane: "miter-face",
   endIdentity: "both",
-  endRelation: "parallel"
+  endRelation: "parallel",
+  lengthDatum: "long-long-outer-edge"
 });
 assert.equal(userLeg.status, "SUPPORTABLE");
 assert.equal(userLeg.materialResolution.storeSku, "STB-ZERO-SPF-2X8-96-001");
@@ -105,6 +106,20 @@ assert.equal(userLeg.estimate.totals.material, 39.8);
 assert.equal(userLeg.estimate.totals.cell_recovery, null);
 assert.equal(userLeg.estimate.totals.Q, null);
 assert.equal(userLeg.estimate.economics.status, "UNRESOLVED_CLASS_SCOPED_RECOVERY");
+
+const unsupportedDatum = evaluateUserDefinedBoardJob(catalog, {
+  title: "same numeric length, unsupported datum",
+  sizeKey: "2x8",
+  finishedLengthIn: 33.75,
+  partQty: 8,
+  angleDeg: 30,
+  cutPlane: "miter-face",
+  endIdentity: "both",
+  endRelation: "parallel",
+  lengthDatum: "long-short"
+});
+assert.equal(unsupportedDatum.status, "UNRESOLVED");
+assert.equal(unsupportedDatum.materialResolution.code, "MATERIAL_NESTING_NOT_DECLARED_FOR_LENGTH_DATUM");
 
 const ticket = estimatePineAlcove(catalog);
 assert.equal(ticket.totals.Q, 374.42);
