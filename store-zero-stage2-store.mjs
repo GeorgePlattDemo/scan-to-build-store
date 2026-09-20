@@ -21,7 +21,7 @@ import {
   estimateJob,
   estimateUserDefinedMiterReference
 } from "./store-zero-pricing-engine.mjs";
-import { envelopeCheck } from "./d001-stage2-envelope.mjs";
+import { envelopeCheck, D001_STAGE2_ENVELOPE } from "./d001-stage2-envelope.mjs";
 import { evaluateSheetMode2, sheetMode2NeutralOps, S001_MODE2_ENVELOPE } from "./s001-mode2-envelope.mjs";
 import {
   evaluateSheetMode2Arched,
@@ -170,27 +170,84 @@ function nominalSize(sizeKey) {
   return { nominalT: Number(match[1]), nominalW: Number(match[2]) };
 }
 
-function firstFitRows(partQty, finishedLengthIn, stockLengthIn, endAllowanceIn) {
+export function sequenceCrosscuts({
+  parentLengthIn,
+  parts = [],
+  establishAngledEnd = false,
+  holdIn = D001_STAGE2_ENVELOPE.cutoffControl.retainedTailIn,
+  kerfIn = D001_STAGE2_ENVELOPE.cutoffControl.kerfIn
+} = {}) {
+  const parent = Number(parentLengthIn);
+  const hold = Number(holdIn);
+  const kerf = Number(kerfIn);
+  const pieces = parts.map(Number).filter((len) => Number.isFinite(len) && len > 0).sort((a, b) => b - a);
+  if (!Number.isFinite(parent) || parent <= 0 || !pieces.length) {
+    return { status: "UNRESOLVED", code: "INVALID_CUTOFF_SEQUENCE_INPUT", rows: [] };
+  }
+  if (!Number.isFinite(hold) || hold <= 0) {
+    return { status: "UNRESOLVED", code: "HOLD_LENGTH_UNPUBLISHED", rows: [] };
+  }
+  if (!Number.isFinite(kerf) || kerf < 0) {
+    return { status: "UNRESOLVED", code: "KERF_UNPUBLISHED", rows: [] };
+  }
+
   const rows = [];
-  for (let n = 0; n < partQty; n += 1) {
-    let placed = false;
+  for (const len of pieces) {
+    let selected = null;
     for (const row of rows) {
-      const candidate = row.sum + finishedLengthIn + endAllowanceIn;
-      if (candidate <= stockLengthIn + 1e-9) {
-        row.parts += 1;
-        row.sum += finishedLengthIn;
-        row.run = candidate;
-        placed = true;
+      if (row.remainingIn - len - kerf >= hold - 1e-9) {
+        selected = row;
         break;
       }
     }
-    if (!placed) {
-      const run = finishedLengthIn + endAllowanceIn;
-      if (run > stockLengthIn + 1e-9) return null;
-      rows.push({ parts: 1, sum: finishedLengthIn, run });
+    if (!selected) {
+      const establishKerf = establishAngledEnd ? kerf : 0;
+      const startRemaining = parent - establishKerf;
+      if (startRemaining - len - kerf < hold - 1e-9) {
+        return {
+          status: "UNRESOLVED",
+          code: "LAST_REMAIN_BELOW_ROTOR_SAW_CENTER",
+          holdIn: hold,
+          kerfIn: kerf,
+          parentLengthIn: parent,
+          rows
+        };
+      }
+      selected = {
+        parentLengthIn: parent,
+        establishAngledEnd,
+        cuts: [],
+        remainingIn: startRemaining,
+        establishKerfIn: establishKerf
+      };
+      rows.push(selected);
     }
+    const before = selected.remainingIn;
+    selected.remainingIn = Number((selected.remainingIn - len - kerf).toFixed(6));
+    selected.cuts.push({
+      partLengthIn: len,
+      kerfIn: kerf,
+      retainedBeforeIn: Number(before.toFixed(6)),
+      retainedAfterIn: selected.remainingIn,
+      holdRequiredIn: hold,
+      pass: selected.remainingIn >= hold - 1e-9
+    });
   }
-  return rows;
+
+  const cutCount = pieces.length + (establishAngledEnd ? rows.length : 0);
+  return {
+    status: "SEQUENCED",
+    code: null,
+    policyId: D001_STAGE2_ENVELOPE.cutoffControl.id,
+    holdIn: hold,
+    kerfIn: kerf,
+    parentLengthIn: parent,
+    sticks: rows.length,
+    cutCount,
+    indexMoves: pieces.length,
+    rows,
+    minRetainedAfterIn: Math.min(...rows.flatMap((row) => row.cuts.map((cut) => cut.retainedAfterIn)))
+  };
 }
 
 export function resolveUserDefinedBoardMaterial(catalog, input = {}) {
@@ -233,21 +290,29 @@ export function resolveUserDefinedBoardMaterial(catalog, input = {}) {
   );
 
   const candidates = [];
+  const sequenceFailures = [];
   for (const item of offerings) {
-    const baseFit = envelopeCheck(item, {
-      requiredOps: ["CROSSCUT"],
-      keptLengthIn: finishedLengthIn
-    });
+    const workpiecePresentation = cutPlane === "bevel-thickness"
+      ? D001_STAGE2_ENVELOPE.stock.presentation.edgeException.mode
+      : D001_STAGE2_ENVELOPE.stock.presentation.defaultMode;
+    const baseFit = envelopeCheck(item, { requiredOps: ["CROSSCUT"], workpiecePresentation });
     if (baseFit.status === "REFUSED") continue;
+
+    const parts = Array.from({ length: partQty }, () => finishedLengthIn);
+    const sequence = sequenceCrosscuts({
+      parentLengthIn: item.stockL_in,
+      parts,
+      establishAngledEnd: angleDeg !== 0
+    });
+    if (sequence.status !== "SEQUENCED") {
+      sequenceFailures.push({ storeSku: item.storeSku, stockLengthIn: item.stockL_in, code: sequence.code });
+      continue;
+    }
 
     const cutWidth = cutPlane === "bevel-thickness" ? item.actualT : item.actualW;
     const endAllowanceIn = Math.abs(cutWidth * Math.tan(angleDeg * Math.PI / 180));
-    const rows = firstFitRows(partQty, finishedLengthIn, item.stockL_in, endAllowanceIn);
-    if (!rows) continue;
-    const quantity = rows.length;
+    const quantity = sequence.sticks;
     const materialTotal = Math.round(quantity * item.sellingPrice * 100) / 100;
-    const cutCount = rows.reduce((sum, row) => sum + row.parts + (angleDeg ? 1 : 0), 0);
-    const indexMoves = rows.reduce((sum, row) => sum + row.parts, 0);
     candidates.push({
       status: "MAPPED",
       form: "board",
@@ -256,21 +321,35 @@ export function resolveUserDefinedBoardMaterial(catalog, input = {}) {
       quantity,
       unitPrice: item.sellingPrice,
       materialTotal,
-      rows,
+      sequence,
+      rows: sequence.rows,
       endAllowanceIn,
       actualW: item.actualW,
       actualT: item.actualT,
+      workpiecePresentation,
+      presentedWidthIn: workpiecePresentation === D001_STAGE2_ENVELOPE.stock.presentation.edgeException.mode ? item.actualT : item.actualW,
+      presentedThicknessIn: workpiecePresentation === D001_STAGE2_ENVELOPE.stock.presentation.edgeException.mode ? item.actualW : item.actualT,
       supportedOps: item.supportedOps || [],
       cellFamily: item.cellFamily || [],
       modeledWork: {
         parentBoards: quantity,
         finishedParts: partQty,
-        cutCount,
-        indexMoves
+        cutCount: sequence.cutCount,
+        indexMoves: sequence.indexMoves
       }
     });
   }
   if (!candidates.length) {
+    const holdFailure = sequenceFailures.find((failure) => failure.code === "LAST_REMAIN_BELOW_ROTOR_SAW_CENTER");
+    if (holdFailure) {
+      return {
+        status: "UNRESOLVED",
+        code: "LAST_REMAIN_BELOW_ROTOR_SAW_CENTER",
+        policyId: D001_STAGE2_ENVELOPE.cutoffControl.id,
+        holdIn: D001_STAGE2_ENVELOPE.cutoffControl.retainedTailIn,
+        candidates: sequenceFailures
+      };
+    }
     return { status: "UNRESOLVED", code: "STORE_STOCK_CONTAINMENT_UNRESOLVED" };
   }
   candidates.sort((a, b) =>
@@ -296,13 +375,14 @@ export function evaluateUserDefinedBoardJob(catalog, spec = {}) {
   }
   const item = findSku(catalog, materialResolution.storeSku);
   const requiredOps = Number(spec.angleDeg) === 0 ? ["CROSSCUT"] : ["MITER_LIMITED"];
-  const miterPlane = spec.cutPlane === "miter-face" ? "FACE" :
-    spec.cutPlane === "bevel-thickness" ? "BEVEL" : null;
+  const workpiecePresentation = materialResolution.workpiecePresentation ||
+    D001_STAGE2_ENVELOPE.stock.presentation.defaultMode;
   const capability = capabilityAnswer(item, requiredOps, {
-    keptLengthIn: Number(spec.finishedLengthIn),
+    workpiecePresentation,
+    retainedTailIn: materialResolution.sequence?.minRetainedAfterIn,
     miterAngleDeg: Number(spec.angleDeg),
-    miterPlane,
-    bevelAngleDeg: spec.cutPlane === "bevel-thickness" ? Number(spec.angleDeg) : 0
+    miterPlane: Number(spec.angleDeg) === 0 ? null : "FACE",
+    bevelAngleDeg: 0
   });
   const stock = stockAnswer(item, materialResolution.quantity);
   let status = "SUPPORTABLE";
@@ -315,7 +395,7 @@ export function evaluateUserDefinedBoardJob(catalog, spec = {}) {
         classId: "user-defined-board.miter.v1",
         materialResolution,
         finishedLengthIn: Number(spec.finishedLengthIn),
-        faceWidthIn: item.actualW
+        faceWidthIn: materialResolution.presentedWidthIn ?? item.actualW
       })
     : null;
 
@@ -327,6 +407,8 @@ export function evaluateUserDefinedBoardJob(catalog, spec = {}) {
     materialResolution,
     stock,
     capability,
+    workpiecePresentation,
+    cutoffSequence: materialResolution.sequence ?? null,
     estimate,
     not_claimed: [
       "complete price unless estimate supplies a class-scoped recovery",

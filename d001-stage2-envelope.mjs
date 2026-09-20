@@ -4,7 +4,7 @@
  * Numbers exist to exercise fit → ops → minutes → Q. They do not pre-commit Stage-3 iron.
  */
 export const D001_STAGE2_ENVELOPE = {
-  id: "D001-STAGE2-ENVELOPE-0.3",
+  id: "D001-STAGE2-ENVELOPE-0.4",
   basis: "DECLARED_STAGE2_CAPABILITY",
   measured: false,
   commissioned: false,
@@ -25,9 +25,37 @@ export const D001_STAGE2_ENVELOPE = {
     minThicknessIn: 0.75,
     maxThicknessSawIn: 3.5,
     maxThicknessMillIn: 1.5,
-    maxParentLengthWithoutExternalSupportIn: 96,
-    minControlledLengthIn: 24,
-    externalSupport: "UNRESOLVED"
+    maxParentLengthIn: 192,
+    support: {
+      infeedRollerLengthIn: 168,
+      outfeedRollerLengthIn: 168,
+      basis: "DECLARED_TEST_MACHINE_REFERENCE",
+      measured: false,
+      commissioned: false,
+      note: "Store Zero test-machine support declaration. All current dimensional-lumber catalog parents through 16 ft are inside the declared parent-stock envelope."
+    },
+    presentation: {
+      defaultMode: "WIDE_FACE_ON_TABLE_NARROW_EDGE_TO_FENCE",
+      defaultRule: "Dimensional lumber runs with the wide face on the table/base and the narrow edge to the fence.",
+      edgeException: {
+        nominalT: 2,
+        nominalW: 4,
+        mode: "NARROW_FACE_ON_TABLE_WIDE_FACE_TO_FENCE",
+        allowedOps: ["CROSSCUT", "MITER_LIMITED"],
+        rule: "Nominal 2x4 is the only declared lumber member that may run on its narrow face with the 3.5 in face against the fence."
+      }
+    }
+  },
+  cutoffControl: {
+    id: "D001-CUTOFF-HOLD-0.1",
+    basis: "DECLARED_TEST_MACHINE_REFERENCE",
+    measured: false,
+    commissioned: false,
+    retainedTailIn: 24,
+    kerfIn: 0.125,
+    sawToNearestRotorCenterIn: 24,
+    rule: "RETAINED_DRIVEN_STOCK_GE_NEAREST_ROTOR_CENTER",
+    note: "The 24 in value constrains the retained driven parent after a cutoff. It is not a minimum finished-part length."
   },
   saw: {
     id: "D001-DOWNSTROKE-MITER-CROSSCUT-0.1",
@@ -77,8 +105,8 @@ export const D001_STAGE2_ENVELOPE = {
     "third manipulating roller (patent 504 is three; Stage-2 fixture names two)",
     "third router/drill on a vertical way",
     "DRILL diameter / depth / location envelope",
-    "unsupported overhang geometry",
-    "whether a short part may run on one roller"
+    "final physical design and commissioning of the declared infeed/outfeed roller support",
+    "whether an independently loaded short parent may run on one roller"
   ]
 };
 
@@ -103,22 +131,32 @@ export function envelopeCheck(item, req = {}) {
   const e = D001_STAGE2_ENVELOPE.stock;
   const ops = req.requiredOps || [];
 
-  if (w != null && w > e.maxWidthIn) reasons.push("STOCK_WIDTH_EXCEEDS_D001_STAGE2_ENVELOPE");
-  if (w != null && w < e.minWidthIn) reasons.push("STOCK_WIDTH_BELOW_D001_STAGE2_ENVELOPE");
-  if (L != null && L > e.maxParentLengthWithoutExternalSupportIn) {
-    reasons.push("PARENT_LENGTH_REQUIRES_UNDECLARED_EXTERNAL_SUPPORT");
-  }
+  const presentation = req.workpiecePresentation ?? e.presentation.defaultMode;
+  const edgeMode = e.presentation.edgeException.mode;
+  const defaultMode = e.presentation.defaultMode;
+  const edgePresented = presentation === edgeMode;
+  const isNominal2x4 = item.nominalT === e.presentation.edgeException.nominalT &&
+    item.nominalW === e.presentation.edgeException.nominalW;
+
+  if (presentation !== defaultMode && presentation !== edgeMode) reasons.push("WORKPIECE_PRESENTATION_NOT_DECLARED");
+  if (edgePresented && !isNominal2x4) reasons.push("EDGE_PRESENTATION_RESERVED_FOR_NOMINAL_2X4");
+  if (edgePresented && ops.some((op) => !e.presentation.edgeException.allowedOps.includes(op))) reasons.push("EDGE_PRESENTATION_OPERATION_NOT_DECLARED");
+
+  const presentedW = edgePresented ? t : w;
+  const presentedT = edgePresented ? w : t;
+
+  if (presentedW != null && presentedW > e.maxWidthIn) reasons.push("STOCK_WIDTH_EXCEEDS_D001_STAGE2_ENVELOPE");
+  if (presentedW != null && presentedW < e.minWidthIn) reasons.push("STOCK_WIDTH_BELOW_D001_STAGE2_ENVELOPE");
+  if (L != null && L > e.maxParentLengthIn) reasons.push("PARENT_LENGTH_EXCEEDS_DECLARED_D001_SUPPORT");
 
   const needsMill = ops.some((op) =>
     ["MILL_LONGITUDINAL_PROFILE", "MILL_END_PROFILE", "DADO", "GROOVE", "RABBET"].includes(op)
   );
   const maxT = needsMill ? e.maxThicknessMillIn : e.maxThicknessSawIn;
-  if (t != null && t > maxT) reasons.push("STOCK_THICKNESS_EXCEEDS_D001_STAGE2_ENVELOPE");
-  if (t != null && t < e.minThicknessIn) reasons.push("STOCK_THICKNESS_BELOW_D001_STAGE2_ENVELOPE");
+  if (presentedT != null && presentedT > maxT) reasons.push("STOCK_THICKNESS_EXCEEDS_D001_STAGE2_ENVELOPE");
+  if (presentedT != null && presentedT < e.minThicknessIn) reasons.push("STOCK_THICKNESS_BELOW_D001_STAGE2_ENVELOPE");
 
-  if (req.keptLengthIn != null && req.keptLengthIn < e.minControlledLengthIn) {
-    reasons.push("KEPT_LENGTH_BELOW_TWO_ROLLER_CONTROL");
-  }
+  if (req.retainedTailIn != null && req.retainedTailIn < D001_STAGE2_ENVELOPE.cutoffControl.retainedTailIn) reasons.push("LAST_REMAIN_BELOW_ROTOR_SAW_CENTER");
   if (req.millYIn != null && req.millYIn > D001_STAGE2_ENVELOPE.motion.Y_MILL_TRAVEL_MAX_IN) {
     reasons.push("MILL_Y_EXCEEDS_TOOL_TRAVEL");
   }
@@ -135,8 +173,8 @@ export function envelopeCheck(item, req = {}) {
     else if (Math.abs(angle) > saw.miterAbsMaxDeg) reasons.push("MITER_ANGLE_EXCEEDS_D001_STAGE2_ENVELOPE");
     if (plane !== saw.miterPlane) reasons.push("MITER_PLANE_NOT_SUPPORTED");
     if (Number(bevel) !== 0) reasons.push("BEVEL_OR_COMPOUND_MITER_NOT_DECLARED");
-    if (w != null && w > saw.maxMiterStockWidthIn) reasons.push("MITER_STOCK_WIDTH_EXCEEDS_D001_STAGE2_ENVELOPE");
-    if (t != null && t > saw.maxMiterStockThicknessIn) reasons.push("MITER_STOCK_THICKNESS_EXCEEDS_D001_STAGE2_ENVELOPE");
+    if (presentedW != null && presentedW > saw.maxMiterStockWidthIn) reasons.push("MITER_STOCK_WIDTH_EXCEEDS_D001_STAGE2_ENVELOPE");
+    if (presentedT != null && presentedT > saw.maxMiterStockThicknessIn) reasons.push("MITER_STOCK_THICKNESS_EXCEEDS_D001_STAGE2_ENVELOPE");
   }
 
   const have = new Set(item.supportedOps || []);
@@ -151,7 +189,11 @@ export function envelopeCheck(item, req = {}) {
     reasons,
     envelope: D001_STAGE2_ENVELOPE.id,
     derived: {
-      millPasses: millPassesForDepth(req.millDepthIn || 0)
+      millPasses: millPassesForDepth(req.millDepthIn || 0),
+      workpiecePresentation: presentation,
+      presentedWidthIn: presentedW ?? null,
+      presentedThicknessIn: presentedT ?? null,
+      cutoffControl: D001_STAGE2_ENVELOPE.cutoffControl.id
     }
   };
 }
