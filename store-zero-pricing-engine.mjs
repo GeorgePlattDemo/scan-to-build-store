@@ -100,18 +100,23 @@ export function cycleOneStick({
   widthIn,
   holes = 0,
   depthIn = 0.75,
+  sawCuts = 2,
+  sawTraverseIn = null,
   millLongIn = 0,
   millEnds = 0,
   millDepthIn = 0,
   passes = 1
 }) {
-  const saw = sawCycleMin(widthIn);
+  const cutCount = Math.max(0, Number(sawCuts) || 0);
+  const traverse = Number.isFinite(Number(sawTraverseIn)) && Number(sawTraverseIn) > 0
+    ? Number(sawTraverseIn)
+    : widthIn;
+  const saw = sawCycleMin(traverse);
   const millPasses = millDepthIn ? millPassesForDepth(millDepthIn) : passes;
   const total =
     TOOLING.loadSeatMin +
-    saw +
+    cutCount * saw +
     indexMin(keptLengthIn) +
-    saw +
     holes * drillCycleMin(depthIn) +
     millLongMin(millLongIn, millPasses) +
     millEndMin(millEnds) +
@@ -196,6 +201,42 @@ export function estimateJob(catalog, { title, classId, pieces, hardwareSku = nul
       "physical stock count"
     ]
   };
+}
+
+export function estimateBoardSequence(catalog, {
+  title,
+  classId = "user_defined_board",
+  storeSku,
+  qty = 1,
+  definedWorkpieceLengthIn,
+  sawCuts,
+  sawAngleDeg = 0,
+  drillCycles = 0,
+  drillReferenceDepthIn = 0.75
+}) {
+  const item = findOffering(catalog, storeSku);
+  if (!item || item.form !== "board" || item.actualW == null) {
+    return { status: "UNRESOLVED", reason: "BOARD_OFFERING_REQUIRED", title };
+  }
+  const angle = Math.max(0, Math.min(89, Number(sawAngleDeg) || 0));
+  const radians = angle * Math.PI / 180;
+  const sawTraverseIn = angle > 0
+    ? item.actualW / Math.cos(radians)
+    : item.actualW;
+  return estimateJob(catalog, {
+    title,
+    classId,
+    pieces: [{
+      storeSku,
+      qty,
+      keptLengthIn: definedWorkpieceLengthIn,
+      widthIn: item.actualW,
+      sawCuts,
+      sawTraverseIn,
+      holes: drillCycles,
+      depthIn: drillReferenceDepthIn
+    }]
+  });
 }
 
 /** Established pine alcove square-cut ticket. */
