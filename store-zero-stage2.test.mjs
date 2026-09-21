@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { loadCatalog, loadObservations, findSku, pineAlcoveEvaluation } from "./store-zero-stage2-store.mjs";
-import { estimatePineAlcove, sellingPrice } from "./store-zero-pricing-engine.mjs";
+import { estimatePineAlcove, estimateBoardSequence, sellingPrice } from "./store-zero-pricing-engine.mjs";
 
 const catalog = loadCatalog();
 const observations = loadObservations();
@@ -58,6 +58,24 @@ assert.ok(ticket.totals.Q > ticket.totals.material);
 const evaln = pineAlcoveEvaluation(catalog);
 assert.equal(evaln.status, "SUPPORTABLE");
 assert.equal(evaln.lines[0].stock.assertions.onHand.basis, "SYNTHETIC_FIXTURE");
+
+const xBrace = estimateBoardSequence(catalog, {
+  title: "Start Your Own — X brace",
+  classId: "user_defined_board.x_brace",
+  storeSku: "STB-ZERO-SPF-2X4-72-001",
+  qty: 1,
+  definedWorkpieceLengthIn: 60,
+  sawCuts: 3,
+  sawAngleDeg: 30,
+  drillCycles: 2
+});
+assert.equal(xBrace.status, "BUDGETARY_ESTIMATE");
+assert.equal(xBrace.totals.material, 3.13);
+assert.equal(xBrace.cycle.T_job_min, 10.077);
+assert.equal(xBrace.totals.cell_recovery, 51.79);
+assert.equal(xBrace.totals.Q, 54.92);
+assert.equal(xBrace.cycle.model, "STB-D001-CYCLE-MODEL-S2-0.1");
+
 
 console.log("store-zero-stage2.test.mjs ok");
 console.log("skuCount", catalog.skuCount);
