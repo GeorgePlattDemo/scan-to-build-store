@@ -67,15 +67,16 @@ const xBrace = estimateBoardSequence(catalog, {
   definedWorkpieceLengthIn: 60,
   sawCuts: 3,
   sawAngleDeg: 30,
-  drillCycles: 2
+  drillCycles: 0,
+  spotCycles: 2
 });
 assert.equal(xBrace.status, "BUDGETARY_ESTIMATE");
 assert.equal(xBrace.totals.material, 3.13);
-assert.equal(xBrace.cycle.T_job_min, 10.077);
-assert.equal(xBrace.totals.cell_recovery, 51.79);
-assert.equal(xBrace.totals.Q, 54.92);
+assert.equal(xBrace.cycle.T_job_min, 10.014);
+assert.equal(xBrace.totals.cell_recovery, 51.69);
+assert.equal(xBrace.totals.Q, 54.82);
 assert.equal(xBrace.cycle.model, "STB-D001-CYCLE-MODEL-S2-0.1");
-
+assert.equal(xBrace.engine.version, "0.2.3");
 
 console.log("store-zero-stage2.test.mjs ok");
 console.log("skuCount", catalog.skuCount);
