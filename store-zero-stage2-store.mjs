@@ -51,6 +51,68 @@ export function offerMaterial(catalog, q) {
   });
 }
 
+export function resolveBoardMaterial(catalog, demand = {}) {
+  const definedWorkpieceLengthIn = Number(demand.definedWorkpieceLengthIn);
+  const qty = Number.isFinite(Number(demand.qty)) ? Number(demand.qty) : 1;
+  const requiredOps = Array.isArray(demand.requiredOps) ? demand.requiredOps : [];
+  const feature = {
+    keptLengthIn: definedWorkpieceLengthIn,
+    sawAngleDeg: demand.sawAngleDeg,
+    cutPlane: demand.cutPlane,
+    spotDemand: demand.spotDemand,
+    millYIn: demand.millYIn,
+    millDepthIn: demand.millDepthIn
+  };
+  const candidates = offerMaterial(catalog, {
+    species: demand.species,
+    form: demand.form || "board",
+    nominalT: demand.nominalT,
+    nominalW: demand.nominalW
+  })
+    .filter((item) =>
+      Number.isFinite(definedWorkpieceLengthIn)
+        ? Number(item.stockL_in) >= definedWorkpieceLengthIn
+        : true
+    )
+    .sort((a, b) => Number(a.stockL_in) - Number(b.stockL_in) || Number(a.sellingPrice) - Number(b.sellingPrice));
+
+  const considered = candidates.map((item) => ({
+    item,
+    stock: stockAnswer(item, qty),
+    price: priceAnswer(item),
+    capability: capabilityAnswer(item, requiredOps, feature)
+  }));
+  const mapped = considered.find((entry) =>
+    entry.stock.sufficient === true &&
+    entry.price.status !== "UNRESOLVED" &&
+    entry.capability.status === "SUPPORTABLE"
+  );
+  if (mapped) {
+    return {
+      status: "MAPPED",
+      item: mapped.item,
+      storeSku: mapped.item.storeSku,
+      pricingReferenceSku: mapped.item.storeSku,
+      pricingReferenceStockLengthIn: mapped.item.stockL_in,
+      allocationClaimed: false,
+      workpieceLengthIn: definedWorkpieceLengthIn,
+      stock: mapped.stock,
+      price: mapped.price,
+      capability: mapped.capability
+    };
+  }
+  if (!candidates.length) {
+    return { status: "UNAVAILABLE", reason: "NO_MATCHING_BOARD_OFFERING", workpieceLengthIn: definedWorkpieceLengthIn };
+  }
+  if (considered.some((entry) => entry.capability.status === "UNRESOLVED")) {
+    return { status: "UNRESOLVED", reason: "CAPABILITY_INPUT_UNRESOLVED", considered };
+  }
+  if (considered.every((entry) => entry.capability.status === "REFUSED")) {
+    return { status: "REFUSED", reason: "NO_MATCHING_BOARD_WITHIN_ENVELOPE", considered };
+  }
+  return { status: "UNAVAILABLE", reason: "MATCHING_BOARD_NOT_AVAILABLE", considered };
+}
+
 export function stockAnswer(item, qtyNeeded = 1) {
   if (!item) return { status: "UNAVAILABLE", reason: "SKU_NOT_OFFERED" };
   const available = item.onHand - item.allocated;
@@ -103,6 +165,16 @@ export function capabilityAnswer(item, requiredOps = [], feature = {}) {
       envelope: env
     };
   }
+  if (env.status === "UNRESOLVED") {
+    return {
+      status: "UNRESOLVED",
+      unresolved: env.unresolved,
+      declared: item.supportedOps,
+      cellFamily: item.cellFamily,
+      basis: "DECLARED_STAGE2_CAPABILITY",
+      envelope: env
+    };
+  }
   return {
     status: "SUPPORTABLE",
     declared: item.supportedOps,
@@ -124,10 +196,13 @@ export function evaluateJob(catalog, spec) {
     const price = priceAnswer(item);
     const cap = capabilityAnswer(item, line.requiredOps || ["CROSSCUT"], {
       keptLengthIn: line.keptLengthIn,
+      sawAngleDeg: line.sawAngleDeg,
+      cutPlane: line.cutPlane,
+      spotDemand: line.spotDemand,
       millYIn: line.millYIn,
       millDepthIn: line.millDepthIn
     });
-    if (!item || price.status === "UNRESOLVED") unresolved = true;
+    if (!item || price.status === "UNRESOLVED" || cap.status === "UNRESOLVED") unresolved = true;
     if (cap.status === "REFUSED") refused = true;
     if (stock.status === "NOT_ON_HAND" || stock.status === "ON_HAND_SHORT") unavailable = true;
     lines.push({
