@@ -9,7 +9,7 @@ import { millPassesForDepth, D001_STAGE2_ENVELOPE } from "./d001-stage2-envelope
 
 export const ENGINE = {
   id: "STB-STORE-ZERO-PRICE-1",
-  version: "0.2.2",
+  version: "0.2.3",
   clock: "2026-09-10",
   documentKind: "BudgetaryEstimate"
 };
@@ -49,7 +49,13 @@ export const TOOLING = {
   loadSeatMin: 0.6,
   releaseLabelMin: 0.4,
   jobSetupMin: 8,
-  drill: { rpm: 3000, ipr: 0.008 }
+  drill: { rpm: 3000, ipr: 0.008 },
+  spot: {
+    diameterIn: 0.1875,
+    fixedCycleMin: 0.16,
+    basis: "DECLARED_FIXTURE",
+    note: "Modeled fixed 3/16 in spot/pilot cycle. No finished-hole depth is claimed."
+  }
 };
 
 export const MILL = {
@@ -81,6 +87,10 @@ export function drillCycleMin(depthIn, drill = TOOLING.drill) {
   return TOOLING.saw.deployMin + depthIn / (drill.ipr * drill.rpm) + TOOLING.saw.retractMin;
 }
 
+export function spotCycleMin() {
+  return TOOLING.spot.fixedCycleMin;
+}
+
 export function indexMin(keptLengthIn) {
   return TOOLING.accelMin + Math.abs(keptLengthIn) / TOOLING.rapidInPerMin;
 }
@@ -99,6 +109,7 @@ export function cycleOneStick({
   keptLengthIn,
   widthIn,
   holes = 0,
+  spots = 0,
   depthIn = 0.75,
   sawCuts = 2,
   sawTraverseIn = null,
@@ -118,6 +129,7 @@ export function cycleOneStick({
     cutCount * saw +
     indexMin(keptLengthIn) +
     holes * drillCycleMin(depthIn) +
+    spots * spotCycleMin() +
     millLongMin(millLongIn, millPasses) +
     millEndMin(millEnds) +
     TOOLING.releaseLabelMin;
@@ -212,6 +224,7 @@ export function estimateBoardSequence(catalog, {
   sawCuts,
   sawAngleDeg = 0,
   drillCycles = 0,
+  spotCycles = 0,
   drillReferenceDepthIn = 0.75
 }) {
   const item = findOffering(catalog, storeSku);
@@ -234,6 +247,7 @@ export function estimateBoardSequence(catalog, {
       sawCuts,
       sawTraverseIn,
       holes: drillCycles,
+      spots: spotCycles,
       depthIn: drillReferenceDepthIn
     }]
   });
