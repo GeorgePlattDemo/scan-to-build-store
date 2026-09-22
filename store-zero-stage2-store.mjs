@@ -313,6 +313,8 @@ function sequenceCandidate(item, demand, capability) {
 }
 
 export function resolveBoardMaterial(catalog, demand = {}) {
+  const validation = validateCatalog(catalog);
+  if (!validation.valid) return {status:"UNRESOLVED", reason:"CATALOG_INVALID", errors:validation.errors};
   const finishedPartLengthIn = finitePositive(demand.finishedPartLengthIn);
   const quantity = integerPositive(demand.quantity);
   const sawAngleDeg = Number(demand.sawAngleDeg);
@@ -529,6 +531,8 @@ export function capabilityAnswer(item, requiredOps = [], feature = {}) {
 }
 
 export function evaluateJob(catalog, spec) {
+  const validation = validateCatalog(catalog);
+  if (!validation.valid) return {status:"UNRESOLVED", reason:"CATALOG_INVALID", errors:validation.errors};
   const lines = [];
   let unresolved = false;
   let refused = false;

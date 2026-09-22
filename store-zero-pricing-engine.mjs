@@ -9,7 +9,7 @@ import { millPassesForDepth, D001_STAGE2_ENVELOPE } from "./d001-stage2-envelope
 
 export const ENGINE = {
   id: "STB-STORE-ZERO-PRICE-1",
-  version: "0.3.1",
+  version: "0.4.0",
   clock: "2026-09-10",
   documentKind: "BudgetaryEstimate"
 };
@@ -29,49 +29,48 @@ export function sellingPrice(list) {
   return Math.round(list * (1 + MARK_ON) * 100) / 100;
 }
 
-// Legacy reference-ticket economics only. Not authorized for user_defined_board.
-export const RECOVERY = {
-  setupCharge: 35,
-  machineHourRate: 100
-};
-
-/** User 1 has no approved processing rate or per-job setup-time basis. */
+// Explicit legacy assignments preserve existing reference tickets; never a default.
+export const RECOVERY = { setupCharge: 35, machineHourRate: 100 };
 export const BOARD_PROCESSING_POLICY = Object.freeze({
-  classId: "user_defined_board",
-  status: "UNRESOLVED",
-  setupCharge: null,
-  machineHourRate: null,
-  jobSetupMin: null,
-  reason: "BOARD_PROCESSING_RATE_REQUIRED",
-  setupTimeReason: "BOARD_SETUP_TIME_BASIS_REQUIRED"
+  id: "USER1-PROCESSING-UNRESOLVED/1", classId: "user_defined_board",
+  status: "UNRESOLVED", setupCharge: null, machineHourRate: null, jobSetupMin: null,
+  reason: "BOARD_PROCESSING_RATE_REQUIRED", setupTimeReason: "BOARD_SETUP_TIME_BASIS_REQUIRED"
 });
-
+const LEGACY_REFERENCE_POLICY = Object.freeze({
+  id: "LEGACY-REFERENCE-RECOVERY/1", status: "DECLARED_REFERENCE",
+  source: "store-zero-pricing-engine.mjs@01f9c5580cea262bd898a9f2c1ac2cd89d02845f",
+  setupCharge: 35, machineHourRate: 100, jobSetupMin: 8,
+  measured: false, commissioned: false
+});
+export const PRICING_POLICIES = Object.freeze({
+  user_defined_board: BOARD_PROCESSING_POLICY,
+  "app.user-defined-board.v1": BOARD_PROCESSING_POLICY,
+  "alcove.insert.square_shelves": LEGACY_REFERENCE_POLICY,
+  "cut-001": LEGACY_REFERENCE_POLICY,
+  "app.board.square.v1": LEGACY_REFERENCE_POLICY,
+  "picnic.leg.square": LEGACY_REFERENCE_POLICY,
+  "picnic.leg.taper": LEGACY_REFERENCE_POLICY
+});
+export function pricingPolicyFor(classId) {
+  return Object.hasOwn(PRICING_POLICIES, classId) ? PRICING_POLICIES[classId] : Object.freeze({
+    id: null, classId: classId ?? null, status: "UNRESOLVED",
+    setupCharge: null, machineHourRate: null, jobSetupMin: null,
+    reason: "CLASS_PRICING_POLICY_REQUIRED", setupTimeReason: "CLASS_SETUP_TIME_BASIS_REQUIRED"
+  });
+}
 function qualifyBoardEconomics(estimate) {
-  if (estimate.classId !== BOARD_PROCESSING_POLICY.classId || !estimate.totals) return estimate;
+  if (!estimate.totals) return estimate;
+  const policy = pricingPolicyFor(estimate.classId);
+  if (policy.status !== "UNRESOLVED") return { ...estimate, processingPolicy: policy };
   return {
-    ...estimate,
-    status: "PARTIAL_BUDGETARY_ESTIMATE",
-    processingPolicy: BOARD_PROCESSING_POLICY,
-    unresolved: [...new Set([
-      ...(estimate.unresolved ?? []),
-      BOARD_PROCESSING_POLICY.reason,
-      BOARD_PROCESSING_POLICY.setupTimeReason
-    ])],
-    cycle: {
-      ...estimate.cycle,
-      T_job_min: null,
-      T_job_hr: null,
-      modeledOperationSubtotalMin: estimate.cycle.T_job_min,
-      jobSetupMin: null,
-      completeness: "PARTIAL_MODELED_OPERATION_TIME"
-    },
-    totals: {
-      ...estimate.totals,
-      cell_recovery: null,
-      Q: round(estimate.totals.material + estimate.totals.hardware, 2),
-      Q_basis: "PARTIAL_CALCULATED",
-      note: "Material/hardware subtotal only. Processing charges and job setup time are unresolved; depth-defined spot time is also excluded when requested. Not a complete job price."
-    }
+    ...estimate, status: "PARTIAL_BUDGETARY_ESTIMATE", processingPolicy: policy,
+    unresolved: [...new Set([...(estimate.unresolved ?? []), policy.reason, policy.setupTimeReason])],
+    cycle: { ...estimate.cycle, T_job_min: null, T_job_hr: null,
+      modeledOperationSubtotalMin: estimate.cycle.T_job_min, jobSetupMin: null,
+      completeness: "PARTIAL_MODELED_OPERATION_TIME" },
+    totals: { ...estimate.totals, cell_recovery: null,
+      Q: round(estimate.totals.material + estimate.totals.hardware, 2), Q_basis: "PARTIAL_CALCULATED",
+      note: "Material/hardware subtotal only. Processing charges and job setup time are unresolved; depth-defined spot time is also excluded when requested. Not a complete job price." }
   };
 }
 
@@ -226,7 +225,7 @@ export function estimateJob(catalog, { title, classId, pieces, hardwareSku = nul
     return { status: "UNRESOLVED", reason: "MISSING_PRICE", title };
   }
   const cycleMin =
-    (classId === BOARD_PROCESSING_POLICY.classId ? 0 : TOOLING.jobSetupMin) +
+    (pricingPolicyFor(classId).jobSetupMin ?? 0) +
     pieces.reduce((s, p) => s + cycleOneStick(p) * p.qty, 0);
   const hours = cycleMin / 60;
   const material = round(lines.reduce((s, l) => s + l.extension, 0), 2);
@@ -239,9 +238,9 @@ export function estimateJob(catalog, { title, classId, pieces, hardwareSku = nul
     }
     hardware = hardwareLine.extension;
   }
-  const cell = classId === BOARD_PROCESSING_POLICY.classId
+  const cell = pricingPolicyFor(classId).status === "UNRESOLVED"
     ? null
-    : round(RECOVERY.setupCharge + RECOVERY.machineHourRate * hours, 2);
+    : round(pricingPolicyFor(classId).setupCharge + pricingPolicyFor(classId).machineHourRate * hours, 2);
   const Q = round(material + cell + hardware, 2);
   return qualifyBoardEconomics({
     status: "BUDGETARY_ESTIMATE",
@@ -379,7 +378,7 @@ export function estimateBoardPlan(catalog, {
   const finishedLengthIn = Number(plan.finishedPart?.lengthIn ?? 0);
 
   const cycleMin =
-    (classId === BOARD_PROCESSING_POLICY.classId ? 0 : TOOLING.jobSetupMin) +
+    (pricingPolicyFor(classId).jobSetupMin ?? 0) +
     selected.parentCount * (TOOLING.loadSeatMin + TOOLING.releaseLabelMin) +
     productionSawCuts * sawCycleMin(miterTraverseIn) +
     preparationSawCuts * sawCycleMin(item.actualW) +
@@ -391,9 +390,9 @@ export function estimateBoardPlan(catalog, {
   const resolvedCycleMin = cycleMin + (spotEconomicsResolved && spotCount > 0 ? spotCount * spotCycleMin() : 0);
   const hours = resolvedCycleMin / 60;
   const material = materialLine.extension;
-  const cell = classId === BOARD_PROCESSING_POLICY.classId
+  const cell = pricingPolicyFor(classId).status === "UNRESOLVED"
     ? null
-    : round(RECOVERY.setupCharge + RECOVERY.machineHourRate * hours, 2);
+    : round(pricingPolicyFor(classId).setupCharge + pricingPolicyFor(classId).machineHourRate * hours, 2);
   const Q = round(material + cell, 2);
 
   const estimate = {

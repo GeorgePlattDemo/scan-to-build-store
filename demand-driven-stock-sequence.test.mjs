@@ -132,6 +132,7 @@ shortCatalog.offerings.push({
   onHand: 10,
   allocated: 0
 });
+shortCatalog.skuCount = shortCatalog.offerings.length;
 const shortAnswer = resolveBoardMaterial(shortCatalog, baseDemand);
 assert.equal(shortAnswer.status, "UNAVAILABLE");
 assert.equal(shortAnswer.finishedPartLengthIn, 16);

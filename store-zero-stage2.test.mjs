@@ -87,7 +87,7 @@ assert.equal(user1Estimate.totals.material, 3.13);
 assert.equal(user1Estimate.cycle.T_job_min, null);
 assert.equal(user1Estimate.totals.cell_recovery, null);
 assert.equal(user1Estimate.totals.Q, user1Estimate.totals.material);
-assert.equal(user1Estimate.engine.version, "0.3.1");
+assert.equal(user1Estimate.engine.version, "0.4.0");
 
 console.log("store-zero-stage2.test.mjs ok");
 console.log("skuCount", catalog.skuCount);
