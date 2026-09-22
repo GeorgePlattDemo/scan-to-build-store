@@ -70,7 +70,7 @@ assert.equal(alcoveCapability.lines[0].stock.assertions.onHand.basis, "SYNTHETIC
 // User 1 is the first complete job under the new governing standard.
 const user1 = evaluateDimensionalTravelJob(catalog, {
   ...structuredClone(USER1_DIMENSIONAL_TRAVEL_DEMAND),
-  storeRevision: "TESTED_BRANCH_REVISION"
+  storeRevision: process.env.STB_STORE_REVISION || "LOCAL_UNPINNED_STORE_REVISION"
 });
 assert.equal(user1.status, "SUPPORTABLE");
 assert.equal(user1.estimate.complete, true);
