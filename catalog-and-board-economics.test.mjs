@@ -93,7 +93,7 @@ test('CLI writes validated additions and leaves output unchanged on rejection', 
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('User 1 cannot inherit legacy rates or setup time through any pricing entry', () => {
+test('No job can inherit undeclared rates or setup time through any pricing entry', () => {
   const recovery = { ...RECOVERY }, setup = TOOLING.jobSetupMin;
   const before = quote();
   try {
@@ -112,8 +112,8 @@ test('User 1 cannot inherit legacy rates or setup time through any pricing entry
       assert.equal(estimate.totals.Q, estimate.totals.material);
       assert.equal(estimate.cycle.T_job_min, null);
       assert.ok(estimate.cycle.modeledOperationSubtotalMin < 5);
-      assert.ok(estimate.unresolved.includes('BOARD_PROCESSING_RATE_REQUIRED'));
-      assert.ok(estimate.unresolved.includes('BOARD_SETUP_TIME_BASIS_REQUIRED'));
+      assert.ok(estimate.unresolved.includes('PROCESSING_RATE_BASIS_REQUIRED'));
+      assert.ok(estimate.unresolved.includes('SETUP_TIME_BASIS_REQUIRED'));
     }
   } finally { Object.assign(RECOVERY, recovery); TOOLING.jobSetupMin = setup; }
 });
@@ -146,5 +146,8 @@ test('operations still determine modeled time and spot uncertainty remains expli
   assert.ok(prepared.cycle.modeledOperationSubtotalMin > base.cycle.modeledOperationSubtotalMin);
   assert.ok(quote(catalog, demand, 2).unresolved.includes('SPOT_CYCLE_TIME_APPLICABILITY_UNRESOLVED'));
   assert.equal(resolveBoardMaterial(catalog, { ...demand, sawAngleDeg: 46 }).status, 'REFUSED');
-  assert.equal(estimatePineAlcove(catalog).status, 'BUDGETARY_ESTIMATE');
+  const alcove = estimatePineAlcove(catalog);
+  assert.equal(alcove.status, 'PARTIAL_BUDGETARY_ESTIMATE');
+  assert.equal(alcove.totals.cell_recovery, null);
+  assert.equal(alcove.totals.Q, alcove.totals.material + alcove.totals.hardware);
 });
