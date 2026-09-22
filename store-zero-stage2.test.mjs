@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
-import { loadCatalog, loadObservations, findSku, pineAlcoveEvaluation } from "./store-zero-stage2-store.mjs";
-import { estimatePineAlcove, estimateBoardSequence, sellingPrice } from "./store-zero-pricing-engine.mjs";
+import {
+  loadCatalog,
+  loadObservations,
+  findSku,
+  pineAlcoveEvaluation,
+  evaluateDimensionalTravelJob
+} from "./store-zero-stage2-store.mjs";
+import { estimatePineAlcove, sellingPrice, ENGINE } from "./store-zero-pricing-engine.mjs";
+import { USER1_DIMENSIONAL_TRAVEL_DEMAND } from "./user1-dimensional-travel-fixture.mjs";
 
 const catalog = loadCatalog();
 const observations = loadObservations();
@@ -25,8 +32,7 @@ for (const o of catalog.offerings) {
   if (o.listReferenceBasis === "OBSERVED") {
     assert.equal(o.assertions.externalListPrice.basis, "OBSERVED");
     assert.ok(o.observationId, o.storeSku);
-    const obs = observations.observations.find((x) => x.id === o.observationId);
-    assert.ok(obs, o.observationId);
+    assert.ok(observations.observations.find((x) => x.id === o.observationId), o.observationId);
   } else {
     assert.notEqual(o.assertions.externalListPrice.basis, "OBSERVED");
   }
@@ -48,37 +54,36 @@ assert.equal(pine72.listReferenceBasis, "OBSERVED");
 assert.equal(pine96.list_reference, 19.99);
 assert.equal(pine96.sellingPrice, 20.99);
 
+// Alcove material/sourced truth is preserved, but complete Q is intentionally
+// withheld until the Alcove configurator emits the governing travel-standard demand.
 const ticket = estimatePineAlcove(catalog);
-assert.equal(ticket.status, "BUDGETARY_ESTIMATE");
+assert.equal(ticket.status, "PARTIAL_BUDGETARY_ESTIMATE");
 assert.equal(ticket.totals.material, 272.86);
 assert.equal(ticket.hardware_line.extension, 18);
-assert.equal(ticket.totals.Q_basis, "CALCULATED");
-assert.ok(ticket.totals.Q > ticket.totals.material);
+assert.equal(ticket.totals.Q, null);
+assert.ok(ticket.unresolvedConditions.includes("DIMENSIONAL_TRAVEL_STANDARD_INPUT_REQUIRED"));
 
-const evaln = pineAlcoveEvaluation(catalog);
-assert.equal(evaln.status, "SUPPORTABLE");
-assert.equal(evaln.lines[0].stock.assertions.onHand.basis, "SYNTHETIC_FIXTURE");
+const alcoveCapability = pineAlcoveEvaluation(catalog);
+assert.equal(alcoveCapability.status, "SUPPORTABLE");
+assert.equal(alcoveCapability.lines[0].stock.assertions.onHand.basis, "SYNTHETIC_FIXTURE");
 
-const xBrace = estimateBoardSequence(catalog, {
-  title: "Start Your Own — X brace",
-  classId: "user_defined_board.x_brace",
-  storeSku: "STB-ZERO-SPF-2X4-72-001",
-  qty: 1,
-  definedWorkpieceLengthIn: 60,
-  sawCuts: 3,
-  sawAngleDeg: 30,
-  drillCycles: 0,
-  spotCycles: 2
+// User 1 is the first complete job under the new governing standard.
+const user1 = evaluateDimensionalTravelJob(catalog, {
+  ...structuredClone(USER1_DIMENSIONAL_TRAVEL_DEMAND),
+  storeRevision: "TESTED_BRANCH_REVISION"
 });
-assert.equal(xBrace.status, "BUDGETARY_ESTIMATE");
-assert.equal(xBrace.totals.material, 3.13);
-assert.equal(xBrace.cycle.T_job_min, 10.014);
-assert.equal(xBrace.totals.cell_recovery, 51.69);
-assert.equal(xBrace.totals.Q, 54.82);
-assert.equal(xBrace.cycle.model, "STB-D001-CYCLE-MODEL-S2-0.1");
-assert.equal(xBrace.engine.version, "0.2.3");
+assert.equal(user1.status, "SUPPORTABLE");
+assert.equal(user1.estimate.complete, true);
+assert.equal(user1.estimate.travel.derivedSawCuts, 3);
+assert.equal(user1.estimate.travel.derivedSpotCount, 2);
+assert.equal(user1.estimate.totals.material, 3.13);
+assert.equal(user1.estimate.totals.machine_service, 5.89);
+assert.equal(user1.estimate.totals.Q, 9.02);
+assert.equal(user1.estimate.travel.time.T_MACHINE_min, 1.4128);
+assert.equal(user1.estimate.engine.version, "0.3.0");
+assert.equal(ENGINE.version, "0.3.0");
 
 console.log("store-zero-stage2.test.mjs ok");
 console.log("skuCount", catalog.skuCount);
 console.log("observations", observations.observations.length);
-console.log("pine Q", ticket.totals.Q);
+console.log("User 1 Q", user1.estimate.totals.Q);
