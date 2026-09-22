@@ -1,0 +1,29 @@
+name: Demand-driven stock and sequence acceptance
+
+on:
+  push:
+    branches:
+      - repair/demand-driven-stock-sequence-0.1
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demand-driven-stock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.2'
+      - name: Demand-driven acceptance cases A-F and named faults
+        run: node demand-driven-stock-sequence.test.mjs
+      - name: D-001 capability envelope regression
+        run: node d001-stage2-envelope.test.mjs
+      - name: Store Stage-2 regression
+        run: node store-zero-stage2.test.mjs

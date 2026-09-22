@@ -1,0 +1,43 @@
+{
+  "documentKind": "StoreZeroCatalogAdditions",
+  "offerings": [
+    {
+      "storeSku": "STB-ZERO-SPF-2X4-60-001",
+      "offered": true,
+      "form": "board",
+      "species": "spf",
+      "grade": "construction",
+      "nominalT": 2,
+      "nominalW": 4,
+      "actualT": 1.5,
+      "actualW": 3.5,
+      "stockL_in": 60,
+      "sheetW_in": null,
+      "sheetL_in": null,
+      "uom": "ea",
+      "list_reference": 2.48,
+      "mark_on": 0.05,
+      "sellingPrice": 2.6,
+      "onHand": 24,
+      "allocated": 0,
+      "supplierPath": "SPECIAL_ORDER_REPRESENTED",
+      "cellFamily": ["D-001"],
+      "supportedOps": ["CROSSCUT", "MITER_LIMITED", "DRILL", "MILL_LONGITUDINAL_PROFILE", "MILL_END_PROFILE"],
+      "priceBasis": "CALCULATED",
+      "observationId": null,
+      "limitations": [],
+      "description": "2x4 x 60 in SPF construction",
+      "assertions": {
+        "externalListPrice": {"basis": "NONE", "observationId": null, "value": null},
+        "materialMapping": {"basis": "DECLARED"},
+        "sellingPrice": {"basis": "CALCULATED"},
+        "pricingRule": {"basis": "DECLARED_FIXTURE", "ruleId": "SZ-MARK-ON-5"},
+        "onHand": {"basis": "SYNTHETIC_FIXTURE", "label": "fixture-declared on-hand stock"},
+        "allocation": {"basis": "SIMULATED_STATE"},
+        "supplierPath": {"basis": "SYNTHETIC_FIXTURE"},
+        "cellCompatibility": {"basis": "DECLARED_STAGE2_CAPABILITY"}
+      },
+      "listReferenceBasis": "CALCULATED"
+    }
+  ]
+}

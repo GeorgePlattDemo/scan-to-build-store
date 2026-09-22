@@ -4,7 +4,7 @@
  * Numbers exist to exercise fit → ops → minutes → Q. They do not authorize live motion.
  */
 export const D001_STAGE2_ENVELOPE = {
-  id: "D001-STAGE2-ENVELOPE-0.3",
+  id: "D001-STAGE2-ENVELOPE-0.4",
   basis: "DECLARED_STAGE2_CAPABILITY",
   measured: false,
   commissioned: false,
@@ -41,13 +41,22 @@ export const D001_STAGE2_ENVELOPE = {
   },
   spot: {
     operation: "SPOT_ON_LOCATION",
+    operationContract: "SPOT_ON_LOCATION/0.2",
     mode: "SPOT_ON_LOCATION",
+    toolDefinitionId: "D001-SPOT-3_16-TOOL-0.2",
     toolDiameterIn: 0.1875,
     toolDiameterLabel: "3/16 in",
+    fullDiameterPenetrationIn: 0.1875,
+    depthReference: "ENTRY_SURFACE_ALONG_DRILL_AXIS",
+    pointAngleDeg: null,
+    pointAxialLengthIn: null,
+    pointGeometryStatus: "UNRESOLVED",
+    totalTipPenetrationIn: null,
+    customerDepthProgrammingRequired: false,
     locationRule: "CENTERED_ON_PART",
     acrossWidthRule: "CENTERED_ON_WIDE_FACE",
-    depthClaimed: false,
-    note: "Declared fixed 3/16 in spot/pilot tool. This is not a generic finished-hole envelope."
+    depthClaimed: true,
+    note: "Bounded 3/16 in spot operation. Full-diameter penetration is 3/16 in below the entry surface. Total tip penetration remains unresolved until the selected tool point geometry is declared."
   },
   motion: {
     FEED_X_MAX_LOADED_IN_PER_MIN: 480,
@@ -77,6 +86,7 @@ export const D001_STAGE2_ENVELOPE = {
     "third manipulating roller (patent 504 is three; Stage-2 fixture names two)",
     "radial-arm vs second chop as distinct saw types",
     "third router/drill on a vertical way",
+    "selected 3/16 SPOT_ON_LOCATION tool point angle / axial point length",
     "generic DRILL diameter / depth / location beyond the declared 3/16 SPOT_ON_LOCATION operation",
     "unsupported overhang geometry",
     "whether a short part may run on one roller"
@@ -160,12 +170,24 @@ export function envelopeCheck(item, req = {}) {
     if (spot.acrossWidthRule !== D001_STAGE2_ENVELOPE.spot.acrossWidthRule) {
       reasons.push("SPOT_ACROSS_WIDTH_RULE_NOT_DECLARED");
     }
+    if (
+      t != null &&
+      D001_STAGE2_ENVELOPE.spot.fullDiameterPenetrationIn > t
+    ) {
+      reasons.push("SPOT_FULL_DIAMETER_DEPTH_EXCEEDS_STOCK_THICKNESS");
+    }
+    if (D001_STAGE2_ENVELOPE.spot.pointGeometryStatus !== "DECLARED") {
+      unresolved.push("SPOT_TOOL_POINT_GEOMETRY_REQUIRED");
+    }
     const along = finiteNumber(spot.locationAlongLengthIn);
+    const spotReferenceLengthIn = finiteNumber(
+      req.finishedPartLengthIn != null ? req.finishedPartLengthIn : req.keptLengthIn
+    );
     if (along == null) {
       unresolved.push("SPOT_LOCATION_REQUIRED");
     } else if (
       along < 0 ||
-      (finiteNumber(req.keptLengthIn) != null && along > Number(req.keptLengthIn))
+      (spotReferenceLengthIn != null && along > spotReferenceLengthIn)
     ) {
       reasons.push("SPOT_LOCATION_OUTSIDE_WORKPIECE");
     }
@@ -199,8 +221,17 @@ export function envelopeCheck(item, req = {}) {
         spot && spot.required !== false
           ? {
               mode: D001_STAGE2_ENVELOPE.spot.mode,
+              operationContract: D001_STAGE2_ENVELOPE.spot.operationContract,
+              toolDefinitionId: D001_STAGE2_ENVELOPE.spot.toolDefinitionId,
               toolDiameterIn: D001_STAGE2_ENVELOPE.spot.toolDiameterIn,
-              depthClaimed: false
+              fullDiameterPenetrationIn: D001_STAGE2_ENVELOPE.spot.fullDiameterPenetrationIn,
+              depthReference: D001_STAGE2_ENVELOPE.spot.depthReference,
+              pointAngleDeg: D001_STAGE2_ENVELOPE.spot.pointAngleDeg,
+              pointAxialLengthIn: D001_STAGE2_ENVELOPE.spot.pointAxialLengthIn,
+              pointGeometryStatus: D001_STAGE2_ENVELOPE.spot.pointGeometryStatus,
+              totalTipPenetrationIn: D001_STAGE2_ENVELOPE.spot.totalTipPenetrationIn,
+              customerDepthProgrammingRequired: D001_STAGE2_ENVELOPE.spot.customerDepthProgrammingRequired,
+              depthClaimed: true
             }
           : null
     }
