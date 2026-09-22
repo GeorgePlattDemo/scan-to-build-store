@@ -26,14 +26,17 @@ assert.equal(passA.estimate.status, "BUDGETARY_ESTIMATE");
 assert.equal(passA.estimate.complete, true);
 assert.equal(passA.estimate.completeness, "COMPLETE_FOR_TRAVEL_STANDARD");
 assert.deepEqual(passA.estimate.unresolved, []);
-assert.equal(passA.materialResolution.pricingReferenceSku, "STB-ZERO-SPF-2X4-72-001");
-assert.equal(passA.estimate.totals.material, 3.13);
+assert.equal(passA.materialResolution.pricingReferenceSku, "STB-ZERO-SPF-2X4-60-001");
+assert.equal(passA.materialResolution.pricingReferenceStockLengthIn, 60);
+assert.equal(passA.materialResolution.workpieceLengthIn, 60);
+assert.equal(passA.materialResolution.selectionPolicy, "SHORTEST_COMPLETE_STORE_OFFERING");
+assert.equal(passA.estimate.totals.material, 2.61);
 assert.equal(passA.estimate.travel.derivedSawCuts, 3);
 assert.equal(passA.estimate.travel.derivedSpotCount, 2);
 assert.equal(passA.estimate.travel.finalRemainderIn, 27.625);
 assert.equal(passA.estimate.travel.time.T_MACHINE_min, 1.4128);
 assert.equal(passA.estimate.totals.machine_service, 5.89);
-assert.equal(passA.estimate.totals.Q, 9.02);
+assert.equal(passA.estimate.totals.Q, 8.50);
 
 const ops = passA.estimate.travel.operationPlan;
 assert.equal(ops.filter((op) => op.kind === "REFERENCE_CUT").length, 1);
@@ -57,6 +60,76 @@ assert.equal(passA.estimate.travel.configurationVersion, "0.1");
 assert.equal(passA.calculationIdentity.inputHash, passB.calculationIdentity.inputHash);
 assert.equal(passA.calculationIdentity.resultHash, passB.calculationIdentity.resultHash);
 assert.equal(passA.estimate.totals.Q, passB.estimate.totals.Q);
+
+
+const USER1_18 = structuredClone(USER1);
+USER1_18.configurationVersion = "0.2";
+USER1_18.parts = USER1_18.parts.map((part, index) => ({
+  ...part,
+  lengthIn: 18,
+  features: part.features.map((feature) => ({
+    ...feature,
+    featureId: "SPOT-" + (index + 1),
+    xIn: 9
+  }))
+}));
+const resolved18 = evaluateDimensionalTravelJob(catalog, USER1_18);
+assert.equal(resolved18.status, "SUPPORTABLE");
+assert.equal(resolved18.materialResolution.pricingReferenceSku, "STB-ZERO-SPF-2X4-72-001");
+assert.equal(resolved18.materialResolution.pricingReferenceStockLengthIn, 72);
+assert.equal(resolved18.materialResolution.workpieceLengthIn, 72);
+assert.equal(resolved18.materialResolution.selectionPolicy, "SHORTEST_COMPLETE_STORE_OFFERING");
+assert.deepEqual(
+  resolved18.materialResolution.consideredCandidates.slice(0, 2).map((entry) => [
+    entry.storeSku,
+    entry.stockLengthIn,
+    entry.candidateStatus,
+    entry.reason
+  ]),
+  [
+    ["STB-ZERO-SPF-2X4-60-001", 60, "REFUSED", "LAST_REMAIN_BELOW_TWO_ROLLER_CONTROL"],
+    ["STB-ZERO-SPF-2X4-72-001", 72, "SUPPORTABLE", null]
+  ]
+);
+assert.equal(resolved18.estimate.travel.finalRemainderIn, 35.625);
+
+// Catalog growth is data, not a code rewrite: inserting a valid 66-in offering
+// causes the same resolver to select it automatically for the 18-in job.
+const catalogWith66 = structuredClone(catalog);
+const source72 = catalogWith66.offerings.find((o) => o.storeSku === "STB-ZERO-SPF-2X4-72-001");
+const sku66 = {
+  ...structuredClone(source72),
+  storeSku: "TEST-SPF-2X4-66-001",
+  stockL_in: 66,
+  list_reference: 2.74,
+  sellingPrice: 2.88,
+  description: "test-only 2x4 x 66 in SPF construction",
+  observationId: null,
+  listReferenceBasis: "CALCULATED",
+  assertions: {
+    ...structuredClone(source72.assertions),
+    externalListPrice: { basis: "NONE", observationId: null, value: null },
+    materialMapping: { basis: "DECLARED" }
+  }
+};
+catalogWith66.offerings.push(sku66);
+catalogWith66.skuCount = catalogWith66.offerings.length;
+const resolved18With66 = evaluateDimensionalTravelJob(catalogWith66, USER1_18);
+assert.equal(resolved18With66.status, "SUPPORTABLE");
+assert.equal(resolved18With66.materialResolution.pricingReferenceSku, "TEST-SPF-2X4-66-001");
+assert.equal(resolved18With66.materialResolution.pricingReferenceStockLengthIn, 66);
+assert.equal(resolved18With66.materialResolution.workpieceLengthIn, 66);
+assert.equal(resolved18With66.estimate.travel.finalRemainderIn, 29.625);
+
+// Removing a SKU is equally data-driven: the 16-in job falls through to 72
+// without changing resolver code.
+const catalogWithout60 = structuredClone(catalog);
+catalogWithout60.offerings = catalogWithout60.offerings.filter((o) => o.storeSku !== "STB-ZERO-SPF-2X4-60-001");
+catalogWithout60.skuCount = catalogWithout60.offerings.length;
+const fallback16 = evaluateDimensionalTravelJob(catalogWithout60, USER1);
+assert.equal(fallback16.status, "SUPPORTABLE");
+assert.equal(fallback16.materialResolution.pricingReferenceSku, "STB-ZERO-SPF-2X4-72-001");
+assert.equal(fallback16.materialResolution.pricingReferenceStockLengthIn, 72);
 
 // Every formal Store submission is a fresh evaluation with a new receipt.
 // The same definition may calculate to the same Q, but the prior answer is never
@@ -85,8 +158,8 @@ assert.equal(requestA.estimate.totals.Q, requestB.estimate.totals.Q);
 // A Store price change must alter the current evaluation rather than allowing the
 // previously returned Q to survive as authority.
 const repricedCatalog = structuredClone(catalog);
-const repricedItem = repricedCatalog.offerings.find((o) => o.storeSku === "STB-ZERO-SPF-2X4-72-001");
-repricedItem.sellingPrice = 3.49;
+const repricedItem = repricedCatalog.offerings.find((o) => o.storeSku === "STB-ZERO-SPF-2X4-60-001");
+repricedItem.sellingPrice = 2.99;
 const repriced = evaluateDimensionalStoreRequest(repricedCatalog, USER1, {
   requestId: "USER1-REQ-PRICE-CHANGED",
   evaluatedAt: "2026-09-22T18:32:00.000Z",
@@ -94,7 +167,7 @@ const repriced = evaluateDimensionalStoreRequest(repricedCatalog, USER1, {
 });
 assert.equal(repriced.freshEvaluation, true);
 assert.equal(repriced.status, "SUPPORTABLE");
-assert.equal(repriced.estimate.totals.material, 3.49);
+assert.equal(repriced.estimate.totals.material, 2.99);
 assert.notEqual(repriced.estimate.totals.Q, requestA.estimate.totals.Q);
 assert.notEqual(repriced.calculationIdentity.inputHash, requestA.calculationIdentity.inputHash);
 assert.notEqual(repriced.calculationIdentity.resultHash, requestA.calculationIdentity.resultHash);
@@ -168,5 +241,9 @@ assert.equal(D001_TRAVEL_STANDARD.basis, "DECLARED_STAGE2_MODEL");
 console.log("d001-travel-standard.test.mjs ok");
 console.log("User 1 Q", passA.estimate.totals.Q);
 console.log("User 1 modeled minutes", passA.estimate.travel.time.T_MACHINE_min);
+console.log("User 1 Store SKU", passA.materialResolution.pricingReferenceSku);
+console.log("18-in Store SKU", resolved18.materialResolution.pricingReferenceSku);
+console.log("18-in Q", resolved18.estimate.totals.Q);
+console.log("18-in modeled minutes", resolved18.estimate.travel.time.T_MACHINE_min);
 console.log("inputHash", passA.calculationIdentity.inputHash);
 console.log("resultHash", passA.calculationIdentity.resultHash);
