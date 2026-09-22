@@ -2,9 +2,7 @@ import assert from "node:assert/strict";
 import { loadCatalog, findSku, capabilityAnswer, evaluateJob } from "./store-zero-stage2-store.mjs";
 import {
   estimatePicnicLegSquare,
-  estimatePicnicLegTapered,
-  millLongMin,
-  millEndMin
+  estimatePicnicLegTapered
 } from "./store-zero-pricing-engine.mjs";
 
 const catalog = loadCatalog();
@@ -16,14 +14,17 @@ assert.ok(sku.supportedOps.includes("MILL_END_PROFILE"));
 const cap = capabilityAnswer(sku, ["CROSSCUT", "MILL_LONGITUDINAL_PROFILE", "MILL_END_PROFILE"]);
 assert.equal(cap.status, "SUPPORTABLE");
 
+// Capability remains declared, but these historical count/path summaries do not
+// carry the complete identified feature/operation travel record required for Q.
 const square = estimatePicnicLegSquare(catalog);
 const tapered = estimatePicnicLegTapered(catalog);
-assert.equal(square.status, "BUDGETARY_ESTIMATE");
-assert.equal(tapered.status, "BUDGETARY_ESTIMATE");
+assert.equal(square.status, "PARTIAL_BUDGETARY_ESTIMATE");
+assert.equal(tapered.status, "PARTIAL_BUDGETARY_ESTIMATE");
 assert.equal(square.totals.material, tapered.totals.material);
-assert.ok(tapered.cycle.T_job_min > square.cycle.T_job_min);
-assert.ok(tapered.totals.Q > square.totals.Q);
-assert.ok(tapered.cycle.T_job_min - square.cycle.T_job_min >= millLongMin(28) + millEndMin(1) - 0.001);
+assert.equal(square.totals.Q, null);
+assert.equal(tapered.totals.Q, null);
+assert.ok(square.unresolvedConditions.includes("DIMENSIONAL_TRAVEL_STANDARD_INPUT_REQUIRED"));
+assert.ok(tapered.unresolvedConditions.includes("DIMENSIONAL_TRAVEL_STANDARD_INPUT_REQUIRED"));
 
 const evaln = evaluateJob(catalog, {
   title: tapered.title,
@@ -39,6 +40,4 @@ const evaln = evaluateJob(catalog, {
 assert.equal(evaln.status, "SUPPORTABLE");
 
 console.log("d-001-stage2-mill.test.mjs ok");
-console.log("square Q", square.totals.Q, "min", square.cycle.T_job_min);
-console.log("taper Q", tapered.totals.Q, "min", tapered.cycle.T_job_min);
-console.log("delta Q", +(tapered.totals.Q - square.totals.Q).toFixed(2));
+console.log("picnic capability remains SUPPORTABLE; complete Q waits for travel-standard migration");
