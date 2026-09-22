@@ -149,7 +149,7 @@ export function cycleOneStick({
     cutCount * saw +
     indexMin(keptLengthIn) +
     holes * drillCycleMin(depthIn) +
-    spots * spotCycleMin() +
+    (spots > 0 ? spots * spotCycleMin() : 0) +
     millLongMin(millLongIn, millPasses) +
     millEndMin(millEnds) +
     TOOLING.releaseLabelMin;
