@@ -8,6 +8,7 @@ import {
   D001_TRAVEL_STANDARD,
   storeMachineSellRate
 } from "./d001-travel-standard.mjs";
+import { USER1_DIMENSIONAL_TRAVEL_DEMAND } from "./user1-dimensional-travel-fixture.mjs";
 
 const catalog = loadCatalog();
 
