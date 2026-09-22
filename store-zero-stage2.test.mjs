@@ -28,6 +28,18 @@ assert.equal(spf60.sellingPrice, 2.61);
 assert.equal(spf60.assertions.listReferenceDerivation.basis, "CALCULATED");
 assert.equal(spf60.assertions.listReferenceDerivation.sourceObservationId, "OBS-001");
 
+
+const spf72Modeled = findSku(catalog, "STB-ZERO-SPF-2X4-72-001");
+const spf96Observed = findSku(catalog, "STB-ZERO-SPF-2X4-96-001");
+assert.ok(spf72Modeled && spf96Observed);
+assert.ok(spf60.sellingPrice < spf72Modeled.sellingPrice);
+assert.ok(spf72Modeled.sellingPrice < spf96Observed.sellingPrice);
+const sameClassPricePerIn = [spf60, spf72Modeled, spf96Observed].map((o) => o.sellingPrice / o.stockL_in);
+assert.ok(
+  Math.max(...sameClassPricePerIn) - Math.min(...sameClassPricePerIn) < 0.001,
+  "modeled SPF 2x4 length ladder lost its declared price/length correlation"
+);
+
 for (const o of catalog.offerings) {
   assert.ok(o.assertions, o.storeSku);
   assert.equal(o.assertions.sellingPrice.basis, "CALCULATED");
