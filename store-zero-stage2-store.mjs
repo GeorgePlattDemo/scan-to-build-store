@@ -343,6 +343,7 @@ export function evaluateDimensionalTravelJob(catalog, demand = {}) {
   };
   const candidates = matchingBoardOfferings(catalog, materialDemand);
   const candidateEvaluations = [];
+  let firstIncompleteEstimate = null;
 
   for (const item of candidates) {
     const candidateWorkpieceLengthIn = Number(item.stockL_in);
@@ -395,6 +396,9 @@ export function evaluateDimensionalTravelJob(catalog, demand = {}) {
           (Array.isArray(estimate.reasons) ? estimate.reasons[0] : null) ||
           (Array.isArray(estimate.unresolved) ? estimate.unresolved[0] : null) ||
           candidateStatus;
+      if (estimate.complete !== true && firstIncompleteEstimate === null) {
+        firstIncompleteEstimate = estimate;
+      }
     } else if (price.status === "UNRESOLVED" || capability.status === "UNRESOLVED") {
       candidateStatus = "UNRESOLVED";
       reason = price.reason || capability.unresolved?.[0] || "CANDIDATE_INPUT_UNRESOLVED";
@@ -473,7 +477,7 @@ export function evaluateDimensionalTravelJob(catalog, demand = {}) {
       selectionPolicy: "SHORTEST_COMPLETE_STORE_OFFERING",
       consideredCandidates: candidateEvaluations
     },
-    estimate: null,
+    estimate: firstIncompleteEstimate,
     calculationIdentity: null,
     not_claimed: ["commercial quote", "physical fabrication", "live motion"]
   };
