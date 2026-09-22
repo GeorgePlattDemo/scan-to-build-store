@@ -107,19 +107,24 @@ const material = resolveBoardMaterial(catalog, {
   form: "board",
   nominalT: 2,
   nominalW: 4,
-  definedWorkpieceLengthIn: 60,
-  qty: 1,
+  finishedPartLengthIn: 16,
+  quantity: 2,
   requiredOps: ["MITER_LIMITED"],
   sawAngleDeg: 30,
   cutPlane: "miter-face",
+  lengthDatum: "long-long-outer-edge",
+  endIdentity: "both",
+  endRelation: "parallel",
   spotDemand: spot
 });
-assert.equal(material.status, "UNRESOLVED");
-assert.equal(material.reason, "CAPABILITY_INPUT_UNRESOLVED");
-assert.equal(material.workpieceLengthIn, 60);
+assert.equal(material.status, "MAPPED");
+assert.equal(material.finishedPartLengthIn, 16);
+assert.equal(material.quantity, 2);
 assert.equal(material.allocationClaimed, false);
 assert.equal(material.pricingReferenceSku, "STB-ZERO-SPF-2X4-72-001");
 assert.equal(material.pricingReferenceStockLengthIn, 72);
+assert.equal(material.plan.selected.parentCount, 1);
+assert.equal(material.plan.parents[0].remainderIn, 39.625);
 assert.ok(material.capability.unresolved.includes("SPOT_TOOL_POINT_GEOMETRY_REQUIRED"));
 
 const materialNoSpot = resolveBoardMaterial(catalog, {
@@ -127,13 +132,17 @@ const materialNoSpot = resolveBoardMaterial(catalog, {
   form: "board",
   nominalT: 2,
   nominalW: 4,
-  definedWorkpieceLengthIn: 60,
-  qty: 1,
+  finishedPartLengthIn: 16,
+  quantity: 2,
   requiredOps: ["MITER_LIMITED"],
   sawAngleDeg: 30,
-  cutPlane: "miter-face"
+  cutPlane: "miter-face",
+  lengthDatum: "long-long-outer-edge",
+  endIdentity: "both",
+  endRelation: "parallel"
 });
 assert.equal(materialNoSpot.status, "MAPPED");
+assert.equal(materialNoSpot.capability.status, "SUPPORTABLE");
 
 const wide = { ...pine, actualW: 13.25 };
 assert.equal(envelopeCheck(wide, { requiredOps: ["CROSSCUT"] }).status, "REFUSED");
