@@ -11,51 +11,7 @@ import {
 
 const catalog = loadCatalog();
 
-const USER1 = {
-  title: "Start Your Own — User 1 X brace",
-  configurationId: "SYO-USER1-XBRACE",
-  configurationVersion: "0.1",
-  classId: "app.user-defined-board.v1",
-  materialDemand: {
-    species: "spf",
-    form: "board",
-    nominalT: 2,
-    nominalW: 4
-  },
-  definedWorkpieceLengthIn: 60,
-  requiredOps: ["MITER_LIMITED"],
-  sawAngleDeg: 30,
-  cutPlane: "miter-face",
-  datumCMethod: "REFERENCE_CUT",
-  declaredSawCuts: 3,
-  declaredSpotCount: 2,
-  unresolvedConditions: [],
-  storeRevision: "TESTED_BRANCH_REVISION",
-  parts: [
-    {
-      partId: "PART-1",
-      lengthIn: 16,
-      features: [{
-        featureId: "SPOT-1",
-        kind: "SPOT_ON_LOCATION",
-        xIn: 8,
-        locationRule: "CENTERED_ON_PART",
-        acrossWidthRule: "CENTERED_ON_WIDE_FACE"
-      }]
-    },
-    {
-      partId: "PART-2",
-      lengthIn: 16,
-      features: [{
-        featureId: "SPOT-2",
-        kind: "SPOT_ON_LOCATION",
-        xIn: 8,
-        locationRule: "CENTERED_ON_PART",
-        acrossWidthRule: "CENTERED_ON_WIDE_FACE"
-      }]
-    }
-  ]
-};
+const USER1 = { ...structuredClone(USER1_DIMENSIONAL_TRAVEL_DEMAND), storeRevision: "TESTED_BRANCH_REVISION" };
 
 const passA = evaluateDimensionalTravelJob(catalog, USER1);
 const passB = evaluateDimensionalTravelJob(catalog, structuredClone(USER1));
