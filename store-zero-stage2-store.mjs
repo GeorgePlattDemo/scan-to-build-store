@@ -17,7 +17,8 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { estimatePineAlcove, estimateJob, estimateUserDefinedBoardTravel } from "./store-zero-pricing-engine.mjs";
-import { envelopeCheck } from "./d001-stage2-envelope.mjs";
+import { D001_STAGE2_ENVELOPE, envelopeCheck } from "./d001-stage2-envelope.mjs";
+import { calculationHash, D001_TRAVEL_STANDARD } from "./d001-travel-standard.mjs";
 
 export const STAGE2_JOB_DISPOSITIONS = [
   "SUPPORTABLE",
@@ -34,6 +35,97 @@ export function loadCatalog(path = join(ROOT, "store-zero-catalog.json")) {
 
 export function loadObservations(path = join(ROOT, "store-zero-observations.json")) {
   return JSON.parse(readFileSync(path, "utf8"));
+}
+
+export const STORE_EVALUATION_FRESHNESS = Object.freeze({
+  id: "STB-STORE-FRESH-EVALUATION-0.1",
+  rule: "EVERY_STORE_REQUEST_REEVALUATES_CURRENT_STORE_STATE",
+  priorAnswerMayAuthorizeNewRequest: false,
+  priorReceiptMayAuthorizeNewRequest: false
+});
+
+function currentStoreRevision(demand = {}, request = {}) {
+  return String(
+    request.storeRevision ||
+    process.env.STB_STORE_REVISION ||
+    demand.storeRevision ||
+    "LOCAL_UNPINNED_STORE_REVISION"
+  );
+}
+
+function storeEvaluationAuthority(catalog, storeRevision) {
+  return {
+    storeRevision,
+    catalogHash: calculationHash(catalog),
+    machineEnvelope: {
+      id: D001_STAGE2_ENVELOPE.id,
+      hash: calculationHash(D001_STAGE2_ENVELOPE)
+    },
+    travelStandard: {
+      id: D001_TRAVEL_STANDARD.id,
+      version: D001_TRAVEL_STANDARD.version,
+      hash: calculationHash(D001_TRAVEL_STANDARD)
+    },
+    economics: {
+      id: D001_TRAVEL_STANDARD.economics.id,
+      version: D001_TRAVEL_STANDARD.economics.version,
+      hash: calculationHash(D001_TRAVEL_STANDARD.economics)
+    }
+  };
+}
+
+export function evaluateDimensionalStoreRequest(catalog, demand = {}, request = {}) {
+  const requestId = String(request.requestId || "").trim();
+  if (!requestId) {
+    return {
+      title: demand.title || "Dimensional travel job",
+      stage: 2,
+      store: "Store Zero",
+      status: "UNRESOLVED",
+      complete: false,
+      freshEvaluation: false,
+      unresolvedConditions: ["STORE_EVALUATION_REQUEST_ID_REQUIRED"],
+      estimate: null,
+      calculationIdentity: null,
+      evaluationReceipt: null,
+      not_claimed: ["commercial quote", "physical fabrication", "live motion"]
+    };
+  }
+
+  const evaluatedAt = String(request.evaluatedAt || new Date().toISOString());
+  const storeRevision = currentStoreRevision(demand, request);
+  const authority = storeEvaluationAuthority(catalog, storeRevision);
+
+  // Deliberately call the governing evaluator for every Store request.
+  // No prior Store answer or receipt is accepted as an input to this function.
+  const evaluation = evaluateDimensionalTravelJob(catalog, {
+    ...demand,
+    storeRevision
+  });
+
+  const receiptCore = {
+    freshnessRule: STORE_EVALUATION_FRESHNESS.id,
+    requestId,
+    evaluatedAt,
+    authority,
+    demandHash: calculationHash(demand),
+    status: evaluation.status,
+    calculationIdentity: evaluation.calculationIdentity || null
+  };
+
+  return {
+    ...evaluation,
+    freshEvaluation: true,
+    evaluationReceipt: Object.freeze({
+      ...receiptCore,
+      receiptHash: calculationHash(receiptCore)
+    })
+  };
+}
+
+export function requestDimensionalStoreEvaluation(demand = {}, request = {}) {
+  // Reload Store catalog state on every formal Store request.
+  return evaluateDimensionalStoreRequest(loadCatalog(), demand, request);
 }
 
 export function findSku(catalog, storeSku) {
