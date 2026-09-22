@@ -40,6 +40,29 @@ Examples: shelf elevation → spot/drill coordinates; finished length → crossc
 
 The configuration defines **what and where on the part**. The D-001 model defines **station/tool, machine movement, and modeled timing**. Project/configurator data shall not invent machine coordinates, Store capability, Store economics, or Store answers.
 
+## 3A. Store SKU resolution is catalog-driven
+
+Dimensional material resolution is a Store function, not a project/configurator function.
+
+For a complete dimensional demand, Store evaluates matching offered SKUs in ascending stock length. A candidate is selectable only when the complete Store evaluation for that candidate passes current stock sufficiency, price completeness, declared capability, dimensional containment, retained-control, reference, operation, and travel requirements.
+
+A candidate that fails the complete job does **not** end the search. Store continues to the next matching candidate until one complete candidate passes or all matching candidates are exhausted.
+
+The governing selection policy is:
+
+`SHORTEST_COMPLETE_STORE_OFFERING`
+
+Consequences:
+
+- adding a valid SKU is a catalog-data change; it must not require project-specific resolver code;
+- removing, repricing, or changing availability of a SKU is reevaluated on the next Store request;
+- a shorter candidate may replace a longer candidate automatically when it completely supports the same demand;
+- if the shortest candidate fails retained-control, capability, availability, price, or another governing Store requirement, Store evaluates the next candidate;
+- the application/configurator may describe material class and physical demand, but it may not nominate, hard-code, or prefer a Store SKU;
+- Store SKU length is a Store material/fulfillment answer. It must not silently rewrite finished part geometry.
+
+Tests may preserve named historical fixtures where required, but generic Store acceptance must not freeze catalog membership, SKU count, or one preferred stock length as eternal truth.
+
 ## 4. Valid operation sequence
 
 Operations may be reordered only by the Store/machine planner and only while preserving geometry, dependencies, material identity, and the reference chain.
