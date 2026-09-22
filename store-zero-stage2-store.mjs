@@ -104,8 +104,26 @@ export function resolveBoardMaterial(catalog, demand = {}) {
   if (!candidates.length) {
     return { status: "UNAVAILABLE", reason: "NO_MATCHING_BOARD_OFFERING", workpieceLengthIn: definedWorkpieceLengthIn };
   }
-  if (considered.some((entry) => entry.capability.status === "UNRESOLVED")) {
-    return { status: "UNRESOLVED", reason: "CAPABILITY_INPUT_UNRESOLVED", considered };
+  const unresolvedEntry = considered.find((entry) =>
+    entry.stock.sufficient === true &&
+    entry.price.status !== "UNRESOLVED" &&
+    entry.capability.status === "UNRESOLVED"
+  );
+  if (unresolvedEntry) {
+    return {
+      status: "UNRESOLVED",
+      reason: "CAPABILITY_INPUT_UNRESOLVED",
+      item: unresolvedEntry.item,
+      storeSku: unresolvedEntry.item.storeSku,
+      pricingReferenceSku: unresolvedEntry.item.storeSku,
+      pricingReferenceStockLengthIn: unresolvedEntry.item.stockL_in,
+      allocationClaimed: false,
+      workpieceLengthIn: definedWorkpieceLengthIn,
+      stock: unresolvedEntry.stock,
+      price: unresolvedEntry.price,
+      capability: unresolvedEntry.capability,
+      considered
+    };
   }
   if (considered.every((entry) => entry.capability.status === "REFUSED")) {
     return { status: "REFUSED", reason: "NO_MATCHING_BOARD_WITHIN_ENVELOPE", considered };
