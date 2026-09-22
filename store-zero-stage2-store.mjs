@@ -141,7 +141,7 @@ function sequenceCandidate(item, demand, capability) {
       reason: "INSUFFICIENT_PARENT_FOR_FINISHED_DEMAND_AND_RETAINED_TAIL",
       item,
       capability,
-      finishedPartLengthIn,
+      finishedPartLengthIn: finishedLengthIn,
       retainedTailIn
     };
   }
