@@ -10,7 +10,7 @@ export const USER1_DIMENSIONAL_TRAVEL_DEMAND = Object.freeze({
     nominalW: 4
   }),
   definedWorkpieceLengthIn: 60,
-  requiredOps: Object.freeze(["MITER_LIMITED"]),
+  requiredOps: Object.freeze(["MITER_LIMITED", "SPOT_ON_LOCATION"]),
   sawAngleDeg: 30,
   cutPlane: "miter-face",
   datumCMethod: "REFERENCE_CUT",
