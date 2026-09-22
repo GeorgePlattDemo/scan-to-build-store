@@ -93,33 +93,39 @@ assert.deepEqual(
 );
 assert.equal(resolved18.estimate.travel.finalRemainderIn, 35.625);
 
-// Catalog growth is data, not a code rewrite: inserting a valid 66-in offering
-// causes the same resolver to select it automatically for the 18-in job.
-const catalogWith66 = structuredClone(catalog);
-const source72 = catalogWith66.offerings.find((o) => o.storeSku === "STB-ZERO-SPF-2X4-72-001");
-const sku66 = {
-  ...structuredClone(source72),
-  storeSku: "TEST-SPF-2X4-66-001",
-  stockL_in: 66,
-  list_reference: 2.74,
-  sellingPrice: 2.88,
-  description: "test-only 2x4 x 66 in SPF construction",
-  observationId: null,
-  listReferenceBasis: "CALCULATED",
-  assertions: {
-    ...structuredClone(source72.assertions),
-    externalListPrice: { basis: "NONE", observationId: null, value: null },
-    materialMapping: { basis: "DECLARED" }
-  }
-};
-catalogWith66.offerings.push(sku66);
-catalogWith66.skuCount = catalogWith66.offerings.length;
-const resolved18With66 = evaluateDimensionalTravelJob(catalogWith66, USER1_18);
-assert.equal(resolved18With66.status, "SUPPORTABLE");
-assert.equal(resolved18With66.materialResolution.pricingReferenceSku, "TEST-SPF-2X4-66-001");
-assert.equal(resolved18With66.materialResolution.pricingReferenceStockLengthIn, 66);
-assert.equal(resolved18With66.materialResolution.workpieceLengthIn, 66);
-assert.equal(resolved18With66.estimate.travel.finalRemainderIn, 29.625);
+// The real catalog ladder is itself the extensibility proof. A larger demand
+// walks the same Store candidates in order without any project-specific SKU rule:
+// 60 fails, 72 fails, 96 passes.
+const USER1_24 = structuredClone(USER1);
+USER1_24.configurationVersion = "0.3";
+USER1_24.parts = USER1_24.parts.map((part, index) => ({
+  ...part,
+  lengthIn: 24,
+  features: part.features.map((feature) => ({
+    ...feature,
+    featureId: "SPOT-" + (index + 1),
+    xIn: 12
+  }))
+}));
+const resolved24 = evaluateDimensionalTravelJob(catalog, USER1_24);
+assert.equal(resolved24.status, "SUPPORTABLE");
+assert.equal(resolved24.materialResolution.pricingReferenceSku, "STB-ZERO-SPF-2X4-96-001");
+assert.equal(resolved24.materialResolution.pricingReferenceStockLengthIn, 96);
+assert.equal(resolved24.materialResolution.workpieceLengthIn, 96);
+assert.deepEqual(
+  resolved24.materialResolution.consideredCandidates.slice(0, 3).map((entry) => [
+    entry.storeSku,
+    entry.stockLengthIn,
+    entry.candidateStatus,
+    entry.reason
+  ]),
+  [
+    ["STB-ZERO-SPF-2X4-60-001", 60, "REFUSED", "LAST_REMAIN_BELOW_TWO_ROLLER_CONTROL"],
+    ["STB-ZERO-SPF-2X4-72-001", 72, "REFUSED", "LAST_REMAIN_BELOW_TWO_ROLLER_CONTROL"],
+    ["STB-ZERO-SPF-2X4-96-001", 96, "SUPPORTABLE", null]
+  ]
+);
+assert.equal(resolved24.estimate.travel.finalRemainderIn, 47.625);
 
 // Removing a SKU is equally data-driven: the 16-in job falls through to 72
 // without changing resolver code.
@@ -245,5 +251,6 @@ console.log("User 1 Store SKU", passA.materialResolution.pricingReferenceSku);
 console.log("18-in Store SKU", resolved18.materialResolution.pricingReferenceSku);
 console.log("18-in Q", resolved18.estimate.totals.Q);
 console.log("18-in modeled minutes", resolved18.estimate.travel.time.T_MACHINE_min);
+console.log("24-in Store SKU", resolved24.materialResolution.pricingReferenceSku);
 console.log("inputHash", passA.calculationIdentity.inputHash);
 console.log("resultHash", passA.calculationIdentity.resultHash);
