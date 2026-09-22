@@ -180,11 +180,14 @@ export function envelopeCheck(item, req = {}) {
       unresolved.push("SPOT_TOOL_POINT_GEOMETRY_REQUIRED");
     }
     const along = finiteNumber(spot.locationAlongLengthIn);
+    const spotReferenceLengthIn = finiteNumber(
+      req.finishedPartLengthIn != null ? req.finishedPartLengthIn : req.keptLengthIn
+    );
     if (along == null) {
       unresolved.push("SPOT_LOCATION_REQUIRED");
     } else if (
       along < 0 ||
-      (finiteNumber(req.keptLengthIn) != null && along > Number(req.keptLengthIn))
+      (spotReferenceLengthIn != null && along > spotReferenceLengthIn)
     ) {
       reasons.push("SPOT_LOCATION_OUTSIDE_WORKPIECE");
     }
