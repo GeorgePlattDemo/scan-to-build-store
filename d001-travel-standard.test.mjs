@@ -12,7 +12,8 @@ import { USER1_DIMENSIONAL_TRAVEL_DEMAND } from "./user1-dimensional-travel-fixt
 
 const catalog = loadCatalog();
 
-const USER1 = { ...structuredClone(USER1_DIMENSIONAL_TRAVEL_DEMAND), storeRevision: "TESTED_BRANCH_REVISION" };
+const STORE_REVISION = process.env.STB_STORE_REVISION || "LOCAL_UNPINNED_STORE_REVISION";
+const USER1 = { ...structuredClone(USER1_DIMENSIONAL_TRAVEL_DEMAND), storeRevision: STORE_REVISION };
 
 const passA = evaluateDimensionalTravelJob(catalog, USER1);
 const passB = evaluateDimensionalTravelJob(catalog, structuredClone(USER1));
@@ -49,6 +50,7 @@ assert.equal(passA.estimate.economics.setupCharge, 0);
 assert.equal(passA.estimate.economics.setupTimeMin, 0);
 assert.equal(passA.estimate.economics.targetGrossMargin, 0.20);
 
+assert.equal(passA.estimate.travel.configurationVersion, "0.1");
 assert.equal(passA.calculationIdentity.inputHash, passB.calculationIdentity.inputHash);
 assert.equal(passA.calculationIdentity.resultHash, passB.calculationIdentity.resultHash);
 assert.equal(passA.estimate.totals.Q, passB.estimate.totals.Q);
