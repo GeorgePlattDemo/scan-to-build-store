@@ -318,8 +318,76 @@ export function evaluateJob(catalog, spec) {
   };
 }
 
+export const DIMENSIONAL_WORKPIECE_POLICY = Object.freeze({
+  PRESERVE_DEFINED: "PRESERVE_DEFINED",
+  GROW_TO_RETAINED_CONTROL: "GROW_TO_RETAINED_CONTROL"
+});
+
+function roundWorkpiece(value) {
+  return Math.round(Number(value) * 1000000) / 1000000;
+}
+
+export function resolveDimensionalWorkpiece(demand = {}) {
+  const requested = Number(demand.definedWorkpieceLengthIn);
+  const parts = Array.isArray(demand.parts) ? demand.parts : [];
+  const partLengths = parts.map((part) => Number(part?.lengthIn));
+  const kerfIn = Number(D001_TRAVEL_STANDARD.control.kerfIn);
+  const minRetainedControlIn = Number(D001_TRAVEL_STANDARD.control.minRetainedControlIn);
+  const policy = String(
+    demand.workpiecePolicy || DIMENSIONAL_WORKPIECE_POLICY.PRESERVE_DEFINED
+  );
+
+  if (!Number.isFinite(requested) || requested <= 0) {
+    return {
+      status: "UNRESOLVED",
+      reason: "DEFINED_WORKPIECE_LENGTH_REQUIRED",
+      requestedDefinedWorkpieceLengthIn: Number.isFinite(requested) ? requested : null,
+      requiredMinimumWorkpieceLengthIn: null,
+      definedWorkpieceLengthIn: null,
+      adjusted: false,
+      policy
+    };
+  }
+  if (!parts.length || partLengths.some((lengthIn) => !Number.isFinite(lengthIn) || lengthIn <= 0)) {
+    return {
+      status: "UNRESOLVED",
+      reason: "IDENTIFIED_PART_LENGTHS_REQUIRED",
+      requestedDefinedWorkpieceLengthIn: requested,
+      requiredMinimumWorkpieceLengthIn: null,
+      definedWorkpieceLengthIn: requested,
+      adjusted: false,
+      policy
+    };
+  }
+
+  const requiredMinimumWorkpieceLengthIn = roundWorkpiece(
+    minRetainedControlIn +
+    kerfIn +
+    partLengths.reduce((sum, lengthIn) => sum + lengthIn + kerfIn, 0)
+  );
+  const mayGrow = policy === DIMENSIONAL_WORKPIECE_POLICY.GROW_TO_RETAINED_CONTROL;
+  const definedWorkpieceLengthIn = mayGrow
+    ? Math.max(requested, requiredMinimumWorkpieceLengthIn)
+    : requested;
+
+  return {
+    status: "RESOLVED",
+    requestedDefinedWorkpieceLengthIn: requested,
+    requiredMinimumWorkpieceLengthIn,
+    definedWorkpieceLengthIn: roundWorkpiece(definedWorkpieceLengthIn),
+    adjusted: definedWorkpieceLengthIn > requested + 1e-9,
+    adjustmentIn: roundWorkpiece(Math.max(0, definedWorkpieceLengthIn - requested)),
+    policy,
+    basis: "D001_RETAINED_CONTROL_MINIMUM"
+  };
+}
+
 export function evaluateDimensionalTravelJob(catalog, demand = {}) {
   const parts = Array.isArray(demand.parts) ? demand.parts : [];
+  const workpieceResolution = resolveDimensionalWorkpiece(demand);
+  const effectiveDefinedWorkpieceLengthIn = workpieceResolution.status === "RESOLVED"
+    ? workpieceResolution.definedWorkpieceLengthIn
+    : demand.definedWorkpieceLengthIn;
   const firstSpot = parts
     .flatMap((part) => Array.isArray(part?.features) ? part.features : [])
     .find((feature) => feature?.kind === "SPOT_ON_LOCATION") || null;
@@ -330,7 +398,7 @@ export function evaluateDimensionalTravelJob(catalog, demand = {}) {
 
   const materialResolution = resolveBoardMaterial(catalog, {
     ...(demand.materialDemand || {}),
-    definedWorkpieceLengthIn: demand.definedWorkpieceLengthIn,
+    definedWorkpieceLengthIn: effectiveDefinedWorkpieceLengthIn,
     qty: 1,
     requiredOps,
     sawAngleDeg: demand.sawAngleDeg,
@@ -366,7 +434,7 @@ export function evaluateDimensionalTravelJob(catalog, demand = {}) {
     configurationId: demand.configurationId,
     configurationVersion: demand.configurationVersion,
     storeSku: item.storeSku,
-    definedWorkpieceLengthIn: demand.definedWorkpieceLengthIn,
+    definedWorkpieceLengthIn: effectiveDefinedWorkpieceLengthIn,
     sawAngleDeg: demand.sawAngleDeg,
     cutPlane: demand.cutPlane,
     datumCMethod: demand.datumCMethod || "REFERENCE_CUT",
@@ -402,8 +470,14 @@ export function evaluateDimensionalTravelJob(catalog, demand = {}) {
       pricingReferenceSku: item.storeSku,
       pricingReferenceStockLengthIn: item.stockL_in,
       allocationClaimed: false,
-      workpieceLengthIn: demand.definedWorkpieceLengthIn
+      requestedDefinedWorkpieceLengthIn: workpieceResolution.requestedDefinedWorkpieceLengthIn ?? null,
+      requiredMinimumWorkpieceLengthIn: workpieceResolution.requiredMinimumWorkpieceLengthIn ?? null,
+      workpieceLengthIn: effectiveDefinedWorkpieceLengthIn,
+      workpieceAdjusted: workpieceResolution.adjusted === true,
+      workpieceAdjustmentIn: workpieceResolution.adjustmentIn || 0,
+      workpiecePolicy: workpieceResolution.policy
     },
+    workpieceResolution,
     estimate,
     calculationIdentity: estimate.calculationIdentity || null,
     not_claimed: ["commercial quote", "physical fabrication", "live motion", "measured machine performance"]
