@@ -20,6 +20,12 @@ Publicly callable does not mean publicly visible.
 
 Connected does not mean surrendered.
 
+## Dimensional completion authority
+
+For dimensional work, `DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md` is the governing Store completion rule. A complete dimensional `Q` is valid only when the identified configuration passes the Store capability, D-001 travel/kinematic calculation, and declared Store economics through the one governing evaluator. Configure and Store reconciliation call that same evaluator; neither the application nor a project wrapper may locally recreate its answer.
+
+A missing Store-owned fact remains `UNRESOLVED`, `REFUSED`, or `UNAVAILABLE`. It is never permission for a local fallback, historical placeholder, or surrogate Store calculation.
+
 ---
 
 # 1. Status of Store Zero
