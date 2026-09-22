@@ -110,6 +110,20 @@ If unchanged identified inputs produce different outputs: **FAIL CLOSED — STOR
 
 A legitimate changed input creates a new identified version, a new Store answer, and a new confirmation as applicable. No silent reconciliation.
 
+### Fresh evaluation on every Store request
+
+Every explicit user action that requests or re-requests a Store answer is a **new Store evaluation request**.
+
+- The Store must execute the governing evaluator again against its current Store state.
+- A prior Store answer, receipt, result hash, displayed price, capability result, or successful request may remain history, but it may not authorize the new request.
+- Each formal request carries a request identity and receives a new evaluation receipt.
+- The receipt identifies the Store revision plus the current catalog, machine-envelope, travel-standard, and economics authority used for that request.
+- If current Store price, material availability, capability, machine envelope, travel model, economics, refusal state, or any other governing authority differs from the answer last presented to the user, the application must surface that difference and require current user confirmation as applicable. It may not silently preserve the earlier result.
+- `UNRESOLVED`, `REFUSED`, or `UNAVAILABLE` on the new evaluation blocks use of an earlier `SUPPORTABLE` answer.
+- Repeated submission of an unchanged definition is allowed. Reuse of its earlier Store evaluation as though it were a fresh evaluation is not.
+
+**Definition identity may be durable. Store validity is re-established per request.**
+
 ## 8. Travel record
 
 Every complete dimensional Store answer retains at minimum:
@@ -159,6 +173,9 @@ Automated acceptance fails if:
 - application/configurator code calculates Store `Q` or locally duplicates Store capability/refusal logic;
 - a project-specific shortcut bypasses the governing evaluator;
 - PASS A and PASS B use different economic mechanisms;
+- a new Store request can reuse a prior Store answer or receipt without executing the governing evaluator again;
+- a formal Store request does not carry a fresh evaluation receipt;
+- current Store catalog, machine-envelope, travel-standard, or economics authority is absent from that receipt;
 - unchanged governing inputs produce different result identities;
 - an unresolved fact is silently filled;
 - a modeled value loses its modeled/fixture identity;
@@ -175,5 +192,7 @@ A successful test run proves only the named acceptance criteria on the exact tes
 **DEFINITION → CAPABILITY → MOTION → TIME → PRICE**
 
 **SAME RULE. SAME EVALUATOR. SAME IDENTIFIED INPUTS. SAME RESULT.**
+
+**EVERY STORE REQUEST REEVALUATES CURRENT STORE STATE. PRIOR ANSWERS ARE HISTORY, NOT AUTHORITY FOR A NEW REQUEST.**
 
 **No shortcuts. No surrogate Store. No silent fallback. No second pricing engine.**
