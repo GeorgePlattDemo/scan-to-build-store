@@ -1,0 +1,44 @@
+name: Fixed spot depth acceptance
+
+on:
+  push:
+    branches:
+      - repair/fixed-spot-depth-0.1
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  store-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Store Stage-2 regressions
+        run: |
+          node d001-stage2-envelope.test.mjs
+          node store-zero-stage2.test.mjs
+          node store-zero-disposition.test.mjs
+          node d-001-stage2-mill.test.mjs
+      - name: Depth semantics source assertions
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { D001_STAGE2_ENVELOPE } from './d001-stage2-envelope.mjs';
+          import { TOOLING, spotEconomicsAssessment } from './store-zero-pricing-engine.mjs';
+          assert.equal(D001_STAGE2_ENVELOPE.spot.operationContract,'SPOT_ON_LOCATION/0.2');
+          assert.equal(D001_STAGE2_ENVELOPE.spot.toolDiameterIn,0.1875);
+          assert.equal(D001_STAGE2_ENVELOPE.spot.fullDiameterPenetrationIn,0.1875);
+          assert.equal(D001_STAGE2_ENVELOPE.spot.depthReference,'ENTRY_SURFACE_ALONG_DRILL_AXIS');
+          assert.equal(D001_STAGE2_ENVELOPE.spot.pointGeometryStatus,'UNRESOLVED');
+          assert.equal(D001_STAGE2_ENVELOPE.spot.totalTipPenetrationIn,null);
+          assert.equal(TOOLING.spot.applicabilityStatus,'UNRESOLVED_FOR_DEPTH_DEFINED_SPOT');
+          assert.equal(spotEconomicsAssessment().legacyFixedCycleMin,0.16);
+          NODE
