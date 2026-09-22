@@ -109,8 +109,11 @@ const shortKept = evaluateJob(catalog, {
 assert.equal(shortKept.status, "REFUSED");
 
 const ticket = estimatePineAlcove(catalog);
-assert.equal(ticket.totals.Q, 374.42);
+assert.equal(ticket.status, "PARTIAL_BUDGETARY_ESTIMATE");
+assert.equal(ticket.totals.material, 272.86);
+assert.equal(ticket.totals.Q, null);
 const taper = estimatePicnicLegTapered(catalog);
-assert.ok(taper.totals.Q > 50);
+assert.equal(taper.status, "PARTIAL_BUDGETARY_ESTIMATE");
+assert.equal(taper.totals.Q, null);
 
 console.log("d001-stage2-envelope.test.mjs ok");
