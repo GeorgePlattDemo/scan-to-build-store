@@ -8,6 +8,13 @@ It sits between the **Scan-to-Build Governed Reference** and user-facing applica
 
 The Store does not redefine project authority, silently repair unresolved information, or allow machine capability to override governance.
 
+## Governing dimensional Store standard
+
+For every **complete dimensional Store Q**, [`DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md`](DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) controls the path from identified configuration → Store capability → modeled D-001 work → modeled occupied-cell time → Store economics → Q → confirmed reconciliation.
+
+There is one governing dimensional Store evaluator. Configure may present the answer it returns; Configure may not reproduce Store pricing/capability logic. The confirmed Store reconciliation calls the same evaluator again. Missing authority fails closed.
+
+
 ---
 
 ## Purpose
