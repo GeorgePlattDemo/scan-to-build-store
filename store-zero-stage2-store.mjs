@@ -16,7 +16,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { estimatePineAlcove, estimateJob } from "./store-zero-pricing-engine.mjs";
+import { estimatePineAlcove, estimateJob, estimateUserDefinedBoardTravel } from "./store-zero-pricing-engine.mjs";
 import { envelopeCheck } from "./d001-stage2-envelope.mjs";
 
 export const STAGE2_JOB_DISPOSITIONS = [
@@ -226,6 +226,98 @@ export function evaluateJob(catalog, spec) {
   };
 }
 
+export function evaluateDimensionalTravelJob(catalog, demand = {}) {
+  const parts = Array.isArray(demand.parts) ? demand.parts : [];
+  const firstSpot = parts
+    .flatMap((part) => Array.isArray(part?.features) ? part.features : [])
+    .find((feature) => feature?.kind === "SPOT_ON_LOCATION") || null;
+
+  const requiredOps = Array.isArray(demand.requiredOps) && demand.requiredOps.length
+    ? [...demand.requiredOps]
+    : ["MITER_LIMITED"];
+
+  const materialResolution = resolveBoardMaterial(catalog, {
+    ...(demand.materialDemand || {}),
+    definedWorkpieceLengthIn: demand.definedWorkpieceLengthIn,
+    qty: 1,
+    requiredOps,
+    sawAngleDeg: demand.sawAngleDeg,
+    cutPlane: demand.cutPlane,
+    spotDemand: firstSpot
+      ? {
+          required: true,
+          mode: "SPOT_ON_LOCATION",
+          locationRule: "CENTERED_ON_PART",
+          locationAlongLengthIn: firstSpot.xIn,
+          acrossWidthRule: firstSpot.acrossWidthRule
+        }
+      : null
+  });
+
+  if (materialResolution.status !== "MAPPED") {
+    return {
+      title: demand.title || "Dimensional travel job",
+      stage: 2,
+      store: "Store Zero",
+      status: materialResolution.status,
+      materialResolution,
+      estimate: null,
+      calculationIdentity: null,
+      not_claimed: ["commercial quote", "physical fabrication", "live motion"]
+    };
+  }
+
+  const item = materialResolution.item;
+  const estimate = estimateUserDefinedBoardTravel(catalog, {
+    title: demand.title || "Dimensional travel job",
+    classId: demand.classId || "user_defined_board",
+    configurationId: demand.configurationId,
+    configurationVersion: demand.configurationVersion,
+    storeSku: item.storeSku,
+    definedWorkpieceLengthIn: demand.definedWorkpieceLengthIn,
+    sawAngleDeg: demand.sawAngleDeg,
+    cutPlane: demand.cutPlane,
+    datumCMethod: demand.datumCMethod || "REFERENCE_CUT",
+    parts,
+    declaredSawCuts: demand.declaredSawCuts,
+    declaredSpotCount: demand.declaredSpotCount,
+    unresolvedConditions: demand.unresolvedConditions || [],
+    storeRevision: demand.storeRevision || null
+  });
+
+  const status = estimate.complete
+    ? "SUPPORTABLE"
+    : estimate.status === "REFUSED"
+      ? "REFUSED"
+      : "UNRESOLVED";
+
+  return {
+    title: demand.title || "Dimensional travel job",
+    stage: 2,
+    store: "Store Zero",
+    status,
+    lines: [{
+      storeSku: item.storeSku,
+      description: item.description,
+      qty: 1,
+      stock: materialResolution.stock,
+      price: materialResolution.price,
+      capability: materialResolution.capability
+    }],
+    materialResolution: {
+      status: materialResolution.status,
+      storeSku: item.storeSku,
+      pricingReferenceSku: item.storeSku,
+      pricingReferenceStockLengthIn: item.stockL_in,
+      allocationClaimed: false,
+      workpieceLengthIn: demand.definedWorkpieceLengthIn
+    },
+    estimate,
+    calculationIdentity: estimate.calculationIdentity || null,
+    not_claimed: ["commercial quote", "physical fabrication", "live motion", "measured machine performance"]
+  };
+}
+
 export function pineAlcoveEvaluation(catalog) {
   const estimate = estimatePineAlcove(catalog);
   return evaluateJob(catalog, {
@@ -238,4 +330,4 @@ export function pineAlcoveEvaluation(catalog) {
   });
 }
 
-export { estimateJob, estimatePineAlcove };
+export { estimateJob, estimatePineAlcove, estimateUserDefinedBoardTravel };
