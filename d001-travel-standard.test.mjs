@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   loadCatalog,
-  evaluateDimensionalTravelJob
+  evaluateDimensionalTravelJob,
+  evaluateDimensionalStoreRequest,
+  requestDimensionalStoreEvaluation,
+  STORE_EVALUATION_FRESHNESS
 } from "./store-zero-stage2-store.mjs";
 import {
   D001_TRAVEL_STANDARD,
@@ -55,6 +58,72 @@ assert.equal(passA.calculationIdentity.inputHash, passB.calculationIdentity.inpu
 assert.equal(passA.calculationIdentity.resultHash, passB.calculationIdentity.resultHash);
 assert.equal(passA.estimate.totals.Q, passB.estimate.totals.Q);
 
+// Every formal Store submission is a fresh evaluation with a new receipt.
+// The same definition may calculate to the same Q, but the prior answer is never
+// accepted as authority for a later Store request.
+const requestA = evaluateDimensionalStoreRequest(structuredClone(catalog), USER1, {
+  requestId: "USER1-REQ-A",
+  evaluatedAt: "2026-09-22T18:30:00.000Z",
+  storeRevision: STORE_REVISION
+});
+const requestB = evaluateDimensionalStoreRequest(structuredClone(catalog), USER1, {
+  requestId: "USER1-REQ-B",
+  evaluatedAt: "2026-09-22T18:31:00.000Z",
+  storeRevision: STORE_REVISION
+});
+assert.equal(STORE_EVALUATION_FRESHNESS.rule, "EVERY_STORE_REQUEST_REEVALUATES_CURRENT_STORE_STATE");
+assert.equal(STORE_EVALUATION_FRESHNESS.priorAnswerMayAuthorizeNewRequest, false);
+assert.equal(requestA.freshEvaluation, true);
+assert.equal(requestB.freshEvaluation, true);
+assert.equal(requestA.evaluationReceipt.requestId, "USER1-REQ-A");
+assert.equal(requestB.evaluationReceipt.requestId, "USER1-REQ-B");
+assert.notEqual(requestA.evaluationReceipt.receiptHash, requestB.evaluationReceipt.receiptHash);
+assert.equal(requestA.calculationIdentity.inputHash, requestB.calculationIdentity.inputHash);
+assert.equal(requestA.calculationIdentity.resultHash, requestB.calculationIdentity.resultHash);
+assert.equal(requestA.estimate.totals.Q, requestB.estimate.totals.Q);
+
+// A Store price change must alter the current evaluation rather than allowing the
+// previously returned Q to survive as authority.
+const repricedCatalog = structuredClone(catalog);
+const repricedItem = repricedCatalog.offerings.find((o) => o.storeSku === "STB-ZERO-SPF-2X4-72-001");
+repricedItem.sellingPrice = 3.49;
+const repriced = evaluateDimensionalStoreRequest(repricedCatalog, USER1, {
+  requestId: "USER1-REQ-PRICE-CHANGED",
+  evaluatedAt: "2026-09-22T18:32:00.000Z",
+  storeRevision: STORE_REVISION + "-PRICE-CHANGED"
+});
+assert.equal(repriced.freshEvaluation, true);
+assert.equal(repriced.status, "SUPPORTABLE");
+assert.equal(repriced.estimate.totals.material, 3.49);
+assert.notEqual(repriced.estimate.totals.Q, requestA.estimate.totals.Q);
+assert.notEqual(repriced.calculationIdentity.inputHash, requestA.calculationIdentity.inputHash);
+assert.notEqual(repriced.calculationIdentity.resultHash, requestA.calculationIdentity.resultHash);
+assert.notEqual(repriced.evaluationReceipt.authority.catalogHash, requestA.evaluationReceipt.authority.catalogHash);
+
+// A capability failure on the current request must surface immediately and carry
+// a fresh receipt; the prior supportable answer cannot be reused.
+const capabilityChanged = structuredClone(USER1);
+capabilityChanged.sawAngleDeg = 46;
+const refusedCurrent = evaluateDimensionalStoreRequest(structuredClone(catalog), capabilityChanged, {
+  requestId: "USER1-REQ-CAPABILITY-CHANGED",
+  evaluatedAt: "2026-09-22T18:33:00.000Z",
+  storeRevision: STORE_REVISION
+});
+assert.equal(refusedCurrent.freshEvaluation, true);
+assert.equal(refusedCurrent.status, "REFUSED");
+assert.equal(refusedCurrent.evaluationReceipt.status, "REFUSED");
+assert.equal(refusedCurrent.calculationIdentity, null);
+
+// Formal request API fails closed without a request identity and reloads Store
+// state internally instead of accepting a cached prior answer.
+const missingRequestIdentity = requestDimensionalStoreEvaluation(USER1, {
+  evaluatedAt: "2026-09-22T18:34:00.000Z",
+  storeRevision: STORE_REVISION
+});
+assert.equal(missingRequestIdentity.status, "UNRESOLVED");
+assert.equal(missingRequestIdentity.freshEvaluation, false);
+assert.ok(missingRequestIdentity.unresolvedConditions.includes("STORE_EVALUATION_REQUEST_ID_REQUIRED"));
+
 const missingSpotCoordinate = structuredClone(USER1);
 delete missingSpotCoordinate.parts[1].features[0].xIn;
 const unresolved = evaluateDimensionalTravelJob(catalog, missingSpotCoordinate);
@@ -74,6 +143,18 @@ mismatch.declaredSpotCount = 1;
 const countMismatch = evaluateDimensionalTravelJob(catalog, mismatch);
 assert.equal(countMismatch.status, "UNRESOLVED");
 assert.ok(countMismatch.estimate.unresolved.includes("DECLARED_SPOT_COUNT_MISMATCH"));
+
+const storeSource = readFileSync(new URL("./store-zero-stage2-store.mjs", import.meta.url), "utf8");
+assert.match(
+  storeSource,
+  /return evaluateDimensionalStoreRequest\(loadCatalog\(\), demand, request\)/,
+  "formal Store request no longer reloads current catalog state"
+);
+assert.equal(
+  /prior(Store)?Answer/.test(storeSource) && /accepted as an input/.test(storeSource),
+  true,
+  "fresh-evaluation anti-cache invariant disappeared from Store source"
+);
 
 const engineSource = readFileSync(new URL("./store-zero-pricing-engine.mjs", import.meta.url), "utf8");
 for (const rejected of ["setupCharge: 35", "machineHourRate: 100", "jobSetupMin: 8"]) {
