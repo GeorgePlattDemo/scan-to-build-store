@@ -5,6 +5,7 @@ on:
     branches:
       - repair/demand-driven-stock-sequence-0.1
       - repair/catalog-and-pricing-policy
+      - repair/reality-bar-no-invented-economics
   pull_request:
     branches:
       - main
@@ -30,3 +31,5 @@ jobs:
         run: node d001-stage2-envelope.test.mjs
       - name: Store Stage-2 regression
         run: node store-zero-stage2.test.mjs
+      - name: Reality bar — no invented processing dollars
+        run: node --test reality-bar.test.mjs
