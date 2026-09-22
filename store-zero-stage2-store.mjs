@@ -16,8 +16,8 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { estimatePineAlcove, estimateJob } from "./store-zero-pricing-engine.mjs";
-import { envelopeCheck } from "./d001-stage2-envelope.mjs";
+import { estimatePineAlcove, estimateJob, estimateBoardPlan } from "./store-zero-pricing-engine.mjs";
+import { D001_STAGE2_ENVELOPE, envelopeCheck } from "./d001-stage2-envelope.mjs";
 
 export const STAGE2_JOB_DISPOSITIONS = [
   "SUPPORTABLE",
@@ -29,7 +29,82 @@ export const STAGE2_JOB_DISPOSITIONS = [
 const ROOT = dirname(fileURLToPath(import.meta.url));
 
 export function loadCatalog(path = join(ROOT, "store-zero-catalog.json")) {
-  return JSON.parse(readFileSync(path, "utf8"));
+  let catalog;
+  try {
+    catalog = JSON.parse(readFileSync(path, "utf8"));
+  } catch (error) {
+    throw new Error(`CATALOG_READ_FAILED: ${error.message}`, { cause: error });
+  }
+  const result = validateCatalog(catalog);
+  if (!result.valid) throw new Error(`CATALOG_INVALID: ${result.errors.join("; ")}`);
+  return catalog;
+}
+
+/** Validate a complete candidate before replacing a usable catalog. No repair by guessing. */
+export function validateCatalog(catalog) {
+  const errors = [];
+  if (!catalog || !Array.isArray(catalog.offerings) || catalog.offerings.length === 0) {
+    return { valid: false, errors: ["offerings must be a nonempty array"] };
+  }
+  if (catalog.skuCount !== catalog.offerings.length) errors.push("skuCount must equal offerings.length");
+  const seen = new Set();
+  for (const [index, item] of catalog.offerings.entries()) {
+    const label = `offerings[${index}]`;
+    if (!item || typeof item !== "object") { errors.push(`${label} must be an object`); continue; }
+    const id = item.storeSku;
+    if (typeof id !== "string" || !id.trim()) errors.push(`${label}.storeSku is required`);
+    if (seen.has(id)) errors.push(`${label}.storeSku is duplicated: ${id}`);
+    seen.add(id);
+    if (typeof item.offered !== "boolean") errors.push(`${label}.offered must be boolean`);
+    if (!["board", "sheet", "hardware"].includes(item.form)) errors.push(`${label}.form is unsupported`);
+    const positive = item.form === "board"
+      ? ["nominalT", "nominalW", "actualT", "actualW", "stockL_in"]
+      : item.form === "sheet" ? ["actualT", "sheetW_in", "sheetL_in"] : [];
+    for (const field of positive) {
+      if (!Number.isFinite(item[field]) || item[field] <= 0) errors.push(`${label}.${field} must be a positive number`);
+    }
+    for (const field of ["onHand", "allocated"]) {
+      if (!Number.isInteger(item[field]) || item[field] < 0) errors.push(`${label}.${field} must be a nonnegative integer`);
+    }
+    for (const field of ["sellingPrice", "list_reference"]) {
+      if (item[field] != null && (!Number.isFinite(item[field]) || item[field] < 0)) errors.push(`${label}.${field} must be null or a nonnegative number`);
+    }
+    for (const field of ["supportedOps", "cellFamily"]) {
+      if (!Array.isArray(item[field]) || item[field].some(v => typeof v !== "string")) errors.push(`${label}.${field} must be an array of strings`);
+    }
+    for (const field of ["onHand", "allocation", "supplierPath", "sellingPrice", "cellCompatibility"]) {
+      if (!item.assertions?.[field]?.basis) errors.push(`${label}.assertions.${field}.basis is required`);
+    }
+    if (item.sellingPrice != null && !item.listReferenceBasis) errors.push(`${label}.listReferenceBasis is required for a priced offering`);
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+/** Immutable, all-or-nothing addition. Rejects duplicates rather than overwriting a SKU. */
+export function addCatalogOfferings(catalog, offerings) {
+  const current = validateCatalog(catalog);
+  if (!current.valid) return { status: "REJECTED", catalog, errors: current.errors };
+  if (!Array.isArray(offerings) || offerings.length === 0) {
+    return { status: "REJECTED", catalog, errors: ["additions must be a nonempty array"] };
+  }
+  const candidate = structuredClone(catalog);
+  candidate.offerings.push(...structuredClone(offerings));
+  candidate.skuCount = candidate.offerings.length;
+  const result = validateCatalog(candidate);
+  return result.valid
+    ? { status: "ACCEPTED", catalog: candidate, errors: [] }
+    : { status: "REJECTED", catalog, errors: result.errors };
+}
+
+/** A failed reload keeps the caller's last valid catalog and reports the failure explicitly. */
+export function reloadCatalog(path, currentCatalog) {
+  const current = validateCatalog(currentCatalog);
+  if (!current.valid) throw new Error(`CATALOG_INVALID: ${current.errors.join("; ")}`);
+  try {
+    return { status: "ACCEPTED", catalog: loadCatalog(path), errors: [] };
+  } catch (error) {
+    return { status: "REJECTED", catalog: currentCatalog, errors: [error.message] };
+  }
 }
 
 export function loadObservations(path = join(ROOT, "store-zero-observations.json")) {
@@ -51,66 +126,334 @@ export function offerMaterial(catalog, q) {
   });
 }
 
-export function resolveBoardMaterial(catalog, demand = {}) {
-  const definedWorkpieceLengthIn = Number(demand.definedWorkpieceLengthIn);
-  const qty = Number.isFinite(Number(demand.qty)) ? Number(demand.qty) : 1;
-  const requiredOps = Array.isArray(demand.requiredOps) ? demand.requiredOps : [];
-  const feature = {
-    keptLengthIn: definedWorkpieceLengthIn,
-    sawAngleDeg: demand.sawAngleDeg,
-    cutPlane: demand.cutPlane,
-    spotDemand: demand.spotDemand,
-    millYIn: demand.millYIn,
-    millDepthIn: demand.millDepthIn
+export const BOARD_SEQUENCE_POLICY = Object.freeze({
+  id: "FEWEST_PARENTS_THEN_SHORTEST_PARENT",
+  basis: "TASK_FALLBACK_NO_EXISTING_MULTI_PART_SELECTION_POLICY",
+  claimsCheapest: false,
+  claimsLeastWaste: false
+});
+
+export const BOARD_SEQUENCE_RULES = Object.freeze({
+  kerfIn: 0.125,
+  retainedControlTailIn: D001_STAGE2_ENVELOPE.stock.minControlledLengthIn,
+  presentation: "2X4_WIDE_FACE_ON_TABLE",
+  separatingCutRule: "ONE_SEPARATOR_MAY_END_ONE_PART_AND_BEGIN_THE_NEXT_WHEN_ENDS_ARE_PARALLEL"
+});
+
+function finitePositive(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function integerPositive(value) {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+function sequenceCandidate(item, demand, capability) {
+  const finishedLengthIn = finitePositive(demand.finishedPartLengthIn);
+  const quantity = integerPositive(demand.quantity);
+  if (finishedLengthIn == null || quantity == null) {
+    return { feasible: false, reason: "FINISHED_PART_DEMAND_INVALID", item, capability };
+  }
+
+  const kerfIn = BOARD_SEQUENCE_RULES.kerfIn;
+  const retainedTailIn = BOARD_SEQUENCE_RULES.retainedControlTailIn;
+  const angleDeg = Number(demand.sawAngleDeg);
+  const requestedBlank = demand.requestedFinishedBlankLengthIn == null
+    ? null
+    : finitePositive(demand.requestedFinishedBlankLengthIn);
+  if (demand.requestedFinishedBlankLengthIn != null && requestedBlank == null) {
+    return { feasible: false, reason: "REQUESTED_FINISHED_BLANK_INVALID", item, capability };
+  }
+
+  const parentLengthIn = Number(item.stockL_in);
+  const workingLengthIn = requestedBlank ?? parentLengthIn;
+  if (!Number.isFinite(parentLengthIn) || workingLengthIn > parentLengthIn) {
+    return { feasible: false, reason: "PARENT_SHORTER_THAN_REQUIRED_BLANK", item, capability };
+  }
+
+  let prep = null;
+  if (requestedBlank != null && requestedBlank < parentLengthIn) {
+    const prepRemainderIn = Number((parentLengthIn - requestedBlank - kerfIn).toFixed(6));
+    if (prepRemainderIn < retainedTailIn) {
+      return {
+        feasible: false,
+        reason: "PREP_CUT_VIOLATES_RETAINED_CONTROL_TAIL",
+        item,
+        capability,
+        preparation: {
+          required: true,
+          reason: "REQUESTED_FINISHED_BLANK",
+          source: demand.requestedFinishedBlankSource ?? "DEMAND.REQUESTED_FINISHED_BLANK",
+          inputLengthIn: parentLengthIn,
+          outputLengthIn: requestedBlank,
+          kerfLossIn: kerfIn,
+          parentRemainderIn: prepRemainderIn
+        }
+      };
+    }
+    prep = {
+      required: true,
+      operation: "CROSSCUT",
+      reason: "REQUESTED_FINISHED_BLANK",
+      source: demand.requestedFinishedBlankSource ?? "DEMAND.REQUESTED_FINISHED_BLANK",
+      inputLengthIn: parentLengthIn,
+      outputLengthIn: requestedBlank,
+      kerfLossIn: kerfIn,
+      parentRemainderIn: prepRemainderIn,
+      economics: "INCLUDED_AS_ONE_MODELED_SAW_CYCLE_PER_PARENT"
+    };
+  }
+
+  const establishCut = angleDeg !== 0 ? 1 : 0;
+  const usableForParts = workingLengthIn - establishCut * kerfIn - retainedTailIn;
+  const perPartDemandIn = finishedLengthIn + kerfIn;
+  const partsPerParent = Math.floor((usableForParts + 1e-9) / perPartDemandIn);
+  if (partsPerParent < 1) {
+    return {
+      feasible: false,
+      reason: "INSUFFICIENT_PARENT_FOR_FINISHED_DEMAND_AND_RETAINED_TAIL",
+      item,
+      capability,
+      finishedPartLengthIn: finishedLengthIn,
+      retainedTailIn
+    };
+  }
+
+  const parentCount = Math.ceil(quantity / partsPerParent);
+  const stock = stockAnswer(item, parentCount);
+  if (!stock.sufficient) {
+    return { feasible: false, reason: "PARENT_QUANTITY_UNAVAILABLE", item, capability, stock, parentCount };
+  }
+
+  const parents = [];
+  let partsRemaining = quantity;
+  let productionSawCuts = 0;
+  let preparationSawCuts = 0;
+  for (let parentIndex = 0; parentIndex < parentCount; parentIndex += 1) {
+    const producedParts = Math.min(partsPerParent, partsRemaining);
+    partsRemaining -= producedParts;
+    let remainderIn = workingLengthIn;
+    const operations = [];
+    if (prep) {
+      preparationSawCuts += 1;
+      operations.push({
+        sequence: operations.length + 1,
+        operation: "PREPARE_FINISHED_BLANK",
+        machineOperation: "CROSSCUT",
+        reason: prep.reason,
+        source: prep.source,
+        inputLengthIn: prep.inputLengthIn,
+        outputLengthIn: prep.outputLengthIn,
+        kerfLossIn: prep.kerfLossIn
+      });
+    }
+    if (establishCut) {
+      remainderIn = Number((remainderIn - kerfIn).toFixed(6));
+      productionSawCuts += 1;
+      operations.push({
+        sequence: operations.length + 1,
+        operation: "ESTABLISH_FIRST_END",
+        machineOperation: "MITER_LIMITED",
+        angleDeg,
+        cutPlane: demand.cutPlane,
+        kerfLossIn: kerfIn
+      });
+    }
+    for (let partIndex = 0; partIndex < producedParts; partIndex += 1) {
+      remainderIn = Number((remainderIn - finishedLengthIn - kerfIn).toFixed(6));
+      productionSawCuts += 1;
+      operations.push({
+        sequence: operations.length + 1,
+        operation: "SEPARATE_FINISHED_PART",
+        machineOperation: angleDeg === 0 ? "CROSSCUT" : "MITER_LIMITED",
+        partNumber: quantity - partsRemaining - producedParts + partIndex + 1,
+        finishedLengthIn,
+        lengthDatum: demand.lengthDatum,
+        angleDeg,
+        cutPlane: demand.cutPlane,
+        endIdentity: demand.endIdentity,
+        endRelation: demand.endRelation,
+        kerfLossIn: kerfIn,
+        sharedBoundaryWithNextPart: angleDeg !== 0 && partIndex < producedParts - 1
+      });
+    }
+    parents.push({
+      parentNumber: parentIndex + 1,
+      storeSku: item.storeSku,
+      parentStockLengthIn: parentLengthIn,
+      workingLengthIn,
+      producedParts,
+      remainderIn,
+      retainedControlTailIn: retainedTailIn,
+      retainedControlSatisfied: remainderIn >= retainedTailIn,
+      operations
+    });
+  }
+
+  return {
+    feasible: true,
+    item,
+    capability,
+    stock,
+    parentCount,
+    partsPerParent,
+    parentLengthIn,
+    workingLengthIn,
+    remainderIn: parents.length === 1 ? parents[0].remainderIn : null,
+    parents,
+    preparation: prep ? parents.map((parent) => parent.operations[0]).filter((op) => op?.operation === "PREPARE_FINISHED_BLANK") : [],
+    accounting: {
+      productionSawCuts,
+      preparationSawCuts,
+      totalModeledSawCuts: productionSawCuts + preparationSawCuts
+    }
   };
+}
+
+export function resolveBoardMaterial(catalog, demand = {}) {
+  const finishedPartLengthIn = finitePositive(demand.finishedPartLengthIn);
+  const quantity = integerPositive(demand.quantity);
+  const sawAngleDeg = Number(demand.sawAngleDeg);
+  if (finishedPartLengthIn == null || quantity == null || !Number.isFinite(sawAngleDeg)) {
+    return {
+      status: "UNRESOLVED",
+      reason: "FINISHED_PART_DEMAND_INVALID",
+      finishedPartLengthIn,
+      quantity
+    };
+  }
+
+  const requiredOps = sawAngleDeg === 0 ? ["CROSSCUT"] : ["MITER_LIMITED"];
+  for (const op of Array.isArray(demand.requiredOps) ? demand.requiredOps : []) {
+    if (!requiredOps.includes(op)) requiredOps.push(op);
+  }
+
   const candidates = offerMaterial(catalog, {
     species: demand.species,
     form: demand.form || "board",
     nominalT: demand.nominalT,
     nominalW: demand.nominalW
-  })
-    .filter((item) =>
-      Number.isFinite(definedWorkpieceLengthIn)
-        ? Number(item.stockL_in) >= definedWorkpieceLengthIn
-        : true
-    )
-    .sort((a, b) => Number(a.stockL_in) - Number(b.stockL_in) || Number(a.sellingPrice) - Number(b.sellingPrice));
+  });
 
-  const considered = candidates.map((item) => ({
-    item,
-    stock: stockAnswer(item, qty),
-    price: priceAnswer(item),
-    capability: capabilityAnswer(item, requiredOps, feature)
-  }));
-  const mapped = considered.find((entry) =>
-    entry.stock.sufficient === true &&
-    entry.price.status !== "UNRESOLVED" &&
-    entry.capability.status === "SUPPORTABLE"
-  );
-  if (mapped) {
+  const considered = candidates.map((item) => {
+    const capability = capabilityAnswer(item, requiredOps, {
+      finishedPartLengthIn,
+      sawAngleDeg,
+      cutPlane: demand.cutPlane,
+      spotDemand: demand.spotDemand
+    });
+    if (capability.status === "REFUSED") {
+      return {
+        feasible: false,
+        reason: "CAPABILITY_REFUSED",
+        item,
+        capability
+      };
+    }
+    return sequenceCandidate(item, { ...demand, finishedPartLengthIn, quantity, sawAngleDeg }, capability);
+  });
+
+  const feasible = considered
+    .filter((entry) => entry.feasible)
+    .sort((a, b) =>
+      a.parentCount - b.parentCount ||
+      a.parentLengthIn - b.parentLengthIn ||
+      String(a.item.storeSku).localeCompare(String(b.item.storeSku))
+    );
+
+  const selected = feasible[0] ?? null;
+  if (!selected) {
+    const capabilityRefusals = considered.flatMap((entry) => entry.capability?.missing ?? []);
     return {
-      status: "MAPPED",
-      item: mapped.item,
-      storeSku: mapped.item.storeSku,
-      pricingReferenceSku: mapped.item.storeSku,
-      pricingReferenceStockLengthIn: mapped.item.stockL_in,
-      allocationClaimed: false,
-      workpieceLengthIn: definedWorkpieceLengthIn,
-      stock: mapped.stock,
-      price: mapped.price,
-      capability: mapped.capability
+      status: capabilityRefusals.length ? "REFUSED" : "UNAVAILABLE",
+      reason: capabilityRefusals.length ? "NO_ELIGIBLE_STORE_STOCK_WITHIN_CAPABILITY" : "NO_ELIGIBLE_STORE_STOCK_SEQUENCE",
+      finishedPartLengthIn,
+      quantity,
+      selectionPolicy: BOARD_SEQUENCE_POLICY,
+      considered,
+      refusalConditions: [...new Set(capabilityRefusals)]
     };
   }
-  if (!candidates.length) {
-    return { status: "UNAVAILABLE", reason: "NO_MATCHING_BOARD_OFFERING", workpieceLengthIn: definedWorkpieceLengthIn };
+
+  const unresolved = [
+    ...new Set([
+      ...(selected.capability?.unresolved ?? [])
+    ])
+  ];
+  const planId = [
+    "BOARD-PLAN",
+    selected.item.storeSku,
+    quantity,
+    String(finishedPartLengthIn).replace(".", "_"),
+    String(sawAngleDeg).replace(".", "_")
+  ].join("-");
+
+  const plan = {
+    planId,
+    selectionPolicy: BOARD_SEQUENCE_POLICY,
+    sequenceRules: BOARD_SEQUENCE_RULES,
+    selected: {
+      storeSku: selected.item.storeSku,
+      parentStockLengthIn: selected.parentLengthIn,
+      parentCount: selected.parentCount,
+      unitPrice: selected.item.sellingPrice,
+      materialTotal: selected.item.sellingPrice == null ? null : Number((selected.item.sellingPrice * selected.parentCount).toFixed(2))
+    },
+    finishedPart: {
+      lengthIn: finishedPartLengthIn,
+      quantity,
+      lengthDatum: demand.lengthDatum,
+      angleDeg: sawAngleDeg,
+      cutPlane: demand.cutPlane,
+      endIdentity: demand.endIdentity,
+      endRelation: demand.endRelation
+    },
+    intermediateBlank: demand.requestedFinishedBlankLengthIn == null
+      ? null
+      : {
+          lengthIn: Number(demand.requestedFinishedBlankLengthIn),
+          reason: "REQUESTED_FINISHED_BLANK",
+          source: demand.requestedFinishedBlankSource ?? "DEMAND.REQUESTED_FINISHED_BLANK"
+        },
+    preparation: selected.preparation,
+    parents: selected.parents,
+    accounting: selected.accounting,
+    unresolvedConditions: unresolved,
+    noPreparationRequired: selected.preparation.length === 0
+  };
+
+  return {
+    status: "MAPPED",
+    reason: unresolved.length ? "MAPPED_WITH_UNRESOLVED_OPERATION_DETAIL" : null,
+    item: selected.item,
+    storeSku: selected.item.storeSku,
+    pricingReferenceSku: selected.item.storeSku,
+    pricingReferenceStockLengthIn: selected.parentLengthIn,
+    parentCount: selected.parentCount,
+    allocationClaimed: false,
+    finishedPartLengthIn,
+    quantity,
+    stock: selected.stock,
+    price: priceAnswer(selected.item),
+    capability: selected.capability,
+    selectionPolicy: BOARD_SEQUENCE_POLICY,
+    plan,
+    considered
+  };
+}
+
+export function estimateResolvedBoardPlan(catalog, materialResolution, { title, classId = "user_defined_board", spotCycles = 0 } = {}) {
+  if (!materialResolution?.plan) {
+    return { status: "UNRESOLVED", reason: "RESOLVED_BOARD_PLAN_REQUIRED", title };
   }
-  if (considered.some((entry) => entry.capability.status === "UNRESOLVED")) {
-    return { status: "UNRESOLVED", reason: "CAPABILITY_INPUT_UNRESOLVED", considered };
-  }
-  if (considered.every((entry) => entry.capability.status === "REFUSED")) {
-    return { status: "REFUSED", reason: "NO_MATCHING_BOARD_WITHIN_ENVELOPE", considered };
-  }
-  return { status: "UNAVAILABLE", reason: "MATCHING_BOARD_NOT_AVAILABLE", considered };
+  return estimateBoardPlan(catalog, {
+    title,
+    classId,
+    plan: materialResolution.plan,
+    spotCycles
+  });
 }
 
 export function stockAnswer(item, qtyNeeded = 1) {

@@ -9,8 +9,8 @@ import { millPassesForDepth, D001_STAGE2_ENVELOPE } from "./d001-stage2-envelope
 
 export const ENGINE = {
   id: "STB-STORE-ZERO-PRICE-1",
-  version: "0.2.3",
-  clock: "2026-09-10",
+  version: "0.4.0",
+  clock: "2026-09-22",
   documentKind: "BudgetaryEstimate"
 };
 
@@ -29,10 +29,112 @@ export function sellingPrice(list) {
   return Math.round(list * (1 + MARK_ON) * 100) / 100;
 }
 
+/**
+ * Processing economics are not declared yet.
+ * Numeric recovery values are intentionally absent. Tests may mutate these
+ * fields to prove that undeclared values cannot affect a Store answer.
+ */
 export const RECOVERY = {
-  setupCharge: 35,
-  machineHourRate: 100
+  setupCharge: null,
+  machineHourRate: null,
+  status: "UNDECLARED",
+  mayFormCompleteQ: false
 };
+
+export const PROCESSING_RECOVERY_POLICY = Object.freeze({
+  status: "UNRESOLVED",
+  method: "COST_POOL_DIVIDED_BY_FORECAST_PRODUCTIVE_HOURS",
+  costPool: null,
+  forecastProductiveHours: null,
+  setupCharge: null,
+  machineHourRate: null,
+  jobSetupMin: null,
+  reason: "PROCESSING_RATE_BASIS_REQUIRED",
+  setupTimeReason: "SETUP_TIME_BASIS_REQUIRED",
+  note: "Processing dollars require a declared cost pool and forecast productive hours. Setup time requires its own declared basis. Modeled operation minutes are not billed time."
+});
+
+/** Compatibility alias for older callers. It does not grant separate authority. */
+export const BOARD_PROCESSING_POLICY = Object.freeze({
+  ...PROCESSING_RECOVERY_POLICY,
+  classId: "user_defined_board"
+});
+
+function qualifyIncompleteProcessing(estimate) {
+  if (!estimate?.totals) return estimate;
+  const hardware = Number(estimate.totals.hardware || 0);
+  const operationMin = Number(
+    estimate.cycle?.modeledOperationSubtotalMin ?? estimate.cycle?.T_job_min ?? 0
+  );
+  const qualified = {
+    ...estimate,
+    status: "PARTIAL_BUDGETARY_ESTIMATE",
+    processingPolicy: PROCESSING_RECOVERY_POLICY,
+    unresolved: [...new Set([
+      ...(estimate.unresolved ?? []),
+      PROCESSING_RECOVERY_POLICY.reason,
+      PROCESSING_RECOVERY_POLICY.setupTimeReason
+    ])],
+    cycle: {
+      ...estimate.cycle,
+      T_job_min: null,
+      T_job_hr: null,
+      modeledOperationSubtotalMin: operationMin,
+      jobSetupMin: null,
+      completeness: "PARTIAL_MODELED_OPERATION_TIME",
+      measured: false
+    },
+    totals: {
+      ...estimate.totals,
+      cell_recovery: null,
+      Q: round(estimate.totals.material + hardware, 2),
+      Q_basis: "PARTIAL_CALCULATED",
+      note: "Material/hardware subtotal only. Processing dollars and billed setup time remain unresolved until their declared bases exist. Modeled operation minutes are not a price."
+    }
+  };
+  return { ...qualified, realityBar: auditRealityBar(qualified) };
+}
+
+export function auditRealityBar(estimate) {
+  const failures = [];
+  const warnings = [];
+  if (!estimate || estimate.status === "UNRESOLVED" || estimate.status === "REFUSED") {
+    return { status: "NOT_APPLICABLE", failures, warnings };
+  }
+  const totals = estimate.totals || {};
+  const expectedQ = round(Number(totals.material || 0) + Number(totals.hardware || 0), 2);
+  if (totals.cell_recovery != null && Number(totals.cell_recovery) !== 0) {
+    failures.push("INVENTED_CELL_RECOVERY");
+  }
+  if (estimate.cycle?.T_job_min != null || estimate.cycle?.T_job_hr != null) {
+    failures.push("UNDECLARED_BILLED_JOB_TIME");
+  }
+  if (Number.isFinite(Number(totals.Q)) && Number(totals.Q) !== expectedQ) {
+    failures.push("Q_INCLUDES_UNSUPPORTED_DOLLARS");
+  }
+  if (RECOVERY.mayFormCompleteQ) {
+    failures.push("UNDECLARED_RECOVERY_AUTHORIZED");
+  }
+  if (RECOVERY.setupCharge != null || RECOVERY.machineHourRate != null) {
+    failures.push("UNDECLARED_RECOVERY_CONSTANT_PRESENT");
+  }
+  if (TOOLING?.jobSetupMin != null) {
+    failures.push("UNDECLARED_SETUP_TIME_PRESENT");
+  }
+  for (const line of estimate.material_lines || []) {
+    if (line.listReferenceBasis && line.listReferenceBasis !== "OBSERVED" && !line.observationId) {
+      warnings.push(`UNOBSERVED_LIST:${line.storeSku}`);
+    }
+  }
+  return {
+    status: failures.length ? "FAIL" : "PASS",
+    rule: "No invented processing dollars. Q may contain only catalog material/hardware until processing economics are declared.",
+    failures,
+    warnings,
+    allowedInQ: ["material", "hardware"],
+    forbiddenInQ: ["undeclared setup charge", "undeclared machine rate", "undeclared billed setup time"]
+  };
+}
 
 export const TOOLING = {
   saw: {
@@ -48,13 +150,19 @@ export const TOOLING = {
   accelMin: 0.05,
   loadSeatMin: 0.6,
   releaseLabelMin: 0.4,
-  jobSetupMin: 8,
+  jobSetupMin: null,
   drill: { rpm: 3000, ipr: 0.008 },
   spot: {
     diameterIn: 0.1875,
-    fixedCycleMin: 0.16,
-    basis: "DECLARED_FIXTURE",
-    note: "Modeled fixed 3/16 in spot/pilot cycle. No finished-hole depth is claimed."
+    fullDiameterPenetrationIn: 0.1875,
+    depthReference: "ENTRY_SURFACE_ALONG_DRILL_AXIS",
+    pointGeometryStatus: D001_STAGE2_ENVELOPE.spot.pointGeometryStatus,
+    pointAngleDeg: D001_STAGE2_ENVELOPE.spot.pointAngleDeg,
+    pointAxialLengthIn: D001_STAGE2_ENVELOPE.spot.pointAxialLengthIn,
+    legacyFixedCycleMin: 0.16,
+    legacyCycleBasis: "DECLARED_FIXTURE_DEPTH_UNDEFINED",
+    applicabilityStatus: "UNRESOLVED_FOR_DEPTH_DEFINED_SPOT",
+    note: "The prior fixed 0.16 min spot cycle belongs to the depth-undefined spot model. Applicability to the new 3/16 full-diameter penetration is unresolved until tool-point geometry and depth-cycle basis are declared."
   }
 };
 
@@ -88,7 +196,21 @@ export function drillCycleMin(depthIn, drill = TOOLING.drill) {
 }
 
 export function spotCycleMin() {
-  return TOOLING.spot.fixedCycleMin;
+  if (TOOLING.spot.applicabilityStatus !== "APPLICABLE") {
+    throw new Error("SPOT_CYCLE_TIME_APPLICABILITY_UNRESOLVED");
+  }
+  return TOOLING.spot.legacyFixedCycleMin;
+}
+
+export function spotEconomicsAssessment() {
+  return {
+    status: TOOLING.spot.applicabilityStatus,
+    legacyFixedCycleMin: TOOLING.spot.legacyFixedCycleMin,
+    legacyCycleBasis: TOOLING.spot.legacyCycleBasis,
+    fullDiameterPenetrationIn: TOOLING.spot.fullDiameterPenetrationIn,
+    pointGeometryStatus: TOOLING.spot.pointGeometryStatus,
+    note: TOOLING.spot.note
+  };
 }
 
 export function indexMin(keptLengthIn) {
@@ -129,7 +251,7 @@ export function cycleOneStick({
     cutCount * saw +
     indexMin(keptLengthIn) +
     holes * drillCycleMin(depthIn) +
-    spots * spotCycleMin() +
+    (spots > 0 ? spots * spotCycleMin() : 0) +
     millLongMin(millLongIn, millPasses) +
     millEndMin(millEnds) +
     TOOLING.releaseLabelMin;
@@ -164,9 +286,7 @@ export function estimateJob(catalog, { title, classId, pieces, hardwareSku = nul
   if (lines.some((l) => l.status === "INCOMPLETE")) {
     return { status: "UNRESOLVED", reason: "MISSING_PRICE", title };
   }
-  const cycleMin =
-    TOOLING.jobSetupMin +
-    pieces.reduce((s, p) => s + cycleOneStick(p) * p.qty, 0);
+  const cycleMin = pieces.reduce((s, p) => s + cycleOneStick(p) * p.qty, 0);
   const hours = cycleMin / 60;
   const material = round(lines.reduce((s, l) => s + l.extension, 0), 2);
   let hardware = 0;
@@ -178,9 +298,9 @@ export function estimateJob(catalog, { title, classId, pieces, hardwareSku = nul
     }
     hardware = hardwareLine.extension;
   }
-  const cell = round(RECOVERY.setupCharge + RECOVERY.machineHourRate * hours, 2);
-  const Q = round(material + cell + hardware, 2);
-  return {
+  const cell = null;
+  const Q = round(material + hardware, 2);
+  return qualifyIncompleteProcessing({
     status: "BUDGETARY_ESTIMATE",
     title,
     classId,
@@ -212,7 +332,7 @@ export function estimateJob(catalog, { title, classId, pieces, hardwareSku = nul
       "live motion",
       "physical stock count"
     ]
-  };
+  });
 }
 
 export function estimateBoardSequence(catalog, {
@@ -236,7 +356,12 @@ export function estimateBoardSequence(catalog, {
   const sawTraverseIn = angle > 0
     ? item.actualW / Math.cos(radians)
     : item.actualW;
-  return estimateJob(catalog, {
+  const spotCount = Math.max(0, Number(spotCycles) || 0);
+  const spotAssessment = spotEconomicsAssessment();
+  const spotEconomicsResolved =
+    spotCount === 0 || spotAssessment.status === "APPLICABLE";
+
+  const estimate = estimateJob(catalog, {
     title,
     classId,
     pieces: [{
@@ -247,10 +372,156 @@ export function estimateBoardSequence(catalog, {
       sawCuts,
       sawTraverseIn,
       holes: drillCycles,
-      spots: spotCycles,
+      spots: spotEconomicsResolved ? spotCount : 0,
       depthIn: drillReferenceDepthIn
     }]
   });
+
+  if (!estimate.totals) return estimate;
+
+  if (spotCount > 0 && !spotEconomicsResolved) {
+    return {
+      ...estimate,
+      status: "PARTIAL_BUDGETARY_ESTIMATE",
+      unresolved: [...(estimate.unresolved ?? []), "SPOT_CYCLE_TIME_APPLICABILITY_UNRESOLVED"],
+      operationEconomics: {
+        spot: {
+          requestedCycles: spotCount,
+          status: spotAssessment.status,
+          legacyFixedCycleMin: spotAssessment.legacyFixedCycleMin,
+          legacyCycleBasis: spotAssessment.legacyCycleBasis,
+          excludedFromResolvedSubtotal: true
+        }
+      },
+      cycle: {
+        ...estimate.cycle,
+        excludedSpotCycles: spotCount,
+        spotCycleStatus: spotAssessment.status
+      },
+      totals: {
+        ...estimate.totals,
+        Q_basis: "PARTIAL_CALCULATED",
+        note: `${estimate.totals?.note ?? ""} Excludes unresolved depth-defined spot-cycle time.`
+      }
+    };
+  }
+
+  return estimate;
+}
+
+
+export function estimateBoardPlan(catalog, {
+  title,
+  classId = "user_defined_board",
+  plan,
+  spotCycles = 0
+}) {
+  const selected = plan?.selected;
+  const item = selected ? findOffering(catalog, selected.storeSku) : null;
+  if (!item || item.form !== "board" || item.actualW == null || !Number.isInteger(selected.parentCount) || selected.parentCount < 1) {
+    return { status: "UNRESOLVED", reason: "SELECTED_BOARD_PLAN_REQUIRED", title };
+  }
+
+  const materialLine = extendLine(catalog, selected.storeSku, selected.parentCount);
+  if (materialLine.status === "INCOMPLETE") {
+    return { status: "UNRESOLVED", reason: "MISSING_PRICE", title };
+  }
+
+  const angle = Number(plan.finishedPart?.angleDeg ?? 0);
+  const radians = angle * Math.PI / 180;
+  const miterTraverseIn = angle > 0 ? item.actualW / Math.cos(radians) : item.actualW;
+  const productionSawCuts = Number(plan.accounting?.productionSawCuts ?? 0);
+  const preparationSawCuts = Number(plan.accounting?.preparationSawCuts ?? 0);
+  const producedParts = Number(plan.finishedPart?.quantity ?? 0);
+  const finishedLengthIn = Number(plan.finishedPart?.lengthIn ?? 0);
+
+  const cycleMin =
+    selected.parentCount * (TOOLING.loadSeatMin + TOOLING.releaseLabelMin) +
+    productionSawCuts * sawCycleMin(miterTraverseIn) +
+    preparationSawCuts * sawCycleMin(item.actualW) +
+    producedParts * indexMin(finishedLengthIn);
+
+  const spotCount = Math.max(0, Number(spotCycles) || 0);
+  const spotAssessment = spotEconomicsAssessment();
+  const spotEconomicsResolved = spotCount === 0 || spotAssessment.status === "APPLICABLE";
+  const resolvedCycleMin = cycleMin + (spotEconomicsResolved && spotCount > 0 ? spotCount * spotCycleMin() : 0);
+  const hours = resolvedCycleMin / 60;
+  const material = materialLine.extension;
+  const cell = null;
+  const Q = round(material, 2);
+
+  const estimate = {
+    status: "BUDGETARY_ESTIMATE",
+    title,
+    classId,
+    documentKind: ENGINE.documentKind,
+    engine: ENGINE,
+    material_lines: [materialLine],
+    hardware_line: null,
+    planIdentity: plan.planId ?? null,
+    operationAccounting: {
+      parentCount: selected.parentCount,
+      productionSawCuts,
+      preparationSawCuts,
+      totalModeledSawCuts: productionSawCuts + preparationSawCuts,
+      producedParts,
+      spotCyclesRequested: spotCount,
+      preparation: Array.isArray(plan.preparation) ? plan.preparation : []
+    },
+    cycle: {
+      model: CYCLE_MODEL.id,
+      basis: CYCLE_MODEL.basis,
+      measured: false,
+      T_job_min: round(resolvedCycleMin, 3),
+      T_job_hr: round(hours, 4),
+      SFM: round(sfm(), 0),
+      feed_fpm: round(feedFpm(), 2)
+    },
+    totals: {
+      material,
+      cell_recovery: cell,
+      hardware: 0,
+      Q,
+      Q_basis: "CALCULATED",
+      note: "Budgetary estimate. Not a commercial quote."
+    },
+    not_claimed: [
+      "commercial quote",
+      "seller-of-record",
+      "physical fabrication",
+      "live motion",
+      "physical stock count"
+    ]
+  };
+
+  if (spotCount > 0 && !spotEconomicsResolved) {
+    return qualifyIncompleteProcessing({
+      ...estimate,
+      status: "PARTIAL_BUDGETARY_ESTIMATE",
+      unresolved: ["SPOT_CYCLE_TIME_APPLICABILITY_UNRESOLVED"],
+      operationEconomics: {
+        spot: {
+          requestedCycles: spotCount,
+          status: spotAssessment.status,
+          legacyFixedCycleMin: spotAssessment.legacyFixedCycleMin,
+          legacyCycleBasis: spotAssessment.legacyCycleBasis,
+          excludedFromResolvedSubtotal: true
+        }
+      },
+      cycle: {
+        ...estimate.cycle,
+        excludedSpotCycles: spotCount,
+        spotCycleStatus: spotAssessment.status
+      },
+      totals: {
+        ...estimate.totals,
+        Q_basis: "PARTIAL_CALCULATED",
+        note: "Partial budgetary subtotal. Excludes unresolved depth-defined spot-cycle time."
+      }
+    });
+  }
+
+  return qualifyIncompleteProcessing(estimate);
 }
 
 /** Established pine alcove square-cut ticket. */
