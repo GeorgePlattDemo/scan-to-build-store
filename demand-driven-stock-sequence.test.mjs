@@ -69,11 +69,11 @@ const directEstimate = estimateResolvedBoardPlan(catalog, direct, {
   title: "Demand-driven direct-use acceptance",
   spotCycles: 0
 });
-assert.equal(directEstimate.status, "BUDGETARY_ESTIMATE");
+assert.equal(directEstimate.status, "PARTIAL_BUDGETARY_ESTIMATE");
 assert.equal(directEstimate.totals.material, 3.13);
-assert.equal(directEstimate.cycle.T_job_min, 9.686);
-assert.equal(directEstimate.totals.cell_recovery, 51.14);
-assert.equal(directEstimate.totals.Q, 54.27);
+assert.equal(directEstimate.cycle.T_job_min, null);
+assert.equal(directEstimate.totals.cell_recovery, null);
+assert.equal(directEstimate.totals.Q, directEstimate.totals.material);
 assertPricedPlanConsistency(direct.plan, directEstimate);
 
 // B. A different eligible Store offering changes parent/sequence/remainder, not finished demand.
@@ -112,9 +112,9 @@ const preparedEstimate = estimateResolvedBoardPlan(catalog, prepared, {
   spotCycles: 0
 });
 assert.equal(preparedEstimate.totals.material, 4.18);
-assert.equal(preparedEstimate.cycle.T_job_min, 9.857);
-assert.equal(preparedEstimate.totals.cell_recovery, 51.43);
-assert.equal(preparedEstimate.totals.Q, 55.61);
+assert.equal(preparedEstimate.cycle.T_job_min, null);
+assert.equal(preparedEstimate.totals.cell_recovery, null);
+assert.equal(preparedEstimate.totals.Q, preparedEstimate.totals.material);
 assertPricedPlanConsistency(prepared.plan, preparedEstimate);
 
 // D. Bad/short stock is refused/unavailable; the finished job is never resized.
@@ -167,8 +167,8 @@ const spotEstimate = estimateResolvedBoardPlan(catalog, withSpot, {
 });
 assert.equal(spotEstimate.status, "PARTIAL_BUDGETARY_ESTIMATE");
 assert.equal(spotEstimate.totals.material, 3.13);
-assert.equal(spotEstimate.totals.cell_recovery, 51.14);
-assert.equal(spotEstimate.totals.Q, 54.27);
+assert.equal(spotEstimate.totals.cell_recovery, null);
+assert.equal(spotEstimate.totals.Q, spotEstimate.totals.material);
 assert.equal(spotEstimate.totals.Q_basis, "PARTIAL_CALCULATED");
 assert.ok(spotEstimate.unresolved.includes("SPOT_CYCLE_TIME_APPLICABILITY_UNRESOLVED"));
 

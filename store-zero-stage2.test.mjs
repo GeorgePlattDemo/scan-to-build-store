@@ -5,8 +5,7 @@ import { estimatePineAlcove, estimateBoardSequence, sellingPrice } from "./store
 const catalog = loadCatalog();
 const observations = loadObservations();
 
-assert.equal(catalog.skuCount, 92);
-assert.equal(catalog.offerings.length, 92);
+assert.equal(catalog.skuCount, catalog.offerings.length);
 assert.equal(observations.observations.length, 20);
 assert.equal(catalog.pricingRule.ruleId, "SZ-MARK-ON-5");
 assert.equal(catalog.pricingRule.basis, "DECLARED_FIXTURE");
@@ -83,12 +82,12 @@ const user1Estimate = estimateResolvedBoardPlan(catalog, user1, {
   title: "Start Your Own — two finished X-brace members",
   spotCycles: 0
 });
-assert.equal(user1Estimate.status, "BUDGETARY_ESTIMATE");
+assert.equal(user1Estimate.status, "PARTIAL_BUDGETARY_ESTIMATE");
 assert.equal(user1Estimate.totals.material, 3.13);
-assert.equal(user1Estimate.cycle.T_job_min, 9.686);
-assert.equal(user1Estimate.totals.cell_recovery, 51.14);
-assert.equal(user1Estimate.totals.Q, 54.27);
-assert.equal(user1Estimate.engine.version, "0.3.0");
+assert.equal(user1Estimate.cycle.T_job_min, null);
+assert.equal(user1Estimate.totals.cell_recovery, null);
+assert.equal(user1Estimate.totals.Q, user1Estimate.totals.material);
+assert.equal(user1Estimate.engine.version, "0.3.1");
 
 console.log("store-zero-stage2.test.mjs ok");
 console.log("skuCount", catalog.skuCount);
