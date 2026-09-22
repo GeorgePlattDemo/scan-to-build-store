@@ -29,7 +29,82 @@ export const STAGE2_JOB_DISPOSITIONS = [
 const ROOT = dirname(fileURLToPath(import.meta.url));
 
 export function loadCatalog(path = join(ROOT, "store-zero-catalog.json")) {
-  return JSON.parse(readFileSync(path, "utf8"));
+  let catalog;
+  try {
+    catalog = JSON.parse(readFileSync(path, "utf8"));
+  } catch (error) {
+    throw new Error(`CATALOG_READ_FAILED: ${error.message}`, { cause: error });
+  }
+  const result = validateCatalog(catalog);
+  if (!result.valid) throw new Error(`CATALOG_INVALID: ${result.errors.join("; ")}`);
+  return catalog;
+}
+
+/** Validate a complete candidate before replacing a usable catalog. No repair by guessing. */
+export function validateCatalog(catalog) {
+  const errors = [];
+  if (!catalog || !Array.isArray(catalog.offerings) || catalog.offerings.length === 0) {
+    return { valid: false, errors: ["offerings must be a nonempty array"] };
+  }
+  if (catalog.skuCount !== catalog.offerings.length) errors.push("skuCount must equal offerings.length");
+  const seen = new Set();
+  for (const [index, item] of catalog.offerings.entries()) {
+    const label = `offerings[${index}]`;
+    if (!item || typeof item !== "object") { errors.push(`${label} must be an object`); continue; }
+    const id = item.storeSku;
+    if (typeof id !== "string" || !id.trim()) errors.push(`${label}.storeSku is required`);
+    if (seen.has(id)) errors.push(`${label}.storeSku is duplicated: ${id}`);
+    seen.add(id);
+    if (typeof item.offered !== "boolean") errors.push(`${label}.offered must be boolean`);
+    if (!["board", "sheet", "hardware"].includes(item.form)) errors.push(`${label}.form is unsupported`);
+    const positive = item.form === "board"
+      ? ["nominalT", "nominalW", "actualT", "actualW", "stockL_in"]
+      : item.form === "sheet" ? ["actualT", "sheetW_in", "sheetL_in"] : [];
+    for (const field of positive) {
+      if (!Number.isFinite(item[field]) || item[field] <= 0) errors.push(`${label}.${field} must be a positive number`);
+    }
+    for (const field of ["onHand", "allocated"]) {
+      if (!Number.isInteger(item[field]) || item[field] < 0) errors.push(`${label}.${field} must be a nonnegative integer`);
+    }
+    for (const field of ["sellingPrice", "list_reference"]) {
+      if (item[field] != null && (!Number.isFinite(item[field]) || item[field] < 0)) errors.push(`${label}.${field} must be null or a nonnegative number`);
+    }
+    for (const field of ["supportedOps", "cellFamily"]) {
+      if (!Array.isArray(item[field]) || item[field].some(v => typeof v !== "string")) errors.push(`${label}.${field} must be an array of strings`);
+    }
+    for (const field of ["onHand", "allocation", "supplierPath", "sellingPrice", "cellCompatibility"]) {
+      if (!item.assertions?.[field]?.basis) errors.push(`${label}.assertions.${field}.basis is required`);
+    }
+    if (item.sellingPrice != null && !item.listReferenceBasis) errors.push(`${label}.listReferenceBasis is required for a priced offering`);
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+/** Immutable, all-or-nothing addition. Rejects duplicates rather than overwriting a SKU. */
+export function addCatalogOfferings(catalog, offerings) {
+  const current = validateCatalog(catalog);
+  if (!current.valid) return { status: "REJECTED", catalog, errors: current.errors };
+  if (!Array.isArray(offerings) || offerings.length === 0) {
+    return { status: "REJECTED", catalog, errors: ["additions must be a nonempty array"] };
+  }
+  const candidate = structuredClone(catalog);
+  candidate.offerings.push(...structuredClone(offerings));
+  candidate.skuCount = candidate.offerings.length;
+  const result = validateCatalog(candidate);
+  return result.valid
+    ? { status: "ACCEPTED", catalog: candidate, errors: [] }
+    : { status: "REJECTED", catalog, errors: result.errors };
+}
+
+/** A failed reload keeps the caller's last valid catalog and reports the failure explicitly. */
+export function reloadCatalog(path, currentCatalog) {
+  const current = validateCatalog(currentCatalog);
+  if (!current.valid) throw new Error(`CATALOG_INVALID: ${current.errors.join("; ")}`);
+  try {
+    return { status: "ACCEPTED", catalog: loadCatalog(path), errors: [] };
+  } catch (error) {
+    return { status: "REJECTED", catalog: currentCatalog, errors: [error.message] };
+  }
 }
 
 export function loadObservations(path = join(ROOT, "store-zero-observations.json")) {
@@ -324,7 +399,7 @@ export function resolveBoardMaterial(catalog, demand = {}) {
       parentStockLengthIn: selected.parentLengthIn,
       parentCount: selected.parentCount,
       unitPrice: selected.item.sellingPrice,
-      materialTotal: Number((selected.item.sellingPrice * selected.parentCount).toFixed(2))
+      materialTotal: selected.item.sellingPrice == null ? null : Number((selected.item.sellingPrice * selected.parentCount).toFixed(2))
     },
     finishedPart: {
       lengthIn: finishedPartLengthIn,

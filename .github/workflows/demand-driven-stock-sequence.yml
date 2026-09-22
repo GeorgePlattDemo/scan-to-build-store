@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - repair/demand-driven-stock-sequence-0.1
+      - repair/catalog-and-pricing-policy
   pull_request:
     branches:
       - main
@@ -21,6 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22.23.2'
+      - name: Catalog updates and User 1 economics
+        run: node --test catalog-and-board-economics.test.mjs
       - name: Demand-driven acceptance cases A-F and named faults
         run: node demand-driven-stock-sequence.test.mjs
       - name: D-001 capability envelope regression
