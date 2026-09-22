@@ -70,13 +70,19 @@ const xBrace = estimateBoardSequence(catalog, {
   drillCycles: 0,
   spotCycles: 2
 });
-assert.equal(xBrace.status, "BUDGETARY_ESTIMATE");
+assert.equal(xBrace.status, "PARTIAL_BUDGETARY_ESTIMATE");
+assert.deepEqual(xBrace.unresolved, ["SPOT_CYCLE_TIME_APPLICABILITY_UNRESOLVED"]);
 assert.equal(xBrace.totals.material, 3.13);
-assert.equal(xBrace.cycle.T_job_min, 10.014);
-assert.equal(xBrace.totals.cell_recovery, 51.69);
-assert.equal(xBrace.totals.Q, 54.82);
+assert.equal(xBrace.cycle.T_job_min, 9.694);
+assert.equal(xBrace.cycle.excludedSpotCycles, 2);
+assert.equal(xBrace.cycle.spotCycleStatus, "UNRESOLVED_FOR_DEPTH_DEFINED_SPOT");
+assert.equal(xBrace.totals.cell_recovery, 51.16);
+assert.equal(xBrace.totals.Q, 54.29);
+assert.equal(xBrace.totals.Q_basis, "PARTIAL_CALCULATED");
+assert.equal(xBrace.operationEconomics.spot.excludedFromResolvedSubtotal, true);
+assert.equal(xBrace.operationEconomics.spot.legacyFixedCycleMin, 0.16);
 assert.equal(xBrace.cycle.model, "STB-D001-CYCLE-MODEL-S2-0.1");
-assert.equal(xBrace.engine.version, "0.2.3");
+assert.equal(xBrace.engine.version, "0.2.4");
 
 console.log("store-zero-stage2.test.mjs ok");
 console.log("skuCount", catalog.skuCount);
