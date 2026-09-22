@@ -17,7 +17,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { estimatePineAlcove, estimateJob, estimateBoardPlan } from "./store-zero-pricing-engine.mjs";
-import { envelopeCheck } from "./d001-stage2-envelope.mjs";
+import { D001_STAGE2_ENVELOPE, envelopeCheck } from "./d001-stage2-envelope.mjs";
 
 export const STAGE2_JOB_DISPOSITIONS = [
   "SUPPORTABLE",
