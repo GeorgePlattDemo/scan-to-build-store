@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { loadCatalog, loadObservations, findSku, pineAlcoveEvaluation } from "./store-zero-stage2-store.mjs";
+import { loadCatalog, loadObservations, findSku, pineAlcoveEvaluation, resolveBoardMaterial, estimateResolvedBoardPlan } from "./store-zero-stage2-store.mjs";
 import { estimatePineAlcove, estimateBoardSequence, sellingPrice } from "./store-zero-pricing-engine.mjs";
 
 const catalog = loadCatalog();
@@ -59,30 +59,36 @@ const evaln = pineAlcoveEvaluation(catalog);
 assert.equal(evaln.status, "SUPPORTABLE");
 assert.equal(evaln.lines[0].stock.assertions.onHand.basis, "SYNTHETIC_FIXTURE");
 
-const xBrace = estimateBoardSequence(catalog, {
-  title: "Start Your Own — X brace",
-  classId: "user_defined_board.x_brace",
-  storeSku: "STB-ZERO-SPF-2X4-72-001",
-  qty: 1,
-  definedWorkpieceLengthIn: 60,
-  sawCuts: 3,
+const user1 = resolveBoardMaterial(catalog, {
+  species: "spf",
+  form: "board",
+  nominalT: 2,
+  nominalW: 4,
+  finishedPartLengthIn: 16,
+  quantity: 2,
   sawAngleDeg: 30,
-  drillCycles: 0,
-  spotCycles: 2
+  cutPlane: "miter-face",
+  endIdentity: "both",
+  endRelation: "parallel",
+  lengthDatum: "long-long-outer-edge"
 });
-assert.equal(xBrace.status, "PARTIAL_BUDGETARY_ESTIMATE");
-assert.deepEqual(xBrace.unresolved, ["SPOT_CYCLE_TIME_APPLICABILITY_UNRESOLVED"]);
-assert.equal(xBrace.totals.material, 3.13);
-assert.equal(xBrace.cycle.T_job_min, 9.694);
-assert.equal(xBrace.cycle.excludedSpotCycles, 2);
-assert.equal(xBrace.cycle.spotCycleStatus, "UNRESOLVED_FOR_DEPTH_DEFINED_SPOT");
-assert.equal(xBrace.totals.cell_recovery, 51.16);
-assert.equal(xBrace.totals.Q, 54.29);
-assert.equal(xBrace.totals.Q_basis, "PARTIAL_CALCULATED");
-assert.equal(xBrace.operationEconomics.spot.excludedFromResolvedSubtotal, true);
-assert.equal(xBrace.operationEconomics.spot.legacyFixedCycleMin, 0.16);
-assert.equal(xBrace.cycle.model, "STB-D001-CYCLE-MODEL-S2-0.1");
-assert.equal(xBrace.engine.version, "0.2.4");
+assert.equal(user1.status, "MAPPED");
+assert.equal(user1.plan.selected.storeSku, "STB-ZERO-SPF-2X4-72-001");
+assert.equal(user1.plan.selected.parentStockLengthIn, 72);
+assert.equal(user1.plan.accounting.productionSawCuts, 3);
+assert.equal(user1.plan.accounting.preparationSawCuts, 0);
+assert.equal(user1.plan.parents[0].remainderIn, 39.625);
+
+const user1Estimate = estimateResolvedBoardPlan(catalog, user1, {
+  title: "Start Your Own — two finished X-brace members",
+  spotCycles: 0
+});
+assert.equal(user1Estimate.status, "BUDGETARY_ESTIMATE");
+assert.equal(user1Estimate.totals.material, 3.13);
+assert.equal(user1Estimate.cycle.T_job_min, 9.686);
+assert.equal(user1Estimate.totals.cell_recovery, 51.14);
+assert.equal(user1Estimate.totals.Q, 54.27);
+assert.equal(user1Estimate.engine.version, "0.3.0");
 
 console.log("store-zero-stage2.test.mjs ok");
 console.log("skuCount", catalog.skuCount);
