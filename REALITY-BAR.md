@@ -11,13 +11,13 @@ A job may be simulated. It may not invent a complete price.
 
 ## Not facts
 
-- `$35` setup charge
-- `$100` / hour machine rate
-- `8` minute job setup
-- Any complete `cell_recovery` minted from those three
-- Billed `T_job_min` that includes invented setup
+- Any undeclared setup charge
+- Any undeclared machine-hour rate
+- Any undeclared per-job setup time
+- Any complete `cell_recovery` minted from unsupported assumptions
+- Any billed `T_job_min` formed from undeclared setup
 
-Those values remain in the source only as a withdrawn placeholder so tests can prove they do not leak into money.
+The rejected historical placeholder values are not retained as active engine constants. Regression tests may mutate the empty fields to arbitrary junk values solely to prove those values cannot affect Q.
 
 ## Required processing basis (absent)
 
@@ -31,7 +31,7 @@ Until that basis exists:
 - `Q` is material + hardware only
 - unresolved includes `PROCESSING_RATE_BASIS_REQUIRED` and `SETUP_TIME_BASIS_REQUIRED`
 
-Do not substitute `$12.33` or any other placeholder complete price.
+Do not substitute any convenient complete price. A plausible-looking number is still false authority if its basis is absent.
 
 ## Reality bar result
 
