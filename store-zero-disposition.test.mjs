@@ -9,7 +9,7 @@ assert.deepEqual(STAGE2_JOB_DISPOSITIONS.sort(), [
   "UNAVAILABLE",
   "UNRESOLVED"
 ]);
-assert.equal(CYCLE_MODEL.id, "STB-D001-CYCLE-MODEL-S2-0.1");
+assert.equal(CYCLE_MODEL.id, "STB-D001-DIMENSIONAL-TRAVEL-0.1");
 assert.equal(CYCLE_MODEL.measured, false);
 
 function withOnHand(storeSku, onHand, allocated = 0) {
@@ -61,8 +61,10 @@ const refused = evaluateJob(catalog, {
 assert.equal(refused.status, "REFUSED");
 
 const pine = estimatePineAlcove(catalog);
+assert.equal(pine.status, "PARTIAL_BUDGETARY_ESTIMATE");
 assert.equal(pine.totals.material, 272.86);
-assert.equal(pine.totals.Q, 374.42);
-assert.equal(pine.cycle.model, "STB-D001-CYCLE-MODEL-S2-0.1");
+assert.equal(pine.totals.Q, null);
+assert.equal(pine.cycle, null);
+assert.ok(pine.unresolvedConditions.includes("DIMENSIONAL_TRAVEL_STANDARD_INPUT_REQUIRED"));
 
 console.log("store-zero-disposition.test.mjs ok");
