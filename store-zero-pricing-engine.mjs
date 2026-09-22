@@ -9,8 +9,8 @@ import { millPassesForDepth, D001_STAGE2_ENVELOPE } from "./d001-stage2-envelope
 
 export const ENGINE = {
   id: "STB-STORE-ZERO-PRICE-1",
-  version: "0.3.1",
-  clock: "2026-09-10",
+  version: "0.4.0",
+  clock: "2026-09-22",
   documentKind: "BudgetaryEstimate"
 };
 
@@ -29,49 +29,110 @@ export function sellingPrice(list) {
   return Math.round(list * (1 + MARK_ON) * 100) / 100;
 }
 
-// Legacy reference-ticket economics only. Not authorized for user_defined_board.
+/**
+ * Processing economics are not declared yet.
+ * Numeric recovery values are intentionally absent. Tests may mutate these
+ * fields to prove that undeclared values cannot affect a Store answer.
+ */
 export const RECOVERY = {
-  setupCharge: 35,
-  machineHourRate: 100
+  setupCharge: null,
+  machineHourRate: null,
+  status: "UNDECLARED",
+  mayFormCompleteQ: false
 };
 
-/** User 1 has no approved processing rate or per-job setup-time basis. */
-export const BOARD_PROCESSING_POLICY = Object.freeze({
-  classId: "user_defined_board",
+export const PROCESSING_RECOVERY_POLICY = Object.freeze({
   status: "UNRESOLVED",
+  method: "COST_POOL_DIVIDED_BY_FORECAST_PRODUCTIVE_HOURS",
+  costPool: null,
+  forecastProductiveHours: null,
   setupCharge: null,
   machineHourRate: null,
   jobSetupMin: null,
-  reason: "BOARD_PROCESSING_RATE_REQUIRED",
-  setupTimeReason: "BOARD_SETUP_TIME_BASIS_REQUIRED"
+  reason: "PROCESSING_RATE_BASIS_REQUIRED",
+  setupTimeReason: "SETUP_TIME_BASIS_REQUIRED",
+  note: "Processing dollars require a declared cost pool and forecast productive hours. Setup time requires its own declared basis. Modeled operation minutes are not billed time."
 });
 
-function qualifyBoardEconomics(estimate) {
-  if (estimate.classId !== BOARD_PROCESSING_POLICY.classId || !estimate.totals) return estimate;
-  return {
+/** Compatibility alias for older callers. It does not grant separate authority. */
+export const BOARD_PROCESSING_POLICY = Object.freeze({
+  ...PROCESSING_RECOVERY_POLICY,
+  classId: "user_defined_board"
+});
+
+function qualifyIncompleteProcessing(estimate) {
+  if (!estimate?.totals) return estimate;
+  const hardware = Number(estimate.totals.hardware || 0);
+  const operationMin = Number(
+    estimate.cycle?.modeledOperationSubtotalMin ?? estimate.cycle?.T_job_min ?? 0
+  );
+  const qualified = {
     ...estimate,
     status: "PARTIAL_BUDGETARY_ESTIMATE",
-    processingPolicy: BOARD_PROCESSING_POLICY,
+    processingPolicy: PROCESSING_RECOVERY_POLICY,
     unresolved: [...new Set([
       ...(estimate.unresolved ?? []),
-      BOARD_PROCESSING_POLICY.reason,
-      BOARD_PROCESSING_POLICY.setupTimeReason
+      PROCESSING_RECOVERY_POLICY.reason,
+      PROCESSING_RECOVERY_POLICY.setupTimeReason
     ])],
     cycle: {
       ...estimate.cycle,
       T_job_min: null,
       T_job_hr: null,
-      modeledOperationSubtotalMin: estimate.cycle.T_job_min,
+      modeledOperationSubtotalMin: operationMin,
       jobSetupMin: null,
-      completeness: "PARTIAL_MODELED_OPERATION_TIME"
+      completeness: "PARTIAL_MODELED_OPERATION_TIME",
+      measured: false
     },
     totals: {
       ...estimate.totals,
       cell_recovery: null,
-      Q: round(estimate.totals.material + estimate.totals.hardware, 2),
+      Q: round(estimate.totals.material + hardware, 2),
       Q_basis: "PARTIAL_CALCULATED",
-      note: "Material/hardware subtotal only. Processing charges and job setup time are unresolved; depth-defined spot time is also excluded when requested. Not a complete job price."
+      note: "Material/hardware subtotal only. Processing dollars and billed setup time remain unresolved until their declared bases exist. Modeled operation minutes are not a price."
     }
+  };
+  return { ...qualified, realityBar: auditRealityBar(qualified) };
+}
+
+export function auditRealityBar(estimate) {
+  const failures = [];
+  const warnings = [];
+  if (!estimate || estimate.status === "UNRESOLVED" || estimate.status === "REFUSED") {
+    return { status: "NOT_APPLICABLE", failures, warnings };
+  }
+  const totals = estimate.totals || {};
+  const expectedQ = round(Number(totals.material || 0) + Number(totals.hardware || 0), 2);
+  if (totals.cell_recovery != null && Number(totals.cell_recovery) !== 0) {
+    failures.push("INVENTED_CELL_RECOVERY");
+  }
+  if (estimate.cycle?.T_job_min != null || estimate.cycle?.T_job_hr != null) {
+    failures.push("UNDECLARED_BILLED_JOB_TIME");
+  }
+  if (Number.isFinite(Number(totals.Q)) && Number(totals.Q) !== expectedQ) {
+    failures.push("Q_INCLUDES_UNSUPPORTED_DOLLARS");
+  }
+  if (RECOVERY.mayFormCompleteQ) {
+    failures.push("UNDECLARED_RECOVERY_AUTHORIZED");
+  }
+  if (RECOVERY.setupCharge != null || RECOVERY.machineHourRate != null) {
+    failures.push("UNDECLARED_RECOVERY_CONSTANT_PRESENT");
+  }
+  if (TOOLING?.jobSetupMin != null) {
+    failures.push("UNDECLARED_SETUP_TIME_PRESENT");
+  }
+  for (const line of estimate.material_lines || []) {
+    if (line.listReferenceBasis && line.listReferenceBasis !== "OBSERVED" && !line.observationId) {
+      warnings.push(`UNOBSERVED_LIST:${line.storeSku}`);
+    }
+  }
+  return {
+    status: failures.length ? "FAIL" : "PASS",
+    rule: "No invented processing dollars. Q may contain only catalog material/hardware until processing economics are declared.",
+    failures,
+    warnings,
+    allowedInQ: ["material", "hardware"],
+    forbiddenInQ: ["undeclared setup charge", "undeclared machine rate", "undeclared billed setup time"]
   };
 }
 
@@ -89,7 +150,7 @@ export const TOOLING = {
   accelMin: 0.05,
   loadSeatMin: 0.6,
   releaseLabelMin: 0.4,
-  jobSetupMin: 8,
+  jobSetupMin: null,
   drill: { rpm: 3000, ipr: 0.008 },
   spot: {
     diameterIn: 0.1875,
@@ -225,9 +286,7 @@ export function estimateJob(catalog, { title, classId, pieces, hardwareSku = nul
   if (lines.some((l) => l.status === "INCOMPLETE")) {
     return { status: "UNRESOLVED", reason: "MISSING_PRICE", title };
   }
-  const cycleMin =
-    (classId === BOARD_PROCESSING_POLICY.classId ? 0 : TOOLING.jobSetupMin) +
-    pieces.reduce((s, p) => s + cycleOneStick(p) * p.qty, 0);
+  const cycleMin = pieces.reduce((s, p) => s + cycleOneStick(p) * p.qty, 0);
   const hours = cycleMin / 60;
   const material = round(lines.reduce((s, l) => s + l.extension, 0), 2);
   let hardware = 0;
@@ -239,11 +298,9 @@ export function estimateJob(catalog, { title, classId, pieces, hardwareSku = nul
     }
     hardware = hardwareLine.extension;
   }
-  const cell = classId === BOARD_PROCESSING_POLICY.classId
-    ? null
-    : round(RECOVERY.setupCharge + RECOVERY.machineHourRate * hours, 2);
-  const Q = round(material + cell + hardware, 2);
-  return qualifyBoardEconomics({
+  const cell = null;
+  const Q = round(material + hardware, 2);
+  return qualifyIncompleteProcessing({
     status: "BUDGETARY_ESTIMATE",
     title,
     classId,
@@ -379,7 +436,6 @@ export function estimateBoardPlan(catalog, {
   const finishedLengthIn = Number(plan.finishedPart?.lengthIn ?? 0);
 
   const cycleMin =
-    (classId === BOARD_PROCESSING_POLICY.classId ? 0 : TOOLING.jobSetupMin) +
     selected.parentCount * (TOOLING.loadSeatMin + TOOLING.releaseLabelMin) +
     productionSawCuts * sawCycleMin(miterTraverseIn) +
     preparationSawCuts * sawCycleMin(item.actualW) +
@@ -391,10 +447,8 @@ export function estimateBoardPlan(catalog, {
   const resolvedCycleMin = cycleMin + (spotEconomicsResolved && spotCount > 0 ? spotCount * spotCycleMin() : 0);
   const hours = resolvedCycleMin / 60;
   const material = materialLine.extension;
-  const cell = classId === BOARD_PROCESSING_POLICY.classId
-    ? null
-    : round(RECOVERY.setupCharge + RECOVERY.machineHourRate * hours, 2);
-  const Q = round(material + cell, 2);
+  const cell = null;
+  const Q = round(material, 2);
 
   const estimate = {
     status: "BUDGETARY_ESTIMATE",
@@ -441,7 +495,7 @@ export function estimateBoardPlan(catalog, {
   };
 
   if (spotCount > 0 && !spotEconomicsResolved) {
-    return qualifyBoardEconomics({
+    return qualifyIncompleteProcessing({
       ...estimate,
       status: "PARTIAL_BUDGETARY_ESTIMATE",
       unresolved: ["SPOT_CYCLE_TIME_APPLICABILITY_UNRESOLVED"],
@@ -467,7 +521,7 @@ export function estimateBoardPlan(catalog, {
     });
   }
 
-  return qualifyBoardEconomics(estimate);
+  return qualifyIncompleteProcessing(estimate);
 }
 
 /** Established pine alcove square-cut ticket. */
