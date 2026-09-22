@@ -10,6 +10,8 @@ permissions:
 jobs:
   store-acceptance:
     runs-on: ubuntu-latest
+    env:
+      STB_STORE_REVISION: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
