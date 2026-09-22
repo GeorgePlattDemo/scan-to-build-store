@@ -100,7 +100,12 @@ test('No job can inherit undeclared rates or setup time through any pricing entr
     RECOVERY.setupCharge = 12345;
     RECOVERY.machineHourRate = 67890;
     TOOLING.jobSetupMin = 54321;
-    assert.deepEqual(quote(), before);
+    const contaminated = quote();
+    assert.equal(contaminated.totals.Q, before.totals.Q);
+    assert.deepEqual(contaminated.cycle, before.cycle);
+    assert.equal(contaminated.realityBar.status, 'FAIL');
+    assert.ok(contaminated.realityBar.failures.includes('UNDECLARED_RECOVERY_CONSTANT_PRESENT'));
+    assert.ok(contaminated.realityBar.failures.includes('UNDECLARED_SETUP_TIME_PRESENT'));
     const sequence = estimateBoardSequence(catalog, { storeSku: sixFoot.storeSku,
       definedWorkpieceLengthIn: 60, sawCuts: 3, sawAngleDeg: 30 });
     const generic = estimateJob(catalog, { classId: 'user_defined_board', pieces: [
