@@ -212,7 +212,10 @@ function normalizedFeature(feature, part, widthIn) {
     return { error: "UNSUPPORTED_OR_MISSING_FEATURE_KIND" };
   }
   const xIn = Number(feature.xIn);
-  if (!Number.isFinite(xIn) || xIn < 0 || xIn > part.lengthIn) {
+  if (!Number.isFinite(xIn)) {
+    return { error: "SPOT_LOCATION_REQUIRED" };
+  }
+  if (xIn < 0 || xIn > part.lengthIn) {
     return { error: "SPOT_LOCATION_OUTSIDE_PART" };
   }
   if (feature.acrossWidthRule !== "CENTERED_ON_WIDE_FACE") {
