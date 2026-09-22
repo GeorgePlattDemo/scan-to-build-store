@@ -1,0 +1,27 @@
+name: D-001 Travel Standard Acceptance
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  store-acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: D-001 envelope
+        run: node d001-stage2-envelope.test.mjs
+      - name: Store dispositions
+        run: node store-zero-disposition.test.mjs
+      - name: Legacy mill migration boundary
+        run: node d-001-stage2-mill.test.mjs
+      - name: Store Stage-2
+        run: node store-zero-stage2.test.mjs
+      - name: User 1 travel-standard acceptance
+        run: node d001-travel-standard.test.mjs
