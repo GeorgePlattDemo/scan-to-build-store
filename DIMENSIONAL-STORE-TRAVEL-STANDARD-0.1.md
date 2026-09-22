@@ -63,6 +63,8 @@ Consequences:
 
 Tests may preserve named historical fixtures where required, but generic Store acceptance must not freeze catalog membership, SKU count, or one preferred stock length as eternal truth.
 
+For Stage-2 modeled catalog pricing, exact current retail matching is not required. Modeled prices should remain **reasonably market-shaped and internally correlated** for comparable material classes. When a SKU price is not directly observed, its derivation must be declared and traceable to an observed or otherwise governed reference. Comparable length variants should preserve a plausible price/length relationship unless specific evidence justifies a different relationship. Later observed evidence may replace the modeled fixture value without changing the resolver.
+
 ## 4. Valid operation sequence
 
 Operations may be reordered only by the Store/machine planner and only while preserving geometry, dependencies, material identity, and the reference chain.
