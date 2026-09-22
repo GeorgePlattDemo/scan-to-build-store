@@ -5,7 +5,8 @@ import {
   evaluateDimensionalTravelJob,
   evaluateDimensionalStoreRequest,
   requestDimensionalStoreEvaluation,
-  STORE_EVALUATION_FRESHNESS
+  STORE_EVALUATION_FRESHNESS,
+  DIMENSIONAL_WORKPIECE_POLICY
 } from "./store-zero-stage2-store.mjs";
 import {
   D001_TRAVEL_STANDARD,
@@ -57,6 +58,54 @@ assert.equal(passA.estimate.travel.configurationVersion, "0.1");
 assert.equal(passA.calculationIdentity.inputHash, passB.calculationIdentity.inputHash);
 assert.equal(passA.calculationIdentity.resultHash, passB.calculationIdentity.resultHash);
 assert.equal(passA.estimate.totals.Q, passB.estimate.totals.Q);
+
+
+// Bounded configurator growth is generic Store behavior, not a Job-1 SKU rule.
+// The baseline 60-in workpiece is preserved when it still satisfies D-001.
+// When two identified 18-in parts would leave less than 24 in, Store may grow
+// the workpiece just enough to preserve retained control, then resolve stock.
+const fixedHorizontalSpanIn = 16 * Math.sin(30 * Math.PI / 180);
+const eighteenMiterDeg = Math.asin(fixedHorizontalSpanIn / 18) * 180 / Math.PI;
+const USER1_18 = structuredClone(USER1);
+USER1_18.configurationVersion = "0.2";
+USER1_18.workpiecePolicy = DIMENSIONAL_WORKPIECE_POLICY.GROW_TO_RETAINED_CONTROL;
+USER1_18.sawAngleDeg = eighteenMiterDeg;
+USER1_18.parts = USER1_18.parts.map((part, index) => ({
+  ...part,
+  lengthIn: 18,
+  features: [{
+    ...part.features[0],
+    featureId: "SPOT-" + (index + 1),
+    xIn: 9
+  }]
+}));
+
+const grown18 = evaluateDimensionalTravelJob(catalog, USER1_18);
+assert.equal(grown18.status, "SUPPORTABLE");
+assert.equal(grown18.workpieceResolution.status, "RESOLVED");
+assert.equal(grown18.workpieceResolution.requestedDefinedWorkpieceLengthIn, 60);
+assert.equal(grown18.workpieceResolution.requiredMinimumWorkpieceLengthIn, 60.375);
+assert.equal(grown18.workpieceResolution.definedWorkpieceLengthIn, 60.375);
+assert.equal(grown18.workpieceResolution.adjusted, true);
+assert.equal(grown18.materialResolution.pricingReferenceSku, "STB-ZERO-SPF-2X4-72-001");
+assert.equal(grown18.materialResolution.pricingReferenceStockLengthIn, 72);
+assert.equal(grown18.materialResolution.workpieceLengthIn, 60.375);
+assert.equal(grown18.estimate.travel.finalRemainderIn, 24);
+assert.equal(grown18.estimate.travel.parts[0].lengthIn, 18);
+assert.equal(grown18.estimate.travel.parts[1].lengthIn, 18);
+assert.equal(grown18.estimate.travel.parts[0].features[0].xIn, 9);
+assert.equal(grown18.estimate.totals.material, 3.13);
+assert.notEqual(grown18.calculationIdentity.resultHash, passA.calculationIdentity.resultHash);
+assert.ok(Math.abs(eighteenMiterDeg - 26.3877999612) < 1e-9);
+
+// Without explicit Store permission to grow, the exact same 18-in definition
+// still refuses at the retained-control gate. This prevents app-side growth.
+const USER1_18_NO_GROWTH = structuredClone(USER1_18);
+USER1_18_NO_GROWTH.workpiecePolicy = DIMENSIONAL_WORKPIECE_POLICY.PRESERVE_DEFINED;
+const refused18 = evaluateDimensionalTravelJob(catalog, USER1_18_NO_GROWTH);
+assert.equal(refused18.status, "REFUSED");
+assert.equal(refused18.workpieceResolution.definedWorkpieceLengthIn, 60);
+assert.ok(refused18.estimate.reasons.includes("LAST_REMAIN_BELOW_TWO_ROLLER_CONTROL"));
 
 // Every formal Store submission is a fresh evaluation with a new receipt.
 // The same definition may calculate to the same Q, but the prior answer is never
@@ -168,5 +217,11 @@ assert.equal(D001_TRAVEL_STANDARD.basis, "DECLARED_STAGE2_MODEL");
 console.log("d001-travel-standard.test.mjs ok");
 console.log("User 1 Q", passA.estimate.totals.Q);
 console.log("User 1 modeled minutes", passA.estimate.travel.time.T_MACHINE_min);
+console.log("18-in preserved-span miter", eighteenMiterDeg);
+console.log("18-in workpiece", grown18.materialResolution.workpieceLengthIn);
+console.log("18-in Store SKU", grown18.materialResolution.pricingReferenceSku);
+console.log("18-in Q", grown18.estimate.totals.Q);
+console.log("18-in modeled minutes", grown18.estimate.travel.time.T_MACHINE_min);
+console.log("18-in resultHash", grown18.calculationIdentity.resultHash);
 console.log("inputHash", passA.calculationIdentity.inputHash);
 console.log("resultHash", passA.calculationIdentity.resultHash);
