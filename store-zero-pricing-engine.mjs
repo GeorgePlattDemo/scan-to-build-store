@@ -9,7 +9,7 @@ import { millPassesForDepth, D001_STAGE2_ENVELOPE } from "./d001-stage2-envelope
 
 export const ENGINE = {
   id: "STB-STORE-ZERO-PRICE-1",
-  version: "0.2.4",
+  version: "0.3.0",
   clock: "2026-09-10",
   documentKind: "BudgetaryEstimate"
 };
@@ -276,6 +276,122 @@ export function estimateBoardSequence(catalog, {
       depthIn: drillReferenceDepthIn
     }]
   });
+
+  if (spotCount > 0 && !spotEconomicsResolved) {
+    return {
+      ...estimate,
+      status: "PARTIAL_BUDGETARY_ESTIMATE",
+      unresolved: ["SPOT_CYCLE_TIME_APPLICABILITY_UNRESOLVED"],
+      operationEconomics: {
+        spot: {
+          requestedCycles: spotCount,
+          status: spotAssessment.status,
+          legacyFixedCycleMin: spotAssessment.legacyFixedCycleMin,
+          legacyCycleBasis: spotAssessment.legacyCycleBasis,
+          excludedFromResolvedSubtotal: true
+        }
+      },
+      cycle: {
+        ...estimate.cycle,
+        excludedSpotCycles: spotCount,
+        spotCycleStatus: spotAssessment.status
+      },
+      totals: {
+        ...estimate.totals,
+        Q_basis: "PARTIAL_CALCULATED",
+        note: "Partial budgetary subtotal. Excludes unresolved depth-defined spot-cycle time."
+      }
+    };
+  }
+
+  return estimate;
+}
+
+
+export function estimateBoardPlan(catalog, {
+  title,
+  classId = "user_defined_board",
+  plan,
+  spotCycles = 0
+}) {
+  const selected = plan?.selected;
+  const item = selected ? findOffering(catalog, selected.storeSku) : null;
+  if (!item || item.form !== "board" || item.actualW == null || !Number.isInteger(selected.parentCount) || selected.parentCount < 1) {
+    return { status: "UNRESOLVED", reason: "SELECTED_BOARD_PLAN_REQUIRED", title };
+  }
+
+  const materialLine = extendLine(catalog, selected.storeSku, selected.parentCount);
+  if (materialLine.status === "INCOMPLETE") {
+    return { status: "UNRESOLVED", reason: "MISSING_PRICE", title };
+  }
+
+  const angle = Number(plan.finishedPart?.angleDeg ?? 0);
+  const radians = angle * Math.PI / 180;
+  const miterTraverseIn = angle > 0 ? item.actualW / Math.cos(radians) : item.actualW;
+  const productionSawCuts = Number(plan.accounting?.productionSawCuts ?? 0);
+  const preparationSawCuts = Number(plan.accounting?.preparationSawCuts ?? 0);
+  const producedParts = Number(plan.finishedPart?.quantity ?? 0);
+  const finishedLengthIn = Number(plan.finishedPart?.lengthIn ?? 0);
+
+  const cycleMin =
+    TOOLING.jobSetupMin +
+    selected.parentCount * (TOOLING.loadSeatMin + TOOLING.releaseLabelMin) +
+    productionSawCuts * sawCycleMin(miterTraverseIn) +
+    preparationSawCuts * sawCycleMin(item.actualW) +
+    producedParts * indexMin(finishedLengthIn);
+
+  const spotCount = Math.max(0, Number(spotCycles) || 0);
+  const spotAssessment = spotEconomicsAssessment();
+  const spotEconomicsResolved = spotCount === 0 || spotAssessment.status === "APPLICABLE";
+  const resolvedCycleMin = cycleMin + (spotEconomicsResolved && spotCount > 0 ? spotCount * spotCycleMin() : 0);
+  const hours = resolvedCycleMin / 60;
+  const material = materialLine.extension;
+  const cell = round(RECOVERY.setupCharge + RECOVERY.machineHourRate * hours, 2);
+  const Q = round(material + cell, 2);
+
+  const estimate = {
+    status: "BUDGETARY_ESTIMATE",
+    title,
+    classId,
+    documentKind: ENGINE.documentKind,
+    engine: ENGINE,
+    material_lines: [materialLine],
+    hardware_line: null,
+    planIdentity: plan.planId ?? null,
+    operationAccounting: {
+      parentCount: selected.parentCount,
+      productionSawCuts,
+      preparationSawCuts,
+      totalModeledSawCuts: productionSawCuts + preparationSawCuts,
+      producedParts,
+      spotCyclesRequested: spotCount,
+      preparation: Array.isArray(plan.preparation) ? plan.preparation : []
+    },
+    cycle: {
+      model: CYCLE_MODEL.id,
+      basis: CYCLE_MODEL.basis,
+      measured: false,
+      T_job_min: round(resolvedCycleMin, 3),
+      T_job_hr: round(hours, 4),
+      SFM: round(sfm(), 0),
+      feed_fpm: round(feedFpm(), 2)
+    },
+    totals: {
+      material,
+      cell_recovery: cell,
+      hardware: 0,
+      Q,
+      Q_basis: "CALCULATED",
+      note: "Budgetary estimate. Not a commercial quote."
+    },
+    not_claimed: [
+      "commercial quote",
+      "seller-of-record",
+      "physical fabrication",
+      "live motion",
+      "physical stock count"
+    ]
+  };
 
   if (spotCount > 0 && !spotEconomicsResolved) {
     return {
