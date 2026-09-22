@@ -10,9 +10,9 @@ function result(){const materialResolution=resolveBoardMaterial(catalog,definiti
 test('actual application class alias has no legacy rate; unknown classes do not inherit any',()=>{
  for(const classId of ['app.user-defined-board.v1','user_defined_board','new-project','toString',undefined]){
   const r=estimateJob(catalog,{classId,pieces:[{storeSku:'STB-ZERO-SPF-2X4-72-001',qty:1,keptLengthIn:16,widthIn:3.5}]});
-  assert.equal(r.totals.cell_recovery,null);assert.equal(r.status,'PARTIAL_BUDGETARY_ESTIMATE');assert.equal(r.totals.Q,r.totals.material);
+  assert.equal(r.totals.cell_recovery,null);assert.equal(r.status,'PARTIAL_BUDGETARY_ESTIMATE');assert.equal(r.totals.Q,null);
  }
- assert.equal(pricingPolicyFor('app.board.square.v1').id,'LEGACY-REFERENCE-RECOVERY/1');
+ assert.equal(pricingPolicyFor('app.board.square.v1').id,'DIMENSIONAL-TRAVEL-PRICING/1');
 });
 test('actual evaluated plan is bound to definition, revision, project and source',()=>{
  const answer=completeStoreInteraction(request,result());

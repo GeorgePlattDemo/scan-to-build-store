@@ -62,7 +62,7 @@ assert.equal(refused.status, "REFUSED");
 
 const pine = estimatePineAlcove(catalog);
 assert.equal(pine.totals.material, 272.86);
-assert.equal(pine.totals.Q, 374.42);
+assert.equal(pine.totals.Q, null);
 assert.equal(pine.cycle.model, "STB-D001-CYCLE-MODEL-S2-0.1");
 
 console.log("store-zero-disposition.test.mjs ok");

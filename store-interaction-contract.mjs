@@ -1,8 +1,8 @@
 /** Shared runtime boundary. This checks consistency, not cryptographic provenance or physical authority. */
 export const STORE_INTERACTION_VERSION = 'stb.store-interaction/1';
 export const PROJECT_STORE_POLICIES = Object.freeze({
-  'start-own': Object.freeze({pricingPolicy:'USER1-PROCESSING-UNRESOLVED/1', capabilityModel:'D001-STAGE2-ENVELOPE-0.4', sourcePin:null}),
-  'board-reference': Object.freeze({pricingPolicy:'LEGACY-REFERENCE-RECOVERY/1', capabilityModel:'D001-STAGE2-ENVELOPE-0.4', sourcePin:null}),
+  'start-own': Object.freeze({pricingPolicy:'DIMENSIONAL-TRAVEL-PRICING/1', capabilityModel:'D001-STAGE2-ENVELOPE-0.4', sourcePin:null}),
+  'board-reference': Object.freeze({pricingPolicy:'DIMENSIONAL-TRAVEL-PRICING/1', capabilityModel:'D001-STAGE2-ENVELOPE-0.4', sourcePin:null}),
   'sheet-s001': Object.freeze({pricingPolicy:'S001-MATERIAL-ONLY/1', capabilityModel:'S001-MODE2-ARCHED-APERTURE-V0', sourcePin:'4402abeb6b0299a5b6db2eec85ed04c3b0236bcc'}),
   'window-seat': Object.freeze({pricingPolicy:'STB-STORE-ZERO-WINDOW-SEAT-RECOVERY-0.1', capabilityModel:'D001-BOARD-EDGE-MILL-REF-0.3', sourcePin:'f88ec61c42446755d00259f88e7fd09f2702fd92'}),
   'alcove': Object.freeze({pricingPolicy:'ALCOVE-NATIVE-REFERENCE/1', capabilityModel:'D001-BOARD-EDGE-MILL-REF-0.3', sourcePin:'f88ec61c42446755d00259f88e7fd09f2702fd92'}),
@@ -29,13 +29,12 @@ function assertStoreResult(request,result) {
   if (result.storePin && result.storePin!==request.storePin) contractFailure('STORE_SOURCE_PIN_MISMATCH');
   if (result.definitionVersionId && String(result.definitionVersionId)!==request.revision) contractFailure('STORE_REVISION_MISMATCH');
   const estimate=result.rawEstimate;
-  if (estimate?.totals && ['material','hardware','Q'].some(k=>!Number.isFinite(estimate.totals[k]))) contractFailure('STORE_PRICE_NUMBER_INVALID');
+  if (estimate?.totals && ['material','hardware'].some(k=>!Number.isFinite(estimate.totals[k]))) contractFailure('STORE_PRICE_NUMBER_INVALID');
   if (result.materialResolution?.allocationClaimed===true) contractFailure('STORE_PHYSICAL_AUTHORITY_FORBIDDEN');
-  if (request.projectKey==='start-own' && estimate?.totals) {
-    if (estimate.processingPolicy?.id!==request.pricingPolicy || estimate.totals.cell_recovery!==null || estimate.cycle?.T_job_min!==null) contractFailure('STORE_UNAUTHORIZED_PROCESSING_CHARGE');
-    if (estimate.status!=='PARTIAL_BUDGETARY_ESTIMATE'||estimate.totals.Q_basis!=='PARTIAL_CALCULATED'||result.priceCompleteness?.status==='COMPLETE_FOR_ENCODED_DEMAND') contractFailure('STORE_INCOMPLETE_PRICE_MISLABELED');
-    if (!estimate.unresolved?.includes('BOARD_PROCESSING_RATE_REQUIRED')) contractFailure('STORE_MISSING_PRICING_REASON');
-    if (Math.abs(estimate.totals.Q-(estimate.totals.material+estimate.totals.hardware))>0.005) contractFailure('STORE_SUBTOTAL_MISMATCH');
+  if (estimate?.totals) {
+    if (estimate.totals.Q!==null && (!result.travelRecord || result.travelRecord.status!=='COMPLETE' || result.travelRecord.Q!==estimate.totals.Q)) contractFailure('NO_COMPLETE_Q');
+    if (estimate.totals.Q===null && result.priceCompleteness?.status==='COMPLETE_FOR_ENCODED_DEMAND') contractFailure('STORE_INCOMPLETE_PRICE_MISLABELED');
+    if (estimate.totals.cell_recovery!==null && !result.travelRecord) contractFailure('STORE_UNAUTHORIZED_PROCESSING_CHARGE');
   }
   if (request.projectKey==='outdoor-build' && (estimate!=null || result.q!=null || result.storeReference?.estimate!=null)) contractFailure('STORE_UNAUTHORIZED_PROCESSING_CHARGE');
   if (request.projectKey==='sheet-s001' && estimate && estimate.processQ_status!=='UNRESOLVED') contractFailure('STORE_INCOMPLETE_PRICE_MISLABELED');

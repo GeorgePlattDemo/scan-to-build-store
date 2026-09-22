@@ -73,7 +73,7 @@ assert.equal(directEstimate.status, "PARTIAL_BUDGETARY_ESTIMATE");
 assert.equal(directEstimate.totals.material, 3.13);
 assert.equal(directEstimate.cycle.T_job_min, null);
 assert.equal(directEstimate.totals.cell_recovery, null);
-assert.equal(directEstimate.totals.Q, directEstimate.totals.material);
+assert.equal(directEstimate.totals.Q, null);
 assertPricedPlanConsistency(direct.plan, directEstimate);
 
 // B. A different eligible Store offering changes parent/sequence/remainder, not finished demand.
@@ -114,7 +114,7 @@ const preparedEstimate = estimateResolvedBoardPlan(catalog, prepared, {
 assert.equal(preparedEstimate.totals.material, 4.18);
 assert.equal(preparedEstimate.cycle.T_job_min, null);
 assert.equal(preparedEstimate.totals.cell_recovery, null);
-assert.equal(preparedEstimate.totals.Q, preparedEstimate.totals.material);
+assert.equal(preparedEstimate.totals.Q, null);
 assertPricedPlanConsistency(prepared.plan, preparedEstimate);
 
 // D. Bad/short stock is refused/unavailable; the finished job is never resized.
@@ -169,8 +169,8 @@ const spotEstimate = estimateResolvedBoardPlan(catalog, withSpot, {
 assert.equal(spotEstimate.status, "PARTIAL_BUDGETARY_ESTIMATE");
 assert.equal(spotEstimate.totals.material, 3.13);
 assert.equal(spotEstimate.totals.cell_recovery, null);
-assert.equal(spotEstimate.totals.Q, spotEstimate.totals.material);
-assert.equal(spotEstimate.totals.Q_basis, "PARTIAL_CALCULATED");
+assert.equal(spotEstimate.totals.Q, null);
+assert.equal(spotEstimate.totals.Q_basis, "NO_COMPLETE_Q");
 assert.ok(spotEstimate.unresolved.includes("SPOT_CYCLE_TIME_APPLICABILITY_UNRESOLVED"));
 
 // Qty edit: four 16-in parts cannot remain on one 72-in parent; one 96-in parent is selected.

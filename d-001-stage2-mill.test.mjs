@@ -18,12 +18,14 @@ assert.equal(cap.status, "SUPPORTABLE");
 
 const square = estimatePicnicLegSquare(catalog);
 const tapered = estimatePicnicLegTapered(catalog);
-assert.equal(square.status, "BUDGETARY_ESTIMATE");
-assert.equal(tapered.status, "BUDGETARY_ESTIMATE");
+assert.equal(square.status, "PARTIAL_BUDGETARY_ESTIMATE");
+assert.equal(tapered.status, "PARTIAL_BUDGETARY_ESTIMATE");
 assert.equal(square.totals.material, tapered.totals.material);
-assert.ok(tapered.cycle.T_job_min > square.cycle.T_job_min);
-assert.ok(tapered.totals.Q > square.totals.Q);
-assert.ok(tapered.cycle.T_job_min - square.cycle.T_job_min >= millLongMin(28) + millEndMin(1) - 0.001);
+assert.ok(tapered.cycle.historicalOperationSubtotalMin > square.cycle.historicalOperationSubtotalMin);
+assert.equal(tapered.totals.Q, null);
+assert.equal(square.totals.Q, null);
+assert.ok(tapered.unresolved.includes("STORE_MACHINE_SELL_RATE_REQUIRED"));
+assert.ok(tapered.cycle.historicalOperationSubtotalMin - square.cycle.historicalOperationSubtotalMin >= millLongMin(28) + millEndMin(1) - 0.001);
 
 const evaln = evaluateJob(catalog, {
   title: tapered.title,
@@ -39,6 +41,6 @@ const evaln = evaluateJob(catalog, {
 assert.equal(evaln.status, "SUPPORTABLE");
 
 console.log("d-001-stage2-mill.test.mjs ok");
-console.log("square Q", square.totals.Q, "min", square.cycle.T_job_min);
-console.log("taper Q", tapered.totals.Q, "min", tapered.cycle.T_job_min);
+console.log("square Q", square.totals.Q, "min", square.cycle.historicalOperationSubtotalMin);
+console.log("taper Q", tapered.totals.Q, "min", tapered.cycle.historicalOperationSubtotalMin);
 console.log("delta Q", +(tapered.totals.Q - square.totals.Q).toFixed(2));

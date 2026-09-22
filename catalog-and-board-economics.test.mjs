@@ -109,11 +109,11 @@ test('User 1 cannot inherit legacy rates or setup time through any pricing entry
     for (const estimate of [before, sequence, generic, quote(catalog, demand, 2)]) {
       assert.equal(estimate.status, 'PARTIAL_BUDGETARY_ESTIMATE');
       assert.equal(estimate.totals.cell_recovery, null);
-      assert.equal(estimate.totals.Q, estimate.totals.material);
+      assert.equal(estimate.totals.Q, null);
       assert.equal(estimate.cycle.T_job_min, null);
-      assert.ok(estimate.cycle.modeledOperationSubtotalMin < 5);
-      assert.ok(estimate.unresolved.includes('BOARD_PROCESSING_RATE_REQUIRED'));
-      assert.ok(estimate.unresolved.includes('BOARD_SETUP_TIME_BASIS_REQUIRED'));
+      assert.ok(estimate.cycle.historicalOperationSubtotalMin < 5);
+      assert.ok(estimate.unresolved.includes('STORE_MACHINE_SELL_RATE_REQUIRED'));
+      assert.ok(estimate.unresolved.includes('KINEMATIC_PLAN_TRANSLATION_REQUIRED'));
     }
   } finally { Object.assign(RECOVERY, recovery); TOOLING.jobSetupMin = setup; }
 });
@@ -143,8 +143,8 @@ test('operations still determine modeled time and spot uncertainty remains expli
   const prepared = quote(catalog, { ...demand, requestedFinishedBlankLengthIn: 64,
     requestedFinishedBlankSource: 'TEST_EXPLICIT_REQUIREMENT' });
   assert.equal(prepared.operationAccounting.preparationSawCuts, 1);
-  assert.ok(prepared.cycle.modeledOperationSubtotalMin > base.cycle.modeledOperationSubtotalMin);
+  assert.ok(prepared.cycle.historicalOperationSubtotalMin > base.cycle.historicalOperationSubtotalMin);
   assert.ok(quote(catalog, demand, 2).unresolved.includes('SPOT_CYCLE_TIME_APPLICABILITY_UNRESOLVED'));
   assert.equal(resolveBoardMaterial(catalog, { ...demand, sawAngleDeg: 46 }).status, 'REFUSED');
-  assert.equal(estimatePineAlcove(catalog).status, 'BUDGETARY_ESTIMATE');
+  assert.equal(estimatePineAlcove(catalog).status, 'PARTIAL_BUDGETARY_ESTIMATE');
 });

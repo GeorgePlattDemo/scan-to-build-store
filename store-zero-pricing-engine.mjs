@@ -9,7 +9,7 @@ import { millPassesForDepth, D001_STAGE2_ENVELOPE } from "./d001-stage2-envelope
 
 export const ENGINE = {
   id: "STB-STORE-ZERO-PRICE-1",
-  version: "0.4.0",
+  version: "0.5.0",
   clock: "2026-09-10",
   documentKind: "BudgetaryEstimate"
 };
@@ -29,48 +29,26 @@ export function sellingPrice(list) {
   return Math.round(list * (1 + MARK_ON) * 100) / 100;
 }
 
-// Explicit legacy assignments preserve existing reference tickets; never a default.
-export const RECOVERY = { setupCharge: 35, machineHourRate: 100 };
+// Compatibility export only. No active rate or setup fallback is authorized.
+export const RECOVERY = { setupCharge: null, machineHourRate: null };
 export const BOARD_PROCESSING_POLICY = Object.freeze({
-  id: "USER1-PROCESSING-UNRESOLVED/1", classId: "user_defined_board",
-  status: "UNRESOLVED", setupCharge: null, machineHourRate: null, jobSetupMin: null,
-  reason: "BOARD_PROCESSING_RATE_REQUIRED", setupTimeReason: "BOARD_SETUP_TIME_BASIS_REQUIRED"
+  id: "DIMENSIONAL-TRAVEL-PRICING/1", status: "UNRESOLVED",
+  setupCharge: null, machineHourRate: null, jobSetupMin: null,
+  reason: "STORE_MACHINE_SELL_RATE_REQUIRED", setupTimeReason: "KINEMATIC_PLAN_TRANSLATION_REQUIRED"
 });
-const LEGACY_REFERENCE_POLICY = Object.freeze({
-  id: "LEGACY-REFERENCE-RECOVERY/1", status: "DECLARED_REFERENCE",
-  source: "store-zero-pricing-engine.mjs@01f9c5580cea262bd898a9f2c1ac2cd89d02845f",
-  setupCharge: 35, machineHourRate: 100, jobSetupMin: 8,
-  measured: false, commissioned: false
-});
-export const PRICING_POLICIES = Object.freeze({
-  user_defined_board: BOARD_PROCESSING_POLICY,
-  "app.user-defined-board.v1": BOARD_PROCESSING_POLICY,
-  "alcove.insert.square_shelves": LEGACY_REFERENCE_POLICY,
-  "cut-001": LEGACY_REFERENCE_POLICY,
-  "app.board.square.v1": LEGACY_REFERENCE_POLICY,
-  "picnic.leg.square": LEGACY_REFERENCE_POLICY,
-  "picnic.leg.taper": LEGACY_REFERENCE_POLICY
-});
-export function pricingPolicyFor(classId) {
-  return Object.hasOwn(PRICING_POLICIES, classId) ? PRICING_POLICIES[classId] : Object.freeze({
-    id: null, classId: classId ?? null, status: "UNRESOLVED",
-    setupCharge: null, machineHourRate: null, jobSetupMin: null,
-    reason: "CLASS_PRICING_POLICY_REQUIRED", setupTimeReason: "CLASS_SETUP_TIME_BASIS_REQUIRED"
-  });
-}
+export function pricingPolicyFor() { return BOARD_PROCESSING_POLICY; }
 function qualifyBoardEconomics(estimate) {
   if (!estimate.totals) return estimate;
-  const policy = pricingPolicyFor(estimate.classId);
-  if (policy.status !== "UNRESOLVED") return { ...estimate, processingPolicy: policy };
   return {
-    ...estimate, status: "PARTIAL_BUDGETARY_ESTIMATE", processingPolicy: policy,
-    unresolved: [...new Set([...(estimate.unresolved ?? []), policy.reason, policy.setupTimeReason])],
+    ...estimate, status: "PARTIAL_BUDGETARY_ESTIMATE", processingPolicy: BOARD_PROCESSING_POLICY,
+    unresolved: [...new Set([...(estimate.unresolved ?? []), BOARD_PROCESSING_POLICY.reason, BOARD_PROCESSING_POLICY.setupTimeReason])],
     cycle: { ...estimate.cycle, T_job_min: null, T_job_hr: null,
-      modeledOperationSubtotalMin: estimate.cycle.T_job_min, jobSetupMin: null,
-      completeness: "PARTIAL_MODELED_OPERATION_TIME" },
+      historicalOperationSubtotalMin: estimate.cycle.T_job_min, jobSetupMin: null,
+      completeness: "NOT_TRAVEL_STANDARD_MACHINE_TIME" },
     totals: { ...estimate.totals, cell_recovery: null,
-      Q: round(estimate.totals.material + estimate.totals.hardware, 2), Q_basis: "PARTIAL_CALCULATED",
-      note: "Material/hardware subtotal only. Processing charges and job setup time are unresolved; depth-defined spot time is also excluded when requested. Not a complete job price." }
+      materialSubtotal: round(estimate.totals.material + estimate.totals.hardware, 2),
+      Q: null, Q_basis: "NO_COMPLETE_Q",
+      note: "Material subtotal only. No complete Q: the declared machine travel model and selling rate are incomplete." }
   };
 }
 
@@ -88,7 +66,7 @@ export const TOOLING = {
   accelMin: 0.05,
   loadSeatMin: 0.6,
   releaseLabelMin: 0.4,
-  jobSetupMin: 8,
+  jobSetupMin: null,
   drill: { rpm: 3000, ipr: 0.008 },
   spot: {
     diameterIn: 0.1875,
