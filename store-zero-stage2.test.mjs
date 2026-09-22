@@ -48,11 +48,14 @@ assert.equal(pine96.list_reference, 19.99);
 assert.equal(pine96.sellingPrice, 20.99);
 
 const ticket = estimatePineAlcove(catalog);
-assert.equal(ticket.status, "BUDGETARY_ESTIMATE");
+assert.equal(ticket.status, "PARTIAL_BUDGETARY_ESTIMATE");
 assert.equal(ticket.totals.material, 272.86);
 assert.equal(ticket.hardware_line.extension, 18);
-assert.equal(ticket.totals.Q_basis, "CALCULATED");
-assert.ok(ticket.totals.Q > ticket.totals.material);
+assert.equal(ticket.totals.Q_basis, "PARTIAL_CALCULATED");
+assert.equal(ticket.totals.cell_recovery, null);
+assert.equal(ticket.totals.Q, ticket.totals.material + ticket.totals.hardware);
+assert.ok(ticket.unresolved.includes("PROCESSING_RATE_BASIS_REQUIRED"));
+assert.ok(ticket.unresolved.includes("SETUP_TIME_BASIS_REQUIRED"));
 
 const evaln = pineAlcoveEvaluation(catalog);
 assert.equal(evaln.status, "SUPPORTABLE");
@@ -87,7 +90,7 @@ assert.equal(user1Estimate.totals.material, 3.13);
 assert.equal(user1Estimate.cycle.T_job_min, null);
 assert.equal(user1Estimate.totals.cell_recovery, null);
 assert.equal(user1Estimate.totals.Q, user1Estimate.totals.material);
-assert.equal(user1Estimate.engine.version, "0.3.1");
+assert.equal(user1Estimate.engine.version, "0.4.0");
 
 console.log("store-zero-stage2.test.mjs ok");
 console.log("skuCount", catalog.skuCount);
