@@ -86,8 +86,8 @@ const material = resolveBoardMaterial(catalog, {
 assert.equal(material.status, "MAPPED");
 assert.equal(material.workpieceLengthIn, 60);
 assert.equal(material.allocationClaimed, false);
-assert.equal(material.pricingReferenceSku, "STB-ZERO-SPF-2X4-72-001");
-assert.equal(material.pricingReferenceStockLengthIn, 72);
+assert.equal(material.pricingReferenceSku, "STB-ZERO-SPF-2X4-60-001");
+assert.equal(material.pricingReferenceStockLengthIn, 60);
 
 const wide = { ...pine, actualW: 13.25 };
 assert.equal(envelopeCheck(wide, { requiredOps: ["CROSSCUT"] }).status, "REFUSED");
