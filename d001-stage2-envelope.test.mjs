@@ -10,12 +10,19 @@ import { envelopeCheck, millPassesForDepth, D001_STAGE2_ENVELOPE } from "./d001-
 import { estimatePineAlcove, estimatePicnicLegTapered } from "./store-zero-pricing-engine.mjs";
 
 const catalog = loadCatalog();
-assert.equal(D001_STAGE2_ENVELOPE.id, "D001-STAGE2-ENVELOPE-0.3");
+assert.equal(D001_STAGE2_ENVELOPE.id, "D001-STAGE2-ENVELOPE-0.4");
 assert.equal(D001_STAGE2_ENVELOPE.motion.Y_MILL_TRAVEL_MAX_IN, 14);
 assert.equal(D001_STAGE2_ENVELOPE.stock.maxWidthIn, 12);
 assert.equal(D001_STAGE2_ENVELOPE.saw.motion, "DOWNSTROKE");
 assert.equal(D001_STAGE2_ENVELOPE.saw.miter.maxDeg, 45);
 assert.equal(D001_STAGE2_ENVELOPE.spot.toolDiameterIn, 0.1875);
+assert.equal(D001_STAGE2_ENVELOPE.spot.fullDiameterPenetrationIn, 0.1875);
+assert.equal(D001_STAGE2_ENVELOPE.spot.depthReference, "ENTRY_SURFACE_ALONG_DRILL_AXIS");
+assert.equal(D001_STAGE2_ENVELOPE.spot.pointGeometryStatus, "UNRESOLVED");
+assert.equal(D001_STAGE2_ENVELOPE.spot.pointAngleDeg, null);
+assert.equal(D001_STAGE2_ENVELOPE.spot.pointAxialLengthIn, null);
+assert.equal(D001_STAGE2_ENVELOPE.spot.totalTipPenetrationIn, null);
+assert.equal(D001_STAGE2_ENVELOPE.spot.customerDepthProgrammingRequired, false);
 assert.equal(millPassesForDepth(0.75), 2);
 
 const pine = findSku(catalog, "STB-ZERO-PINE-1X6-96-001");
@@ -36,8 +43,7 @@ assert.equal(
   capabilityAnswer(spf72, ["MITER_LIMITED"], {
     keptLengthIn: 60,
     sawAngleDeg: 30,
-    cutPlane: "miter-face",
-    spotDemand: spot
+    cutPlane: "miter-face"
   }).status,
   "SUPPORTABLE"
 );
@@ -45,27 +51,52 @@ assert.equal(
   capabilityAnswer(spf72, ["MITER_LIMITED"], {
     keptLengthIn: 60,
     sawAngleDeg: 45,
-    cutPlane: "miter-face",
-    spotDemand: spot
+    cutPlane: "miter-face"
   }).status,
   "SUPPORTABLE"
 );
 const over45 = capabilityAnswer(spf72, ["MITER_LIMITED"], {
   keptLengthIn: 60,
   sawAngleDeg: 46,
-  cutPlane: "miter-face",
-  spotDemand: spot
+  cutPlane: "miter-face"
 });
 assert.equal(over45.status, "REFUSED");
 assert.ok(over45.missing.includes("MITER_ANGLE_OUTSIDE_D001_STAGE2_ENVELOPE"));
 
 const missingAngle = capabilityAnswer(spf72, ["MITER_LIMITED"], {
   keptLengthIn: 60,
-  cutPlane: "miter-face",
-  spotDemand: spot
+  cutPlane: "miter-face"
 });
 assert.equal(missingAngle.status, "UNRESOLVED");
 assert.ok(missingAngle.unresolved.includes("MITER_ANGLE_REQUIRED"));
+
+const depthDefinedSpot = capabilityAnswer(spf72, ["MITER_LIMITED"], {
+  keptLengthIn: 60,
+  sawAngleDeg: 30,
+  cutPlane: "miter-face",
+  spotDemand: spot
+});
+assert.equal(depthDefinedSpot.status, "UNRESOLVED");
+assert.ok(depthDefinedSpot.unresolved.includes("SPOT_TOOL_POINT_GEOMETRY_REQUIRED"));
+assert.equal(depthDefinedSpot.envelope.derived.spot.toolDiameterIn, 0.1875);
+assert.equal(depthDefinedSpot.envelope.derived.spot.fullDiameterPenetrationIn, 0.1875);
+assert.equal(depthDefinedSpot.envelope.derived.spot.depthReference, "ENTRY_SURFACE_ALONG_DRILL_AXIS");
+assert.equal(depthDefinedSpot.envelope.derived.spot.pointGeometryStatus, "UNRESOLVED");
+assert.equal(depthDefinedSpot.envelope.derived.spot.totalTipPenetrationIn, null);
+assert.equal(depthDefinedSpot.envelope.derived.spot.depthClaimed, true);
+
+const missingSpotLocation = capabilityAnswer(spf72, ["MITER_LIMITED"], {
+  keptLengthIn: 60,
+  sawAngleDeg: 30,
+  cutPlane: "miter-face",
+  spotDemand: {
+    ...spot,
+    locationAlongLengthIn: undefined
+  }
+});
+assert.equal(missingSpotLocation.status, "UNRESOLVED");
+assert.ok(missingSpotLocation.unresolved.includes("SPOT_LOCATION_REQUIRED"));
+assert.ok(missingSpotLocation.unresolved.includes("SPOT_TOOL_POINT_GEOMETRY_REQUIRED"));
 
 const genericDrill = capabilityAnswer(spf72, ["DRILL"], { keptLengthIn: 60 });
 assert.equal(genericDrill.status, "UNRESOLVED");
@@ -83,11 +114,26 @@ const material = resolveBoardMaterial(catalog, {
   cutPlane: "miter-face",
   spotDemand: spot
 });
-assert.equal(material.status, "MAPPED");
+assert.equal(material.status, "UNRESOLVED");
+assert.equal(material.reason, "CAPABILITY_INPUT_UNRESOLVED");
 assert.equal(material.workpieceLengthIn, 60);
 assert.equal(material.allocationClaimed, false);
 assert.equal(material.pricingReferenceSku, "STB-ZERO-SPF-2X4-72-001");
 assert.equal(material.pricingReferenceStockLengthIn, 72);
+assert.ok(material.capability.unresolved.includes("SPOT_TOOL_POINT_GEOMETRY_REQUIRED"));
+
+const materialNoSpot = resolveBoardMaterial(catalog, {
+  species: "spf",
+  form: "board",
+  nominalT: 2,
+  nominalW: 4,
+  definedWorkpieceLengthIn: 60,
+  qty: 1,
+  requiredOps: ["MITER_LIMITED"],
+  sawAngleDeg: 30,
+  cutPlane: "miter-face"
+});
+assert.equal(materialNoSpot.status, "MAPPED");
 
 const wide = { ...pine, actualW: 13.25 };
 assert.equal(envelopeCheck(wide, { requiredOps: ["CROSSCUT"] }).status, "REFUSED");
