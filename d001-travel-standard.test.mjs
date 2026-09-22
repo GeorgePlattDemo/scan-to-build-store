@@ -100,7 +100,7 @@ const missingSpotCoordinate = structuredClone(USER1);
 delete missingSpotCoordinate.parts[1].features[0].xIn;
 const unresolved = evaluateDimensionalTravelJob(catalog, missingSpotCoordinate);
 assert.equal(unresolved.status, "UNRESOLVED");
-assert.equal(unresolved.estimate, undefined);
+assert.equal(unresolved.estimate, null);
 
 const badAngle = structuredClone(USER1);
 badAngle.sawAngleDeg = 46;
