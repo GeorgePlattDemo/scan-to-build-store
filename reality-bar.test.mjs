@@ -50,7 +50,10 @@ test("every published ticket passes the reality bar", () => {
   }
 });
 
-test("mutating withdrawn placeholder rates cannot mint a complete Q", () => {
+test("mutating undeclared economics cannot mint a complete Q", () => {
+  assert.equal(RECOVERY.setupCharge, null);
+  assert.equal(RECOVERY.machineHourRate, null);
+  assert.equal(TOOLING.jobSetupMin, null);
   const before = tickets().map((e) => e.totals.Q);
   try {
     RECOVERY.setupCharge = 999;
@@ -63,10 +66,10 @@ test("mutating withdrawn placeholder rates cannot mint a complete Q", () => {
       assert.equal(estimate.totals.cell_recovery, null);
     });
   } finally {
-    RECOVERY.setupCharge = 35;
-    RECOVERY.machineHourRate = 100;
+    RECOVERY.setupCharge = null;
+    RECOVERY.machineHourRate = null;
     RECOVERY.mayFormCompleteQ = false;
-    TOOLING.jobSetupMin = 8;
+    TOOLING.jobSetupMin = null;
   }
 });
 
