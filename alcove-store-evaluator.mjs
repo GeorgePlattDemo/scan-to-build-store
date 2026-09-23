@@ -163,9 +163,12 @@ function evaluateBoardRequirement(catalog, demand, requirement, componentProgram
   }
 
   const maximumFinishedLengthIn = Math.max(...components.map((component) => Number(component.finishedLengthIn)));
-  const spotDemand = requirement.carriesSpotDemand === true
-    ? spotFeatureForCapability(demand.spotDemand)
-    : null;
+  // The project currently supplies shelf-elevation spot intent, but does not yet
+  // bind each spot to an identified physical upright component. Check that the
+  // offering declares SPOT_ON_LOCATION via requiredOps, but do not promote the
+  // unresolved project reference into Store geometry. The overall evaluation
+  // returns ALCOVE_SPOT_TARGET_COMPONENT_MAPPING_REQUIRED until that mapping exists.
+  const spotDemand = null;
 
   const candidates = offerMaterial(catalog, {
     species: materialDemand.species,
