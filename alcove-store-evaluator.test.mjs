@@ -54,12 +54,8 @@ function demand(species = "pine", {
   depth = 14,
   span = 44,
   shelfCount = 5,
-  withPrograms = false,
-  unresolvedConditions = [
-    "FLOOR_SLOPE_RECORDED",
-    "WALL_BOW_RECORDED",
-    "ORDERED_SIZE_ADJUSTMENT_NOT_ESTABLISHED"
-  ]
+  withPrograms = true,
+  unresolvedConditions = []
 } = {}) {
   const shelfElevations = [12, 24, 36, 45, 65].slice(0, shelfCount);
   const features = pilot
@@ -86,9 +82,6 @@ function demand(species = "pine", {
         }
       ])
     : [];
-  const across = Math.ceil(depth / 5.5);
-  const boardsPerShelf = Math.ceil(across / 2);
-  const shelfParentQty = boardsPerShelf * shelfCount;
 
   return {
     title: "Alcove insert — Store-owned material answer",
@@ -106,28 +99,26 @@ function demand(species = "pine", {
       {
         requirementId: "ALCOVE-UPRIGHT-PARENTS",
         role: "UPRIGHTS",
-        stockLengthIn: 72,
-        keptLengthIn: height,
-        qty: 4,
         requiredOps: ["CROSSCUT"],
-        carriesSpotDemand: true
+        carriesSpotDemand: true,
+        selectionAuthority: "STORE_ZERO"
       },
       {
         requirementId: "ALCOVE-SHELF-PARENTS",
         role: "SHELVES",
-        stockLengthIn: 96,
-        keptLengthIn: span,
-        qty: shelfParentQty,
         requiredOps: ["CROSSCUT"],
-        carriesSpotDemand: false
+        carriesSpotDemand: false,
+        selectionAuthority: "STORE_ZERO"
       }
     ],
     componentPrograms: withPrograms
       ? componentPrograms({ height, depth, span, shelfCount })
       : [],
     hardwareDemand: {
-      storeSku: "STB-ZERO-HW-ALCOVE-PACK-001",
-      qty: 1
+      requirementId: "ALCOVE-PINS-AND-SCREWS",
+      description: "pins + screws",
+      qty: 1,
+      selectionAuthority: "STORE_ZERO"
     },
     spotDemand: {
       enabled: pilot,
@@ -141,160 +132,88 @@ function demand(species = "pine", {
 }
 
 const pine = evaluateAlcoveJob(catalog, demand("pine"));
-assert.equal(pine.status, "UNRESOLVED");
-assert.equal(pine.complete, false);
+assert.equal(pine.status, "SUPPORTABLE");
+assert.equal(pine.complete, true);
 assert.deepEqual(
   pine.lines.map((line) => [line.role, line.storeSku, line.qty, line.status]),
   [
     ["UPRIGHTS", "STB-ZERO-PINE-1X6-72-001", 4, "SUPPORTABLE"],
-    ["SHELVES", "STB-ZERO-PINE-1X6-96-001", 10, "SUPPORTABLE"]
+    ["SHELVES", "STB-ZERO-PINE-1X6-96-001", 8, "SUPPORTABLE"]
   ]
 );
-assert.equal(pine.estimate.totals.material, 272.86);
+assert.equal(pine.materialResolution.selectionPolicy, "LOWEST_MATERIAL_EXTENSION_COMPLETE_STORE_OFFERING");
+assert.equal(pine.materialResolution.parentSelections[1].stockLengthIn, 96);
+assert.equal(pine.materialResolution.parentSelections[1].qty, 8);
+assert.equal(pine.estimate.totals.material, 230.88);
 assert.equal(pine.estimate.totals.hardware, 18);
-assert.equal(pine.estimate.totals.machine_service, null);
-assert.equal(pine.estimate.totals.Q, null);
-assert.ok(pine.unresolvedConditions.includes("ALCOVE_COMPONENT_PROGRAMS_REQUIRED"));
-assert.equal(
-  pine.materialResolution.selectionPolicy,
-  "EXACT_PROJECT_STOCK_LENGTH_CLASS_STORE_SKU_BY_MATERIAL"
-);
+assert.ok(Number.isFinite(pine.estimate.totals.machine_service));
+assert.ok(Number.isFinite(pine.estimate.totals.Q));
 
 const poplar = evaluateAlcoveJob(catalog, demand("poplar"));
-assert.equal(poplar.status, "UNRESOLVED");
+assert.equal(poplar.status, "SUPPORTABLE");
 assert.deepEqual(
   poplar.lines.map((line) => line.storeSku),
   ["STB-ZERO-POP-1X6-72-001", "STB-ZERO-POP-1X6-96-001"]
 );
-assert.equal(poplar.estimate.totals.material, 418.36);
-assert.equal(poplar.estimate.totals.hardware, 18);
-assert.equal(poplar.estimate.totals.Q, null);
+assert.ok(poplar.estimate.totals.material > pine.estimate.totals.material);
+assert.ok(poplar.estimate.totals.Q > pine.estimate.totals.Q);
 
-const oak = evaluateAlcoveJob(catalog, demand("oak"));
-assert.equal(oak.status, "UNAVAILABLE");
-assert.equal(oak.lines[0].stock.status, "ON_HAND_SUFFICIENT");
-assert.equal(oak.lines[1].storeSku, "STB-ZERO-OAK-1X6-96-001");
-assert.equal(oak.lines[1].stock.status, "ON_HAND_SHORT");
-assert.equal(oak.lines[1].stock.available, 8);
-assert.equal(oak.lines[1].stock.qtyNeeded, 10);
-assert.equal(oak.estimate.totals.material, 454.86);
-assert.equal(oak.estimate.totals.Q, null);
-
-const cherry = evaluateAlcoveJob(catalog, demand("cherry"));
-assert.equal(cherry.status, "UNAVAILABLE");
-assert.equal(cherry.lines[1].storeSku, "STB-ZERO-CHR-1X6-96-001");
-assert.equal(cherry.lines[1].stock.status, "ON_HAND_SHORT");
-assert.equal(cherry.lines[1].stock.available, 6);
-assert.equal(cherry.estimate.totals.material, 727.72);
-assert.equal(cherry.estimate.totals.Q, null);
-
-const pineCutMill = evaluateAlcoveJob(catalog, demand("pine", {
-  height: 65,
-  depth: 14,
-  withPrograms: true,
-  unresolvedConditions: []
-}));
-assert.equal(pineCutMill.status, "SUPPORTABLE");
-assert.equal(pineCutMill.complete, true);
-assert.equal(pineCutMill.estimate.status, "BUDGETARY_ESTIMATE");
-assert.ok(Number.isFinite(pineCutMill.estimate.totals.machine_service));
-assert.ok(pineCutMill.estimate.totals.machine_service > 0);
-assert.ok(Number.isFinite(pineCutMill.estimate.totals.Q));
-assert.ok(pineCutMill.estimate.totals.Q > pineCutMill.estimate.totals.material + pineCutMill.estimate.totals.hardware);
-assert.ok(pineCutMill.machineEvaluation.time.T_MILL_sec > 0);
-assert.equal(pineCutMill.componentPrograms.length, 19);
-assert.ok(
-  pineCutMill.lines.find((line) => line.role === "SHELVES").requiredOps.includes("MILL_LONGITUDINAL_PROFILE")
-);
-
-const poplarCutMill = evaluateAlcoveJob(catalog, demand("poplar", {
-  height: 65,
-  depth: 14,
-  withPrograms: true,
-  unresolvedConditions: []
-}));
-assert.equal(poplarCutMill.status, "SUPPORTABLE");
-assert.equal(poplarCutMill.complete, true);
-assert.ok(poplarCutMill.estimate.totals.Q > pineCutMill.estimate.totals.Q);
-assert.ok(poplarCutMill.machineEvaluation.time.T_MILL_sec > 0);
-
-const oakCutMill = evaluateAlcoveJob(catalog, demand("oak", {
-  height: 65,
-  depth: 14,
-  withPrograms: true,
-  unresolvedConditions: []
-}));
+const oakCutMill = evaluateAlcoveJob(catalog, demand("oak", { depth: 14 }));
 assert.equal(oakCutMill.status, "REFUSED");
 assert.equal(oakCutMill.complete, false);
-assert.ok(
-  oakCutMill.lines
-    .find((line) => line.role === "SHELVES")
-    .capability.missing
-    .includes("OP_NOT_ON_OFFERING:MILL_LONGITUDINAL_PROFILE")
-);
+assert.equal(oakCutMill.reasonRecords.some((reason) => reason.category === "CAPABILITY_GAP"), true);
 assert.equal(oakCutMill.estimate.totals.Q, null);
 
-const cherryCutMill = evaluateAlcoveJob(catalog, demand("cherry", {
-  height: 65,
-  depth: 14,
-  withPrograms: true,
-  unresolvedConditions: []
-}));
+const cherryCutMill = evaluateAlcoveJob(catalog, demand("cherry", { depth: 14 }));
 assert.equal(cherryCutMill.status, "REFUSED");
 assert.equal(cherryCutMill.complete, false);
-assert.equal(cherryCutMill.estimate.totals.Q, null);
+assert.equal(cherryCutMill.reasonRecords.some((reason) => reason.category === "CAPABILITY_GAP"), true);
 
-const oakCutOnly = evaluateAlcoveJob(catalog, demand("oak", {
-  height: 65,
-  depth: 11,
-  withPrograms: true,
-  unresolvedConditions: []
-}));
+const oakCutOnly = evaluateAlcoveJob(catalog, demand("oak", { depth: 11 }));
 assert.equal(oakCutOnly.status, "SUPPORTABLE");
 assert.equal(oakCutOnly.complete, true);
 assert.equal(oakCutOnly.machineEvaluation.time.T_MILL_sec, 0);
-assert.ok(Number.isFinite(oakCutOnly.estimate.totals.Q));
 
-const cherryCutOnly = evaluateAlcoveJob(catalog, demand("cherry", {
-  height: 65,
-  depth: 11,
-  withPrograms: true,
-  unresolvedConditions: []
-}));
+const cherryCutOnly = evaluateAlcoveJob(catalog, demand("cherry", { depth: 11 }));
 assert.equal(cherryCutOnly.status, "SUPPORTABLE");
 assert.equal(cherryCutOnly.complete, true);
 assert.equal(cherryCutOnly.machineEvaluation.time.T_MILL_sec, 0);
-assert.ok(Number.isFinite(cherryCutOnly.estimate.totals.Q));
 
-const exact72From72 = evaluateAlcoveJob(catalog, demand("pine", {
-  height: 72,
-  depth: 14,
-  withPrograms: true,
-  unresolvedConditions: []
-}));
-assert.equal(exact72From72.status, "REFUSED");
-assert.ok(
-  exact72From72.refusalConditions.includes(
-    "COMPONENTS_EXCEED_DECLARED_PARENT_MATERIAL:ALCOVE-UPRIGHT-PARENTS"
-  )
+const exact72 = evaluateAlcoveJob(catalog, demand("pine", { height: 72 }));
+assert.equal(exact72.status, "SUPPORTABLE");
+assert.equal(
+  exact72.lines.find((line) => line.role === "UPRIGHTS").storeSku,
+  "STB-ZERO-PINE-1X6-96-001"
 );
-assert.equal(exact72From72.estimate.totals.Q, null);
+assert.equal(
+  exact72.lines.find((line) => line.role === "UPRIGHTS").demandedStockLengthIn,
+  96
+);
+
+const deeper = evaluateAlcoveJob(catalog, demand("pine", { depth: 11 }));
+assert.equal(deeper.status, "SUPPORTABLE");
+assert.notEqual(deeper.calculationIdentity.inputHash, pine.calculationIdentity.inputHash);
+assert.notEqual(deeper.estimate.totals.material, pine.estimate.totals.material);
 
 const spotted = evaluateAlcoveJob(catalog, demand("pine", { pilot: true }));
-assert.equal(spotted.status, "REFUSED");
+assert.equal(spotted.status, "UNRESOLVED");
 assert.equal(spotted.lines[0].requiredOps.includes("SPOT_ON_LOCATION"), true);
-assert.equal(spotted.lines[0].capability.status, "REFUSED");
-assert.ok(spotted.lines[0].capability.missing.includes("SPOT_LOCATION_RULE_NOT_DECLARED"));
-assert.ok(
-  spotted.unresolvedConditions.includes(
-    "ALCOVE_FACE_SPOT_DEMAND_OUTSIDE_CURRENT_DECLARED_SPOT_ENVELOPE"
-  )
+assert.equal(
+  spotted.reasonRecords.some((reason) =>
+    reason.category === "DEFINITION_GAP" &&
+    reason.code === "ALCOVE_SPOT_TARGET_COMPONENT_MAPPING_REQUIRED"
+  ),
+  true
 );
 assert.equal(spotted.estimate.totals.Q, null);
 
-const tooTall = evaluateAlcoveJob(catalog, demand("pine", { height: 73 }));
-assert.equal(tooTall.status, "REFUSED");
-assert.ok(tooTall.lines[0].capability.missing.includes("KEPT_LENGTH_EXCEEDS_STOCK_LENGTH"));
+const noMaterial = evaluateAlcoveJob(catalog, demand("walnut"));
+assert.equal(noMaterial.status, "UNAVAILABLE");
+assert.equal(noMaterial.reasonRecords.some((reason) => reason.category === "MATERIAL_GAP"), true);
+
+const noPrograms = evaluateAlcoveJob(catalog, demand("pine", { withPrograms: false }));
+assert.equal(noPrograms.status, "UNRESOLVED");
+assert.equal(noPrograms.reasonRecords.some((reason) => reason.category === "DEFINITION_GAP"), true);
 
 const requestA = evaluateAlcoveStoreRequest(catalog, demand("pine"), {
   requestId: "ALCOVE-REQ-PINE",
@@ -313,14 +232,9 @@ assert.notEqual(requestA.calculationIdentity.inputHash, requestB.calculationIden
 assert.notEqual(requestA.calculationIdentity.resultHash, requestB.calculationIdentity.resultHash);
 assert.notEqual(requestA.evaluationReceipt.receiptHash, requestB.evaluationReceipt.receiptHash);
 
-console.log("PASS · Alcove Store request is catalog-owned, fail-first, and species-sensitive");
-console.log("pine material", pine.estimate.totals.material);
-console.log("poplar material", poplar.estimate.totals.material);
-console.log("oak status", oak.status, oak.lines[1].stock.status);
-console.log("cherry status", cherry.status, cherry.lines[1].stock.status);
-console.log("pilot status", spotted.status, spotted.lines[0].capability.missing);
-console.log("pine cut+mill Q", pineCutMill.estimate.totals.Q, "machine min", pineCutMill.estimate.cycle.T_job_min);
-console.log("poplar cut+mill Q", poplarCutMill.estimate.totals.Q, "machine min", poplarCutMill.estimate.cycle.T_job_min);
-console.log("oak cut-only Q", oakCutOnly.estimate.totals.Q);
-console.log("cherry cut-only Q", cherryCutOnly.estimate.totals.Q);
-console.log("72-from-72 status", exact72From72.status, exact72From72.refusalConditions);
+console.log("PASS · Alcove Store resolves parent stock from finished demand and returns reasoned gaps");
+console.log("pine Q", pine.estimate.totals.Q, pine.materialResolution.parentSelections);
+console.log("poplar Q", poplar.estimate.totals.Q);
+console.log("oak cut+mill", oakCutMill.status, oakCutMill.reasonRecords);
+console.log("spot status", spotted.status, spotted.reasonRecords);
+console.log("72 in upright parent", exact72.lines.find((line) => line.role === "UPRIGHTS").storeSku);

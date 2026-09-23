@@ -73,24 +73,62 @@ function spotFeatureForCapability(spotDemand) {
   };
 }
 
-function evaluateBoardRequirement(catalog, demand, requirement) {
-  const materialDemand = demand.materialDemand || {};
-  const candidates = offerMaterial(catalog, {
-    species: materialDemand.species,
-    form: materialDemand.form || "board",
-    nominalT: materialDemand.nominalT,
-    nominalW: materialDemand.nominalW,
-    stockL_in: Number(requirement.stockLengthIn)
-  }).filter((item) => !materialDemand.grade || item.grade === materialDemand.grade);
 
-  const item = candidates
+const STORE_HARDWARE_REQUIREMENTS = Object.freeze({
+  "ALCOVE-PINS-AND-SCREWS": "STB-ZERO-HW-ALCOVE-PACK-001"
+});
+
+function componentsForRequirement(componentPrograms, requirementId) {
+  return componentPrograms
+    .filter((component) => component?.requirementId === requirementId)
     .slice()
     .sort((a, b) =>
-      Number(a.sellingPrice) - Number(b.sellingPrice) ||
-      String(a.storeSku).localeCompare(String(b.storeSku))
-    )[0] || null;
+      Number(b.finishedLengthIn) - Number(a.finishedLengthIn) ||
+      String(a.componentId || "").localeCompare(String(b.componentId || ""))
+    );
+}
 
-  const qty = Number(requirement.qty);
+function packComponentsIntoParents(stockLengthIn, components) {
+  const kerfIn = Number(D001_TRAVEL_STANDARD.control.kerfIn);
+  const capacityIn = Number(stockLengthIn) - kerfIn;
+  if (!Number.isFinite(capacityIn) || capacityIn <= 0 || !components.length) return null;
+
+  const bins = [];
+  for (const component of components) {
+    const finishedLengthIn = Number(component.finishedLengthIn);
+    const needIn = finishedLengthIn + kerfIn;
+    if (!Number.isFinite(needIn) || needIn <= kerfIn || needIn > capacityIn + 1e-9) return null;
+    let placed = false;
+    for (let index = 0; index < bins.length; index += 1) {
+      if (bins[index] + 1e-9 >= needIn) {
+        bins[index] -= needIn;
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      bins.push(capacityIn - needIn);
+    }
+  }
+  return {
+    qty: bins.length,
+    remainingIn: bins.map((value) => round(value, 6))
+  };
+}
+
+function storeReason(category, code, subject, explanation) {
+  return Object.freeze({
+    category,
+    code,
+    subject,
+    authority: "STORE_ZERO",
+    explanation
+  });
+}
+
+function evaluateBoardRequirement(catalog, demand, requirement, componentPrograms) {
+  const materialDemand = demand.materialDemand || {};
+  const components = componentsForRequirement(componentPrograms, requirement.requirementId);
   const requiredOps = Array.isArray(requirement.requiredOps)
     ? [...requirement.requiredOps]
     : ["CROSSCUT"];
@@ -98,65 +136,213 @@ function evaluateBoardRequirement(catalog, demand, requirement) {
     if (!requiredOps.includes("SPOT_ON_LOCATION")) requiredOps.push("SPOT_ON_LOCATION");
   }
 
-  const stock = stockAnswer(item, Number.isFinite(qty) ? qty : 0);
-  const price = priceAnswer(item);
-  const spotDemand = requirement.carriesSpotDemand === true
-    ? spotFeatureForCapability(demand.spotDemand)
-    : null;
-  let capability = capabilityAnswer(item, requiredOps, {
-    keptLengthIn: Number(requirement.keptLengthIn),
-    spotDemand
-  });
-
-  if (
-    item &&
-    Number.isFinite(Number(requirement.keptLengthIn)) &&
-    Number(requirement.keptLengthIn) > Number(item.stockL_in)
-  ) {
-    capability = {
-      ...capability,
-      status: "REFUSED",
-      missing: [
-        "KEPT_LENGTH_EXCEEDS_STOCK_LENGTH",
-        ...((capability && Array.isArray(capability.missing)) ? capability.missing : [])
-      ]
+  if (!components.length) {
+    return {
+      requirementId: String(requirement.requirementId || ""),
+      role: String(requirement.role || ""),
+      status: "UNRESOLVED",
+      demandedStockLengthIn: null,
+      keptLengthIn: null,
+      qty: null,
+      requiredOps,
+      storeSku: null,
+      description: null,
+      stock: { status: "UNRESOLVED", reason: "COMPONENT_PROGRAM_MISSING_FOR_REQUIREMENT" },
+      price: { status: "UNRESOLVED", reason: "COMPONENT_PROGRAM_MISSING_FOR_REQUIREMENT" },
+      capability: { status: "UNRESOLVED", unresolved: ["COMPONENT_PROGRAM_MISSING_FOR_REQUIREMENT"] },
+      extension: null,
+      selectionPolicy: "LOWEST_MATERIAL_EXTENSION_COMPLETE_STORE_OFFERING",
+      consideredCandidates: [],
+      reasonRecord: storeReason(
+        "DEFINITION_GAP",
+        "COMPONENT_PROGRAM_MISSING_FOR_REQUIREMENT",
+        String(requirement.role || requirement.requirementId || "BOARD_REQUIREMENT"),
+        "Store cannot choose parent material until the finished components for this requirement are identified."
+      )
     };
   }
 
-  let status;
-  if (!item) status = "UNAVAILABLE";
-  else if (capability.status === "REFUSED") status = "REFUSED";
-  else if (price.status === "UNRESOLVED" || capability.status === "UNRESOLVED") status = "UNRESOLVED";
-  else if (stock.status === "NOT_ON_HAND" || stock.status === "ON_HAND_SHORT") status = "UNAVAILABLE";
-  else status = "SUPPORTABLE";
+  const maximumFinishedLengthIn = Math.max(...components.map((component) => Number(component.finishedLengthIn)));
+  // The project currently supplies shelf-elevation spot intent, but does not yet
+  // bind each spot to an identified physical upright component. Check that the
+  // offering declares SPOT_ON_LOCATION via requiredOps, but do not promote the
+  // unresolved project reference into Store geometry. The overall evaluation
+  // returns ALCOVE_SPOT_TARGET_COMPONENT_MAPPING_REQUIRED until that mapping exists.
+  const spotDemand = null;
 
-  const extension = item && Number.isFinite(qty) && price.status !== "UNRESOLVED"
-    ? round(Number(item.sellingPrice) * qty, 2)
-    : null;
+  const candidates = offerMaterial(catalog, {
+    species: materialDemand.species,
+    form: materialDemand.form || "board",
+    nominalT: materialDemand.nominalT,
+    nominalW: materialDemand.nominalW
+  })
+    .filter((item) => !materialDemand.grade || item.grade === materialDemand.grade)
+    .sort((a, b) =>
+      Number(a.stockL_in) - Number(b.stockL_in) ||
+      Number(a.sellingPrice) - Number(b.sellingPrice) ||
+      String(a.storeSku).localeCompare(String(b.storeSku))
+    );
+
+  const considered = candidates.map((item) => {
+    const packing = packComponentsIntoParents(item.stockL_in, components);
+    if (!packing) {
+      return {
+        item,
+        packing: null,
+        qty: null,
+        stock: stockAnswer(item, 0),
+        price: priceAnswer(item),
+        capability: capabilityAnswer(item, requiredOps, {
+          keptLengthIn: maximumFinishedLengthIn,
+          spotDemand
+        }),
+        extension: null,
+        status: "REFUSED",
+        reason: "COMPONENTS_DO_NOT_FIT_PARENT_LENGTH"
+      };
+    }
+
+    const qty = packing.qty;
+    const stock = stockAnswer(item, qty);
+    const price = priceAnswer(item);
+    const capability = capabilityAnswer(item, requiredOps, {
+      keptLengthIn: maximumFinishedLengthIn,
+      spotDemand
+    });
+    let status;
+    let reason = null;
+    if (capability.status === "REFUSED") {
+      status = "REFUSED";
+      reason = capability.missing?.[0] || "STORE_CAPABILITY_REFUSED";
+    } else if (price.status === "UNRESOLVED" || capability.status === "UNRESOLVED") {
+      status = "UNRESOLVED";
+      reason = price.reason || capability.unresolved?.[0] || "STORE_INPUT_UNRESOLVED";
+    } else if (stock.sufficient !== true) {
+      status = "UNAVAILABLE";
+      reason = stock.status;
+    } else {
+      status = "SUPPORTABLE";
+    }
+    return {
+      item,
+      packing,
+      qty,
+      stock,
+      price,
+      capability,
+      extension: price.status !== "UNRESOLVED"
+        ? round(Number(item.sellingPrice) * qty, 2)
+        : null,
+      status,
+      reason
+    };
+  });
+
+  const supportive = considered
+    .filter((entry) => entry.status === "SUPPORTABLE" && Number.isFinite(Number(entry.extension)))
+    .sort((a, b) =>
+      Number(a.extension) - Number(b.extension) ||
+      Number(a.item.stockL_in) - Number(b.item.stockL_in) ||
+      String(a.item.storeSku).localeCompare(String(b.item.storeSku))
+    );
+  let selected = supportive[0] || null;
+
+  if (!selected) {
+    selected = considered
+      .slice()
+      .sort((a, b) => {
+        const rank = { UNRESOLVED: 0, REFUSED: 1, UNAVAILABLE: 2 };
+        return (rank[a.status] ?? 9) - (rank[b.status] ?? 9) ||
+          Number(a.item.stockL_in) - Number(b.item.stockL_in);
+      })[0] || null;
+  }
+
+  if (!selected) {
+    return {
+      requirementId: String(requirement.requirementId || ""),
+      role: String(requirement.role || ""),
+      status: "UNAVAILABLE",
+      demandedStockLengthIn: null,
+      keptLengthIn: maximumFinishedLengthIn,
+      qty: null,
+      requiredOps,
+      storeSku: null,
+      description: null,
+      stock: { status: "UNAVAILABLE", reason: "NO_MATCHING_BOARD_OFFERING" },
+      price: { status: "UNRESOLVED", reason: "NO_MATCHING_BOARD_OFFERING" },
+      capability: { status: "REFUSED", reason: "NO_OFFERING" },
+      extension: null,
+      selectionPolicy: "LOWEST_MATERIAL_EXTENSION_COMPLETE_STORE_OFFERING",
+      consideredCandidates: [],
+      reasonRecord: storeReason(
+        "MATERIAL_GAP",
+        "NO_MATCHING_BOARD_OFFERING",
+        String(requirement.role || requirement.requirementId || "BOARD_REQUIREMENT"),
+        "Store has no offered board matching the requested material class."
+      )
+    };
+  }
+
+  const reasonRecord =
+    selected.status === "REFUSED"
+      ? storeReason(
+          "CAPABILITY_GAP",
+          selected.reason || "STORE_CAPABILITY_REFUSED",
+          String(requirement.role || requirement.requirementId || "BOARD_REQUIREMENT"),
+          "Matching Store material exists, but the requested work or parent handling is outside the declared Store capability."
+        )
+      : selected.status === "UNAVAILABLE"
+        ? storeReason(
+            "AVAILABILITY_GAP",
+            selected.reason || "MATCHING_BOARD_NOT_AVAILABLE",
+            String(requirement.role || requirement.requirementId || "BOARD_REQUIREMENT"),
+            "A matching Store offering exists, but current declared availability is insufficient for the resolved parent quantity."
+          )
+        : selected.status === "UNRESOLVED"
+          ? storeReason(
+              "STORE_DATA_GAP",
+              selected.reason || "STORE_INPUT_UNRESOLVED",
+              String(requirement.role || requirement.requirementId || "BOARD_REQUIREMENT"),
+              "Store has a candidate offering, but a Store-owned price or capability fact remains unresolved."
+            )
+          : null;
 
   return {
     requirementId: String(requirement.requirementId || ""),
     role: String(requirement.role || ""),
-    status,
-    demandedStockLengthIn: Number(requirement.stockLengthIn),
-    keptLengthIn: Number(requirement.keptLengthIn),
-    qty,
+    status: selected.status,
+    demandedStockLengthIn: Number(selected.item.stockL_in),
+    keptLengthIn: maximumFinishedLengthIn,
+    qty: selected.qty,
     requiredOps,
-    storeSku: item?.storeSku || null,
-    description: item?.description || null,
-    stock,
-    price,
-    capability,
-    extension,
-    selectionPolicy: "EXACT_PROJECT_STOCK_LENGTH_CLASS_STORE_SKU_BY_MATERIAL"
+    storeSku: selected.item.storeSku,
+    description: selected.item.description || null,
+    stock: selected.stock,
+    price: selected.price,
+    capability: selected.capability,
+    extension: selected.extension,
+    packing: selected.packing,
+    selectionPolicy: "LOWEST_MATERIAL_EXTENSION_COMPLETE_STORE_OFFERING",
+    consideredCandidates: considered.map((entry) => ({
+      storeSku: entry.item.storeSku,
+      stockLengthIn: entry.item.stockL_in,
+      qty: entry.qty,
+      materialExtension: entry.extension,
+      status: entry.status,
+      reason: entry.reason
+    })),
+    reasonRecord
   };
 }
 
 function evaluateHardware(catalog, demand) {
   const hardware = demand.hardwareDemand || null;
   if (!hardware) return null;
-  const item = findSku(catalog, hardware.storeSku);
   const qty = Number.isFinite(Number(hardware.qty)) ? Number(hardware.qty) : 1;
+  const requestedSku = typeof hardware.storeSku === "string" && hardware.storeSku
+    ? hardware.storeSku
+    : STORE_HARDWARE_REQUIREMENTS[String(hardware.requirementId || "")] || null;
+  const item = requestedSku ? findSku(catalog, requestedSku) : null;
   const stock = stockAnswer(item, qty);
   const price = priceAnswer(item);
   const status = !item
@@ -168,14 +354,36 @@ function evaluateHardware(catalog, demand) {
         : "UNAVAILABLE";
   return {
     status,
-    storeSku: hardware.storeSku,
+    requirementId: hardware.requirementId || null,
+    storeSku: item?.storeSku || null,
+    selectionPolicy: hardware.storeSku
+      ? "LEGACY_EXPLICIT_STORE_SKU"
+      : "STORE_HARDWARE_REQUIREMENT_MAP",
     qty,
-    description: item?.description || null,
+    description: item?.description || hardware.description || null,
     stock,
     price,
     extension: item && price.status !== "UNRESOLVED"
       ? round(Number(item.sellingPrice) * qty, 2)
-      : null
+      : null,
+    reasonRecord:
+      status === "UNAVAILABLE"
+        ? storeReason(
+            item ? "AVAILABILITY_GAP" : "MATERIAL_GAP",
+            item ? stock.status : "NO_MATCHING_HARDWARE_OFFERING",
+            String(hardware.requirementId || "HARDWARE"),
+            item
+              ? "The Store hardware offering exists, but current declared availability is insufficient."
+              : "Store has no mapped hardware offering for the requested functional hardware requirement."
+          )
+        : status === "UNRESOLVED"
+          ? storeReason(
+              "STORE_DATA_GAP",
+              price.reason || "HARDWARE_PRICE_UNRESOLVED",
+              String(hardware.requirementId || "HARDWARE"),
+              "Store identified the hardware offering, but its Store-owned price basis is unresolved."
+            )
+          : null
   };
 }
 
@@ -197,6 +405,11 @@ function validateComponentMaterialCapacity(lines, componentPrograms) {
   const kerfIn = Number(D001_TRAVEL_STANDARD.control.kerfIn);
 
   for (const line of lines) {
+    // Material availability/candidate resolution is already owned by the line.
+    // Do not reinterpret an absent Store parent as a component-fit refusal.
+    if (!line.storeSku || !Number.isFinite(Number(line.demandedStockLengthIn)) || !Number.isFinite(Number(line.qty))) {
+      continue;
+    }
     const components = componentPrograms
       .filter((component) => component.requirementId === line.requirementId)
       .slice()
@@ -282,7 +495,7 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
   }
 
   const lines = requirements.map((requirement) =>
-    evaluateBoardRequirement(catalog, demand, requirement)
+    evaluateBoardRequirement(catalog, demand, requirement, componentPrograms)
   );
   const hardwareLine = evaluateHardware(catalog, demand);
 
@@ -339,8 +552,53 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
   if (demand.spotDemand?.enabled === true) {
     const spotLine = lines.find((line) => line.requiredOps.includes("SPOT_ON_LOCATION"));
     if (spotLine?.capability?.status === "REFUSED") {
-      unresolvedConditions.push("ALCOVE_FACE_SPOT_DEMAND_OUTSIDE_CURRENT_DECLARED_SPOT_ENVELOPE");
+      refusalConditions.push("ALCOVE_FACE_SPOT_DEMAND_OUTSIDE_CURRENT_DECLARED_SPOT_ENVELOPE");
+    } else {
+      unresolvedConditions.push("ALCOVE_SPOT_TARGET_COMPONENT_MAPPING_REQUIRED");
     }
+  }
+
+  const reasonRecords = [
+    ...lines.map((line) => line.reasonRecord).filter(Boolean),
+    ...(hardwareLine?.reasonRecord ? [hardwareLine.reasonRecord] : []),
+    ...incomingUnresolved.map((code) => storeReason(
+      "DEFINITION_GAP",
+      code,
+      "ALCOVE_DEFINITION",
+      "The submitted project still carries an unresolved project condition."
+    )),
+    ...(materialCapacity.unresolved || []).map((code) => storeReason(
+      "DEFINITION_GAP",
+      code,
+      "ALCOVE_COMPONENTS",
+      "Store cannot complete material resolution because required component definition is incomplete."
+    )),
+    ...(materialCapacity.refused || []).map((code) => storeReason(
+      "CAPABILITY_GAP",
+      code,
+      "ALCOVE_COMPONENTS",
+      "The resolved component demand cannot be satisfied by the selected Store parent material."
+    )),
+    ...(Array.isArray(batch?.unresolved) ? batch.unresolved : []).map((code) => storeReason(
+      "DEFINITION_GAP",
+      code,
+      "D001_COMPONENT_TRAVEL",
+      "The declared D-001 component travel model requires additional definition before it can return a complete answer."
+    )),
+    ...(Array.isArray(batch?.reasons) ? batch.reasons : []).map((code) => storeReason(
+      "CAPABILITY_GAP",
+      code,
+      "D001_COMPONENT_TRAVEL",
+      "The requested component travel is outside the current declared D-001 capability."
+    ))
+  ];
+  if (demand.spotDemand?.enabled === true && !reasonRecords.some((reason) => reason.code === "ALCOVE_FACE_SPOT_DEMAND_OUTSIDE_CURRENT_DECLARED_SPOT_ENVELOPE")) {
+    reasonRecords.push(storeReason(
+      "DEFINITION_GAP",
+      "ALCOVE_SPOT_TARGET_COMPONENT_MAPPING_REQUIRED",
+      "SPOT_ON_LOCATION",
+      "Spot locations are defined by shelf elevation, but the current Alcove definition does not yet identify which physical upright component receives each spot."
+    ));
   }
 
   let status;
@@ -423,7 +681,8 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
     totals: estimate.totals,
     machineCalculationIdentity: batch?.calculationIdentity || null,
     unresolvedConditions,
-    refusalConditions
+    refusalConditions,
+    reasonRecords
   };
 
   return {
@@ -436,8 +695,17 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
     materialResolution: {
       status: lines.every((line) => line.storeSku) ? "MAPPED" : status,
       species: demand.materialDemand?.species || null,
-      selectionPolicy: "EXACT_PROJECT_STOCK_LENGTH_CLASS_STORE_SKU_BY_MATERIAL",
-      storeSkus: lines.map((line) => line.storeSku).filter(Boolean)
+      selectionPolicy: "LOWEST_MATERIAL_EXTENSION_COMPLETE_STORE_OFFERING",
+      storeSkus: lines.map((line) => line.storeSku).filter(Boolean),
+      parentSelections: lines.map((line) => ({
+        requirementId: line.requirementId,
+        role: line.role,
+        storeSku: line.storeSku,
+        stockLengthIn: line.demandedStockLengthIn,
+        qty: line.qty,
+        materialExtension: line.extension,
+        selectionPolicy: line.selectionPolicy
+      }))
     },
     lines,
     hardwareLine,
@@ -447,6 +715,7 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
     estimate,
     unresolvedConditions: [...new Set(unresolvedConditions)],
     refusalConditions: [...new Set(refusalConditions)],
+    reasonRecords,
     calculationIdentity: {
       inputHash: calculationHash({
         standard: ALCOVE_STORE_STANDARD.id,
