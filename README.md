@@ -8,6 +8,10 @@ It sits between the **Scan-to-Build Governed Reference** and user-facing applica
 
 The Store does not redefine project authority, silently repair unresolved information, or allow machine capability to override governance.
 
+## Machine implementation and open capability decisions
+
+Read [D-001 machine implementation](D001-MACHINE-IMPLEMENTATION-0.1.md) for the recovered three-router/two-spot inventory, its relationship to current executable functions, proposed positional sensing, and the remaining decisions before additional jobs can receive a complete Q. Machine-readable authority: `d001-machine-implementation.mjs`, attached to the active envelope and travel model. This register does not promote unimplemented stations into capability.
+
 ## Governing dimensional Store standard
 
 For every **complete dimensional Store Q**, [`DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md`](DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) controls the path from identified configuration → Store capability → modeled D-001 work → modeled occupied-cell time → Store economics → Q → confirmed reconciliation.

@@ -10,7 +10,7 @@ import { envelopeCheck, millPassesForDepth, D001_STAGE2_ENVELOPE } from "./d001-
 import { estimatePineAlcove, estimatePicnicLegTapered } from "./store-zero-pricing-engine.mjs";
 
 const catalog = loadCatalog();
-assert.equal(D001_STAGE2_ENVELOPE.id, "D001-STAGE2-ENVELOPE-0.3");
+assert.equal(D001_STAGE2_ENVELOPE.id, "D001-STAGE2-ENVELOPE-0.5");
 assert.equal(D001_STAGE2_ENVELOPE.motion.Y_MILL_TRAVEL_MAX_IN, 14);
 assert.equal(D001_STAGE2_ENVELOPE.stock.maxWidthIn, 12);
 assert.equal(D001_STAGE2_ENVELOPE.saw.motion, "DOWNSTROKE");

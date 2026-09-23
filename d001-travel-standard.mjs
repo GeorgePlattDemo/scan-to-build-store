@@ -1,9 +1,11 @@
+import { D001_MACHINE_IMPLEMENTATION, checkSpotImplementation } from "./d001-machine-implementation.mjs";
 import { createHash } from "node:crypto";
 import { D001_STAGE2_ENVELOPE, millPassesForDepth } from "./d001-stage2-envelope.mjs";
 
 export const D001_TRAVEL_STANDARD = Object.freeze({
   id: "STB-D001-DIMENSIONAL-TRAVEL-0.1",
-  version: "0.2.0",
+  version: "0.2.1",
+  machineImplementation: D001_MACHINE_IMPLEMENTATION,
   basis: "DECLARED_STAGE2_MODEL",
   measured: false,
   commissioned: false,
@@ -21,27 +23,27 @@ export const D001_TRAVEL_STANDARD = Object.freeze({
   stations: Object.freeze({
     sawMiter: Object.freeze({
       id: "SAW-L",
-      xIn: 0,
+      xIn: D001_STAGE2_ENVELOPE.stations["SAW-L"].xIn,
       motion: "DOWNSTROKE",
       capability: "SINGLE_PLANE_FACE_MITER_0_45"
     }),
     sawSquare: Object.freeze({
       id: "SAW-R",
-      xIn: 72,
+      xIn: D001_STAGE2_ENVELOPE.stations["SAW-R"].xIn,
       motion: "DOWNSTROKE",
       capability: "SQUARE_FINISHED_CUT",
       note: "Store Job 001 modeled outfeed finished-cut station; not commissioned iron."
     }),
     millLong: Object.freeze({
       id: "MILL_LONG",
-      xIn: 36,
+      xIn: D001_STAGE2_ENVELOPE.stations["MILL_LONG"].xIn,
       axisReference: "DATUM_A",
       capability: "MILL_LONGITUDINAL_PROFILE",
       note: "Stage-2 longitudinal mill station from the declared D-001 envelope; not commissioned iron."
     }),
     spotFace: Object.freeze({
       id: "SPOT-FACE-REF",
-      xIn: 36,
+      xIn: D001_STAGE2_ENVELOPE.stations["SPOT-FACE-REF"].xIn,
       axisReference: "DATUM_A",
       plungeAxis: "Z",
       capability: "SPOT_ON_LOCATION_3_16_WIDE_FACE",
@@ -274,6 +276,11 @@ function normalizedFeature(feature, part, widthIn) {
   if (!feature || feature.kind !== "SPOT_ON_LOCATION") {
     return { error: "UNSUPPORTED_OR_MISSING_FEATURE_KIND" };
   }
+  const implementation = checkSpotImplementation(feature);
+  if (implementation.reasons.length || implementation.unresolved.length) {
+    return { error: implementation.reasons[0] || implementation.unresolved[0],
+      disposition: implementation.reasons.length ? "REFUSED" : "UNRESOLVED" };
+  }
   const xIn = Number(feature.xIn);
   if (!Number.isFinite(xIn)) {
     return { error: "SPOT_LOCATION_REQUIRED" };
@@ -340,7 +347,7 @@ function normalizedDemand(demand, item) {
     for (const feature of features) {
       const normalized = normalizedFeature(feature, part, widthIn);
       if (normalized.error) {
-        if (normalized.error.includes("OUTSIDE") || normalized.error.includes("NOT_DECLARED")) refused.push(normalized.error);
+        if (normalized.disposition === "REFUSED" || normalized.error.includes("OUTSIDE") || normalized.error.includes("NOT_DECLARED")) refused.push(normalized.error);
         else unresolved.push(normalized.error);
       } else {
         part.features.push(normalized);
