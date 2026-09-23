@@ -21,9 +21,10 @@ const FROZEN_ALCOVE_DEFAULT = Object.freeze({
     species: "pine"
   }),
   materialParents: Object.freeze([
-    Object.freeze({ nominalT: 1, nominalW: 6, minimumParentLengthIn: 72, qty: 4, role: "side-members" }),
-    Object.freeze({ nominalT: 1, nominalW: 6, minimumParentLengthIn: 96, qty: 10, role: "shelf-parents" })
+    Object.freeze({ nominalT: 1, nominalW: 6, minimumParentLengthIn: 72, qty: 4, role: "LEGACY_FIXED_72_PARENT_COUNT_ROLE_UNRESOLVED" }),
+    Object.freeze({ nominalT: 1, nominalW: 6, minimumParentLengthIn: 96, qty: 10, role: "LEGACY_SHELF_COUNT_DERIVED_96_PARENT_COUNT" })
   ]),
+  uprightParentBinding: null,
   shelfOrderedCutLengthIn: null,
   shelfMillingDemand: null,
   pilot: Object.freeze({
@@ -39,6 +40,7 @@ assert.equal(FROZEN_ALCOVE_DEFAULT.configuration.widthIn, 45.5);
 assert.equal(FROZEN_ALCOVE_DEFAULT.configuration.depthIn, 14);
 assert.equal(FROZEN_ALCOVE_DEFAULT.configuration.interiorSpanIn, 44);
 assert.deepEqual(FROZEN_ALCOVE_DEFAULT.configuration.shelfElevationsIn, [12, 24, 36, 45, 65]);
+assert.equal(FROZEN_ALCOVE_DEFAULT.uprightParentBinding, null);
 assert.equal(FROZEN_ALCOVE_DEFAULT.shelfOrderedCutLengthIn, null);
 assert.equal(FROZEN_ALCOVE_DEFAULT.shelfMillingDemand, null);
 
@@ -68,7 +70,7 @@ const spotCapability = capabilityAnswer(pine72, ["SPOT_ON_LOCATION"], {
 });
 assert.equal(spotCapability.status, "SUPPORTABLE");
 
-function uprightDemand({ pilot }) {
+function candidateUprightDemand({ pilot }) {
   const features = pilot
     ? FROZEN_ALCOVE_DEFAULT.configuration.shelfElevationsIn.map((xIn, index) => ({
         featureId: "ALCOVE-L-SPOT-" + String(index + 1).padStart(2, "0"),
@@ -84,7 +86,7 @@ function uprightDemand({ pilot }) {
     : [];
 
   return {
-    title: "Alcove default — representative whole-parent upright",
+    title: "Alcove bridge candidate — 72-in representative whole-parent upright",
     classId: "alcove.insert.square_shelves",
     configurationId: "ALCOVE-DEFAULT-2026-09-22",
     configurationVersion: pilot ? "pilot-on" : "pilot-off",
@@ -109,7 +111,7 @@ function uprightDemand({ pilot }) {
   };
 }
 
-const pilotOff = evaluateDimensionalTravelJob(catalog, uprightDemand({ pilot: false }));
+const pilotOff = evaluateDimensionalTravelJob(catalog, candidateUprightDemand({ pilot: false }));
 assert.equal(pilotOff.status, "REFUSED");
 assert.equal(pilotOff.materialResolution.reason, "NO_COMPLETE_DIMENSIONAL_CANDIDATE");
 assert.ok(pilotOff.materialResolution.consideredCandidates.length >= 2);
@@ -120,7 +122,7 @@ assert.equal(pilotOff.materialResolution.consideredCandidates[1].storeSku, "STB-
 assert.equal(pilotOff.materialResolution.consideredCandidates[1].capabilityStatus, "SUPPORTABLE");
 assert.equal(pilotOff.materialResolution.consideredCandidates[1].reason, "LAST_REMAIN_BELOW_TWO_ROLLER_CONTROL");
 
-const pilotOn = evaluateDimensionalTravelJob(catalog, uprightDemand({ pilot: true }));
+const pilotOn = evaluateDimensionalTravelJob(catalog, candidateUprightDemand({ pilot: true }));
 assert.equal(pilotOn.status, "REFUSED");
 assert.equal(pilotOn.materialResolution.reason, "NO_COMPLETE_DIMENSIONAL_CANDIDATE");
 assert.ok(pilotOn.materialResolution.consideredCandidates.length >= 2);
@@ -138,7 +140,7 @@ assert.equal(legacy.totals.machine_service, null);
 assert.equal(legacy.totals.Q, null);
 assert.ok(legacy.unresolvedConditions.includes("DIMENSIONAL_TRAVEL_STANDARD_INPUT_REQUIRED"));
 
-console.log("alcove-whole-parent-fail-first.test.mjs ok");
+console.log("alcove-whole-parent-fail-first.test.mjs ok — candidate bridge demand only; current Alcove does not bind pilot targets to the 72-in parents");
 console.log("pilot OFF", pilotOff.status, pilotOff.materialResolution.consideredCandidates.map((x) => [x.storeSku, x.capabilityStatus, x.reason]));
 console.log("pilot ON", pilotOn.status, pilotOn.materialResolution.consideredCandidates.map((x) => [x.storeSku, x.capabilityStatus, x.reason]));
 console.log("legacy Alcove Q", legacy.totals.Q);

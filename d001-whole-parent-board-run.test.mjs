@@ -10,6 +10,9 @@ const catalog = loadCatalog();
 const STORE_REVISION = process.env.STB_STORE_REVISION || "LOCAL_UNPINNED_STORE_REVISION";
 const shelfElevations = [12, 24, 36, 45, 65];
 
+// This is a candidate bridge demand used to prove the reusable Store pattern.
+ // The current visible Alcove has not yet bound its pilot target roles to a
+ // specific 72-in parent, so this test must not be cited as a complete project run.
 function demand({ pilot = false } = {}) {
   const features = pilot
     ? shelfElevations.map((xIn, index) => ({
@@ -22,7 +25,7 @@ function demand({ pilot = false } = {}) {
     : [];
   return {
     executionPattern: D001_WHOLE_PARENT_BOARD_RUN.executionPattern,
-    title: "Alcove default — representative whole-parent upright",
+    title: "Alcove bridge candidate — 72-in representative whole-parent upright",
     classId: "alcove.insert.square_shelves",
     configurationId: "ALCOVE-DEFAULT-2026-09-22",
     configurationVersion: pilot ? "pilot-on" : "pilot-off",
@@ -135,7 +138,7 @@ assert.equal(formal.evaluationReceipt.requestId, "ALCOVE-WHOLE-PARENT-REQ-001");
 assert.equal(formal.estimate.executionPattern.executionPattern, "WHOLE_PARENT_BOARD_RUN");
 assert.equal(formal.estimate.totals.Q, 21.34);
 
-console.log("d001-whole-parent-board-run.test.mjs ok");
+console.log("d001-whole-parent-board-run.test.mjs ok — reusable Store pattern proven with candidate Alcove bridge demand");
 console.log("pilot OFF Q", off.estimate.totals.Q, "minutes", off.estimate.travel.time.T_MACHINE_min);
 console.log("pilot ON Q", on.estimate.totals.Q, "minutes", on.estimate.travel.time.T_MACHINE_min);
 console.log("exact-parent fallback", noExactParent.status, noExactParent.materialResolution.consideredCandidates);
