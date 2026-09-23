@@ -8,8 +8,60 @@ import {
 
 const catalog = loadCatalog();
 
-function demand(species = "pine", { pilot = false, height = 65 } = {}) {
-  const shelfElevations = [12, 24, 36, 45, 65];
+function componentPrograms({ height = 65, depth = 14, span = 44, shelfCount = 5 } = {}) {
+  const stockWidth = 5.5;
+  const across = Math.ceil(depth / stockWidth);
+  const programs = [];
+
+  for (let index = 0; index < 4; index += 1) {
+    programs.push({
+      componentId: `ALCOVE-UPRIGHT-${String(index + 1).padStart(2, "0")}`,
+      requirementId: "ALCOVE-UPRIGHT-PARENTS",
+      finishedLengthIn: height,
+      finishedWidthIn: stockWidth,
+      features: []
+    });
+  }
+
+  for (let shelf = 0; shelf < shelfCount; shelf += 1) {
+    for (let strip = 0; strip < across; strip += 1) {
+      const remaining = depth - stockWidth * strip;
+      const finishedWidthIn = Math.min(stockWidth, Math.max(0, remaining));
+      const needsMill = finishedWidthIn < stockWidth - 1e-9;
+      programs.push({
+        componentId: `ALCOVE-SHELF-${String(shelf + 1).padStart(2, "0")}-STRIP-${String(strip + 1).padStart(2, "0")}`,
+        requirementId: "ALCOVE-SHELF-PARENTS",
+        finishedLengthIn: span,
+        finishedWidthIn,
+        features: needsMill
+          ? [{
+              featureId: `ALCOVE-SHELF-${String(shelf + 1).padStart(2, "0")}-RIP`,
+              kind: "MILL_LONGITUDINAL_PROFILE",
+              pathLengthIn: span,
+              yIn: finishedWidthIn,
+              totalDepthIn: 0.75
+            }]
+          : []
+      });
+    }
+  }
+  return programs;
+}
+
+function demand(species = "pine", {
+  pilot = false,
+  height = 65,
+  depth = 14,
+  span = 44,
+  shelfCount = 5,
+  withPrograms = false,
+  unresolvedConditions = [
+    "FLOOR_SLOPE_RECORDED",
+    "WALL_BOW_RECORDED",
+    "ORDERED_SIZE_ADJUSTMENT_NOT_ESTABLISHED"
+  ]
+} = {}) {
+  const shelfElevations = [12, 24, 36, 45, 65].slice(0, shelfCount);
   const features = pilot
     ? shelfElevations.flatMap((xIn, index) => [
         {
@@ -34,6 +86,9 @@ function demand(species = "pine", { pilot = false, height = 65 } = {}) {
         }
       ])
     : [];
+  const across = Math.ceil(depth / 5.5);
+  const boardsPerShelf = Math.ceil(across / 2);
+  const shelfParentQty = boardsPerShelf * shelfCount;
 
   return {
     title: "Alcove insert — Store-owned material answer",
@@ -61,12 +116,15 @@ function demand(species = "pine", { pilot = false, height = 65 } = {}) {
         requirementId: "ALCOVE-SHELF-PARENTS",
         role: "SHELVES",
         stockLengthIn: 96,
-        keptLengthIn: 44,
-        qty: 10,
+        keptLengthIn: span,
+        qty: shelfParentQty,
         requiredOps: ["CROSSCUT"],
         carriesSpotDemand: false
       }
     ],
+    componentPrograms: withPrograms
+      ? componentPrograms({ height, depth, span, shelfCount })
+      : [],
     hardwareDemand: {
       storeSku: "STB-ZERO-HW-ALCOVE-PACK-001",
       qty: 1
@@ -78,11 +136,7 @@ function demand(species = "pine", { pilot = false, height = 65 } = {}) {
       source: "SHELF_ELEVATIONS",
       features
     },
-    unresolvedConditions: [
-      "FLOOR_SLOPE_RECORDED",
-      "WALL_BOW_RECORDED",
-      "ORDERED_SIZE_ADJUSTMENT_NOT_ESTABLISHED"
-    ]
+    unresolvedConditions
   };
 }
 
@@ -100,7 +154,7 @@ assert.equal(pine.estimate.totals.material, 272.86);
 assert.equal(pine.estimate.totals.hardware, 18);
 assert.equal(pine.estimate.totals.machine_service, null);
 assert.equal(pine.estimate.totals.Q, null);
-assert.ok(pine.unresolvedConditions.includes("ALCOVE_WHOLE_BOARD_TRAVEL_STANDARD_REQUIRED"));
+assert.ok(pine.unresolvedConditions.includes("ALCOVE_COMPONENT_PROGRAMS_REQUIRED"));
 assert.equal(
   pine.materialResolution.selectionPolicy,
   "EXACT_PROJECT_STOCK_LENGTH_CLASS_STORE_SKU_BY_MATERIAL"
@@ -133,6 +187,98 @@ assert.equal(cherry.lines[1].stock.status, "ON_HAND_SHORT");
 assert.equal(cherry.lines[1].stock.available, 6);
 assert.equal(cherry.estimate.totals.material, 727.72);
 assert.equal(cherry.estimate.totals.Q, null);
+
+const pineCutMill = evaluateAlcoveJob(catalog, demand("pine", {
+  height: 65,
+  depth: 14,
+  withPrograms: true,
+  unresolvedConditions: []
+}));
+assert.equal(pineCutMill.status, "SUPPORTABLE");
+assert.equal(pineCutMill.complete, true);
+assert.equal(pineCutMill.estimate.status, "BUDGETARY_ESTIMATE");
+assert.ok(Number.isFinite(pineCutMill.estimate.totals.machine_service));
+assert.ok(pineCutMill.estimate.totals.machine_service > 0);
+assert.ok(Number.isFinite(pineCutMill.estimate.totals.Q));
+assert.ok(pineCutMill.estimate.totals.Q > pineCutMill.estimate.totals.material + pineCutMill.estimate.totals.hardware);
+assert.ok(pineCutMill.machineEvaluation.time.T_MILL_sec > 0);
+assert.equal(pineCutMill.componentPrograms.length, 19);
+assert.ok(
+  pineCutMill.lines.find((line) => line.role === "SHELVES").requiredOps.includes("MILL_LONGITUDINAL_PROFILE")
+);
+
+const poplarCutMill = evaluateAlcoveJob(catalog, demand("poplar", {
+  height: 65,
+  depth: 14,
+  withPrograms: true,
+  unresolvedConditions: []
+}));
+assert.equal(poplarCutMill.status, "SUPPORTABLE");
+assert.equal(poplarCutMill.complete, true);
+assert.ok(poplarCutMill.estimate.totals.Q > pineCutMill.estimate.totals.Q);
+assert.ok(poplarCutMill.machineEvaluation.time.T_MILL_sec > 0);
+
+const oakCutMill = evaluateAlcoveJob(catalog, demand("oak", {
+  height: 65,
+  depth: 14,
+  withPrograms: true,
+  unresolvedConditions: []
+}));
+assert.equal(oakCutMill.status, "REFUSED");
+assert.equal(oakCutMill.complete, false);
+assert.ok(
+  oakCutMill.lines
+    .find((line) => line.role === "SHELVES")
+    .capability.missing
+    .includes("OP_NOT_ON_OFFERING:MILL_LONGITUDINAL_PROFILE")
+);
+assert.equal(oakCutMill.estimate.totals.Q, null);
+
+const cherryCutMill = evaluateAlcoveJob(catalog, demand("cherry", {
+  height: 65,
+  depth: 14,
+  withPrograms: true,
+  unresolvedConditions: []
+}));
+assert.equal(cherryCutMill.status, "REFUSED");
+assert.equal(cherryCutMill.complete, false);
+assert.equal(cherryCutMill.estimate.totals.Q, null);
+
+const oakCutOnly = evaluateAlcoveJob(catalog, demand("oak", {
+  height: 65,
+  depth: 11,
+  withPrograms: true,
+  unresolvedConditions: []
+}));
+assert.equal(oakCutOnly.status, "SUPPORTABLE");
+assert.equal(oakCutOnly.complete, true);
+assert.equal(oakCutOnly.machineEvaluation.time.T_MILL_sec, 0);
+assert.ok(Number.isFinite(oakCutOnly.estimate.totals.Q));
+
+const cherryCutOnly = evaluateAlcoveJob(catalog, demand("cherry", {
+  height: 65,
+  depth: 11,
+  withPrograms: true,
+  unresolvedConditions: []
+}));
+assert.equal(cherryCutOnly.status, "SUPPORTABLE");
+assert.equal(cherryCutOnly.complete, true);
+assert.equal(cherryCutOnly.machineEvaluation.time.T_MILL_sec, 0);
+assert.ok(Number.isFinite(cherryCutOnly.estimate.totals.Q));
+
+const exact72From72 = evaluateAlcoveJob(catalog, demand("pine", {
+  height: 72,
+  depth: 14,
+  withPrograms: true,
+  unresolvedConditions: []
+}));
+assert.equal(exact72From72.status, "REFUSED");
+assert.ok(
+  exact72From72.refusalConditions.includes(
+    "COMPONENTS_EXCEED_DECLARED_PARENT_MATERIAL:ALCOVE-UPRIGHT-PARENTS"
+  )
+);
+assert.equal(exact72From72.estimate.totals.Q, null);
 
 const spotted = evaluateAlcoveJob(catalog, demand("pine", { pilot: true }));
 assert.equal(spotted.status, "REFUSED");
@@ -173,3 +319,8 @@ console.log("poplar material", poplar.estimate.totals.material);
 console.log("oak status", oak.status, oak.lines[1].stock.status);
 console.log("cherry status", cherry.status, cherry.lines[1].stock.status);
 console.log("pilot status", spotted.status, spotted.lines[0].capability.missing);
+console.log("pine cut+mill Q", pineCutMill.estimate.totals.Q, "machine min", pineCutMill.estimate.cycle.T_job_min);
+console.log("poplar cut+mill Q", poplarCutMill.estimate.totals.Q, "machine min", poplarCutMill.estimate.cycle.T_job_min);
+console.log("oak cut-only Q", oakCutOnly.estimate.totals.Q);
+console.log("cherry cut-only Q", cherryCutOnly.estimate.totals.Q);
+console.log("72-from-72 status", exact72From72.status, exact72From72.refusalConditions);
