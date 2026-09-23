@@ -16,9 +16,9 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { estimatePineAlcove, estimateJob, estimateUserDefinedBoardTravel } from "./store-zero-pricing-engine.mjs";
+import { estimatePineAlcove, estimateJob, estimateUserDefinedBoardTravel, estimateWholeParentBoardTravel } from "./store-zero-pricing-engine.mjs";
 import { D001_STAGE2_ENVELOPE, envelopeCheck } from "./d001-stage2-envelope.mjs";
-import { calculationHash, D001_TRAVEL_STANDARD } from "./d001-travel-standard.mjs";
+import { calculationHash, D001_TRAVEL_STANDARD, D001_WHOLE_PARENT_BOARD_RUN } from "./d001-travel-standard.mjs";
 
 export const STAGE2_JOB_DISPOSITIONS = [
   "SUPPORTABLE",
@@ -98,10 +98,15 @@ export function evaluateDimensionalStoreRequest(catalog, demand = {}, request = 
 
   // Deliberately call the governing evaluator for every Store request.
   // No prior Store answer or receipt is accepted as an input to this function.
-  const evaluation = evaluateDimensionalTravelJob(catalog, {
-    ...demand,
-    storeRevision
-  });
+  const evaluation = demand.executionPattern === D001_WHOLE_PARENT_BOARD_RUN.executionPattern
+    ? evaluateDimensionalWholeParentJob(catalog, {
+        ...demand,
+        storeRevision
+      })
+    : evaluateDimensionalTravelJob(catalog, {
+        ...demand,
+        storeRevision
+      });
 
   const receiptCore = {
     freshnessRule: STORE_EVALUATION_FRESHNESS.id,
@@ -475,6 +480,171 @@ export function evaluateDimensionalTravelJob(catalog, demand = {}) {
       reason,
       requestedMinimumWorkpieceLengthIn: Number(demand.definedWorkpieceLengthIn),
       selectionPolicy: "SHORTEST_COMPLETE_STORE_OFFERING",
+      consideredCandidates: candidateEvaluations
+    },
+    estimate: firstIncompleteEstimate,
+    calculationIdentity: null,
+    not_claimed: ["commercial quote", "physical fabrication", "live motion"]
+  };
+}
+
+export function evaluateDimensionalWholeParentJob(catalog, demand = {}) {
+  const parts = Array.isArray(demand.parts) ? demand.parts : [];
+  const allSpots = parts.flatMap((part) => Array.isArray(part?.features) ? part.features : [])
+    .filter((feature) => feature?.kind === "SPOT_ON_LOCATION");
+  const firstSpot = allSpots[0] || null;
+  const requiredOps = Array.isArray(demand.requiredOps)
+    ? [...demand.requiredOps]
+    : (firstSpot ? ["SPOT_ON_LOCATION"] : []);
+  const unsupportedOps = requiredOps.filter((op) => op !== "SPOT_ON_LOCATION");
+  if (unsupportedOps.length) {
+    return {
+      title: demand.title || "Whole-parent dimensional job",
+      stage: 2,
+      store: "Store Zero",
+      status: "REFUSED",
+      materialResolution: {
+        status: "REFUSED",
+        reason: "WHOLE_PARENT_OPERATION_NOT_DECLARED",
+        unsupportedOps
+      },
+      estimate: null,
+      calculationIdentity: null,
+      not_claimed: ["commercial quote", "physical fabrication", "live motion"]
+    };
+  }
+
+  const materialDemand = {
+    ...(demand.materialDemand || {}),
+    definedWorkpieceLengthIn: demand.definedWorkpieceLengthIn
+  };
+  const candidates = matchingBoardOfferings(catalog, materialDemand);
+  const candidateEvaluations = [];
+  let firstIncompleteEstimate = null;
+
+  for (const item of candidates) {
+    const candidateWorkpieceLengthIn = Number(item.stockL_in);
+    const stock = stockAnswer(item, 1);
+    const price = priceAnswer(item);
+    const capability = capabilityAnswer(item, requiredOps, {
+      keptLengthIn: Number(demand.definedWorkpieceLengthIn),
+      spotDemand: firstSpot
+        ? {
+            required: true,
+            mode: "SPOT_ON_LOCATION",
+            locationRule: "CENTERED_ON_PART",
+            locationAlongLengthIn: firstSpot.xIn,
+            acrossWidthRule: firstSpot.acrossWidthRule
+          }
+        : null
+    });
+
+    let estimate = null;
+    let candidateStatus = "UNAVAILABLE";
+    let reason = stock.sufficient === true ? null : stock.status;
+
+    if (stock.sufficient === true && price.status !== "UNRESOLVED" && capability.status === "SUPPORTABLE") {
+      estimate = estimateWholeParentBoardTravel(catalog, {
+        title: demand.title || "Whole-parent dimensional job",
+        classId: demand.classId || "whole_parent_board",
+        configurationId: demand.configurationId,
+        configurationVersion: demand.configurationVersion,
+        storeSku: item.storeSku,
+        definedWorkpieceLengthIn: demand.definedWorkpieceLengthIn,
+        datumCMethod: demand.datumCMethod || "MECHANICAL_REFERENCE",
+        parts,
+        declaredSawCuts: demand.declaredSawCuts == null ? 0 : demand.declaredSawCuts,
+        declaredSpotCount: demand.declaredSpotCount,
+        unresolvedConditions: demand.unresolvedConditions || [],
+        storeRevision: demand.storeRevision || null
+      });
+      candidateStatus = estimate.complete
+        ? "SUPPORTABLE"
+        : estimate.status === "REFUSED"
+          ? "REFUSED"
+          : "UNRESOLVED";
+      reason = estimate.complete
+        ? null
+        : estimate.reason ||
+          (Array.isArray(estimate.reasons) ? estimate.reasons[0] : null) ||
+          (Array.isArray(estimate.unresolved) ? estimate.unresolved[0] : null) ||
+          candidateStatus;
+      if (estimate.complete !== true && firstIncompleteEstimate === null) firstIncompleteEstimate = estimate;
+    } else if (price.status === "UNRESOLVED" || capability.status === "UNRESOLVED") {
+      candidateStatus = "UNRESOLVED";
+      reason = price.reason || capability.unresolved?.[0] || "CANDIDATE_INPUT_UNRESOLVED";
+    } else if (capability.status === "REFUSED") {
+      candidateStatus = "REFUSED";
+      reason = capability.missing?.[0] || capability.reason || "CANDIDATE_CAPABILITY_REFUSED";
+    }
+
+    candidateEvaluations.push({
+      storeSku: item.storeSku,
+      stockLengthIn: candidateWorkpieceLengthIn,
+      candidateStatus,
+      reason,
+      stockStatus: stock.status,
+      priceStatus: price.status,
+      capabilityStatus: capability.status
+    });
+
+    if (estimate?.complete === true) {
+      return {
+        title: demand.title || "Whole-parent dimensional job",
+        stage: 2,
+        store: "Store Zero",
+        status: "SUPPORTABLE",
+        lines: [{
+          storeSku: item.storeSku,
+          description: item.description,
+          qty: 1,
+          stock,
+          price,
+          capability
+        }],
+        materialResolution: {
+          status: "MAPPED",
+          storeSku: item.storeSku,
+          pricingReferenceSku: item.storeSku,
+          pricingReferenceStockLengthIn: item.stockL_in,
+          allocationClaimed: false,
+          requestedWholeParentLengthIn: Number(demand.definedWorkpieceLengthIn),
+          workpieceLengthIn: Number(demand.definedWorkpieceLengthIn),
+          selectionPolicy: "EXACT_COMPLETE_STORE_OFFERING",
+          consideredCandidates: candidateEvaluations
+        },
+        estimate,
+        calculationIdentity: estimate.calculationIdentity || null,
+        not_claimed: ["commercial quote", "physical fabrication", "live motion", "measured machine performance"]
+      };
+    }
+  }
+
+  const status = candidateEvaluations.length === 0
+    ? "UNAVAILABLE"
+    : candidateEvaluations.some((entry) => entry.candidateStatus === "UNRESOLVED")
+      ? "UNRESOLVED"
+      : candidateEvaluations.some((entry) => entry.candidateStatus === "REFUSED")
+        ? "REFUSED"
+        : "UNAVAILABLE";
+  const reason = candidateEvaluations.length === 0
+    ? "NO_MATCHING_BOARD_OFFERING"
+    : status === "REFUSED"
+      ? "NO_COMPLETE_WHOLE_PARENT_CANDIDATE"
+      : status === "UNRESOLVED"
+        ? "WHOLE_PARENT_CANDIDATE_UNRESOLVED"
+        : "MATCHING_BOARD_NOT_AVAILABLE";
+
+  return {
+    title: demand.title || "Whole-parent dimensional job",
+    stage: 2,
+    store: "Store Zero",
+    status,
+    materialResolution: {
+      status,
+      reason,
+      requestedWholeParentLengthIn: Number(demand.definedWorkpieceLengthIn),
+      selectionPolicy: "EXACT_COMPLETE_STORE_OFFERING",
       consideredCandidates: candidateEvaluations
     },
     estimate: firstIncompleteEstimate,

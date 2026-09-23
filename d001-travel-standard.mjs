@@ -593,3 +593,348 @@ export function evaluateD001UserDefinedBoard({ item, demand, storeRevision = nul
     ]
   };
 }
+
+/**
+ * Whole-parent dimensional board run.
+ *
+ * This is deliberately separate from the short-part cutoff planner above.
+ * The identified part is the full Store parent, so no cutoff is performed and
+ * the 24-in retained-tail rule is not applicable. A larger parent is not
+ * silently substituted and trimmed to make this pattern pass.
+ */
+export const D001_WHOLE_PARENT_BOARD_RUN = Object.freeze({
+  id: "STB-D001-WHOLE-PARENT-BOARD-RUN-0.1",
+  version: "0.1.0",
+  executionPattern: "WHOLE_PARENT_BOARD_RUN",
+  basis: D001_TRAVEL_STANDARD.basis,
+  exactParentLengthRequired: true,
+  retainedTailRuleApplies: false,
+  supportedFeatureKinds: Object.freeze(["SPOT_ON_LOCATION"]),
+  allowedDatumCMethods: Object.freeze(["MECHANICAL_REFERENCE", "SENSED_FACE"]),
+  note: "The whole parent is the identified finished board run. No cutoff is implied or authorized."
+});
+
+function normalizedWholeParentDemand(demand, item) {
+  const unresolved = [];
+  const refused = [];
+  if (!demand || typeof demand !== "object") unresolved.push("DIMENSIONAL_TRAVEL_DEMAND_REQUIRED");
+  if (!item || item.form !== "board") unresolved.push("BOARD_OFFERING_REQUIRED");
+  if (unresolved.length) return { unresolved, refused };
+
+  const definedWorkpieceLengthIn = Number(demand.definedWorkpieceLengthIn);
+  const stockLengthIn = Number(item.stockL_in);
+  if (!Number.isFinite(definedWorkpieceLengthIn) || definedWorkpieceLengthIn <= 0) {
+    unresolved.push("DEFINED_WORKPIECE_LENGTH_REQUIRED");
+  }
+  if (!Number.isFinite(stockLengthIn) || stockLengthIn <= 0) {
+    unresolved.push("PARENT_STOCK_LENGTH_REQUIRED");
+  } else if (
+    Number.isFinite(definedWorkpieceLengthIn) &&
+    Math.abs(stockLengthIn - definedWorkpieceLengthIn) > 1e-9
+  ) {
+    refused.push("WHOLE_PARENT_EXACT_STOCK_LENGTH_REQUIRED");
+  }
+
+  const datumCMethod = demand.datumC?.method;
+  if (!D001_WHOLE_PARENT_BOARD_RUN.allowedDatumCMethods.includes(datumCMethod)) {
+    if (datumCMethod === "REFERENCE_CUT") {
+      refused.push("WHOLE_PARENT_REFERENCE_CUT_NOT_ALLOWED");
+    } else {
+      unresolved.push("WHOLE_PARENT_DATUM_C_METHOD_REQUIRED");
+    }
+  }
+  if (demand.datumC?.stationId !== D001_TRAVEL_STANDARD.stations.sawMiter.id) {
+    unresolved.push("DATUM_C_REFERENCE_STATION_REQUIRED");
+  }
+
+  const widthIn = Number(item.actualW);
+  if (!Number.isFinite(widthIn) || widthIn <= 0) unresolved.push("ACTUAL_BOARD_WIDTH_REQUIRED");
+
+  const parts = Array.isArray(demand.parts) ? demand.parts : [];
+  if (parts.length !== 1) {
+    unresolved.push("WHOLE_PARENT_SINGLE_IDENTIFIED_PART_REQUIRED");
+  }
+
+  const normalizedParts = [];
+  if (parts.length === 1) {
+    const raw = parts[0];
+    const partId = String(raw?.partId || "");
+    const lengthIn = Number(raw?.lengthIn);
+    if (!partId) unresolved.push("UNIQUE_PART_ID_REQUIRED");
+    if (!Number.isFinite(lengthIn) || lengthIn <= 0) {
+      unresolved.push("PART_LENGTH_REQUIRED");
+    } else if (
+      Number.isFinite(definedWorkpieceLengthIn) &&
+      Math.abs(lengthIn - definedWorkpieceLengthIn) > 1e-9
+    ) {
+      refused.push("WHOLE_PARENT_PART_LENGTH_MUST_EQUAL_WORKPIECE");
+    }
+
+    const part = { partId, lengthIn, features: [] };
+    const features = Array.isArray(raw?.features) ? raw.features : [];
+    for (const feature of features) {
+      const normalized = normalizedFeature(feature, part, widthIn);
+      if (normalized.error) {
+        if (normalized.error.includes("OUTSIDE") || normalized.error.includes("NOT_DECLARED")) {
+          refused.push(normalized.error);
+        } else {
+          unresolved.push(normalized.error);
+        }
+        continue;
+      }
+      const requestedToolDiameterIn = feature.toolDiameterIn == null
+        ? D001_TRAVEL_STANDARD.spot.toolDiameterIn
+        : Number(feature.toolDiameterIn);
+      if (
+        !Number.isFinite(requestedToolDiameterIn) ||
+        Math.abs(requestedToolDiameterIn - D001_TRAVEL_STANDARD.spot.toolDiameterIn) > 1e-9
+      ) {
+        refused.push("SPOT_TOOL_DIAMETER_NOT_DECLARED");
+        continue;
+      }
+      part.features.push({
+        ...normalized,
+        toolDiameterIn: D001_TRAVEL_STANDARD.spot.toolDiameterIn
+      });
+    }
+    normalizedParts.push(part);
+  }
+
+  const incomingUnresolved = Array.isArray(demand.unresolvedConditions)
+    ? demand.unresolvedConditions.filter((v) => typeof v === "string" && v.trim())
+    : [];
+  unresolved.push(...incomingUnresolved);
+
+  return {
+    unresolved,
+    refused,
+    value: {
+      executionPattern: D001_WHOLE_PARENT_BOARD_RUN.executionPattern,
+      configurationId: String(demand.configurationId || ""),
+      configurationVersion: String(demand.configurationVersion || ""),
+      classId: String(demand.classId || "whole_parent_board"),
+      definedWorkpieceLengthIn,
+      stockLengthIn,
+      datumCMethod,
+      widthIn,
+      parts: normalizedParts,
+      declaredSawCuts: demand.declaredSawCuts == null ? null : Number(demand.declaredSawCuts),
+      declaredSpotCount: demand.declaredSpotCount == null ? null : Number(demand.declaredSpotCount)
+    }
+  };
+}
+
+function deriveWholeParentOperationPlan(normalized) {
+  const M = D001_TRAVEL_STANDARD;
+  const sawX = M.stations.sawMiter.xIn;
+  const spotX = M.stations.spotFace.xIn;
+  const operations = [];
+  let currentCIn = sawX;
+  let tIndexSec = 0;
+  let tSpotSec = 0;
+
+  operations.push({
+    sequence: 1,
+    opId: "OP-ESTABLISH-DATUM-C",
+    kind: "ESTABLISH_DATUM_C",
+    stationId: M.stations.sawMiter.id,
+    method: normalized.datumCMethod,
+    consumesMaterial: false,
+    timingSec: 0,
+    timingIncludedIn: "T_LOAD_SEAT_sec"
+  });
+
+  const part = normalized.parts[0];
+  const spots = [...part.features].sort((a, b) => a.xIn - b.xIn);
+  for (const feature of spots) {
+    const targetCIn = spotX - feature.xIn;
+    const distanceIn = Math.abs(targetCIn - currentCIn);
+    const xSec = xIndexTimeSec(distanceIn);
+    tIndexSec += xSec;
+    operations.push({
+      sequence: operations.length + 1,
+      opId: `OP-INDEX-${operations.length + 1}`,
+      kind: "INDEX",
+      purpose: `POSITION_${feature.featureId || part.partId}`,
+      fromCIn: round(currentCIn, 6),
+      toCIn: round(targetCIn, 6),
+      distanceIn: round(distanceIn, 6),
+      timeSec: round(xSec, 4)
+    });
+    currentCIn = targetCIn;
+
+    const spotTiming = spotCycleSec(normalized.widthIn);
+    tSpotSec += spotTiming.totalSec;
+    operations.push({
+      sequence: operations.length + 1,
+      opId: feature.featureId || `SPOT-${part.partId}`,
+      kind: "SPOT_ON_LOCATION",
+      stationId: M.stations.spotFace.id,
+      partId: part.partId,
+      partRelativeXIn: round(feature.xIn, 6),
+      workpieceFeatureXIn: round(feature.xIn, 6),
+      acrossWidthRule: feature.acrossWidthRule,
+      acrossWidthIn: round(spotTiming.acrossWidthIn, 6),
+      toolDiameterIn: M.spot.toolDiameterIn,
+      timingReferencePlungeIn: M.spot.timingReferencePlungeIn,
+      depthIsPartRequirement: false,
+      timeSec: round(spotTiming.totalSec, 4)
+    });
+  }
+
+  return {
+    operations,
+    cutRows: [],
+    derivedSawCuts: 0,
+    derivedSpotCount: spots.length,
+    finalRemainderIn: null,
+    retainedControlRuleApplied: false,
+    time: {
+      T_LOAD_SEAT_sec: M.handling.loadSeatSec,
+      T_REFERENCE_sec: 0,
+      T_INDEX_sec: round(tIndexSec, 4),
+      T_SAW_sec: 0,
+      T_DRILL_SPOT_sec: round(tSpotSec, 4),
+      T_MILL_sec: 0,
+      T_RELEASE_LABEL_sec: M.handling.releaseLabelSec
+    }
+  };
+}
+
+export function evaluateD001WholeParentBoard({ item, demand, storeRevision = null } = {}) {
+  const normalized = normalizedWholeParentDemand(demand, item);
+  if (normalized.unresolved?.length) return unresolvedResult(normalized.unresolved);
+  if (normalized.refused?.length) return refusedResult(normalized.refused);
+
+  const plan = deriveWholeParentOperationPlan(normalized.value);
+  const unresolved = [];
+  if (normalized.value.declaredSawCuts != null && normalized.value.declaredSawCuts !== 0) {
+    unresolved.push("DECLARED_SAW_COUNT_MISMATCH");
+  }
+  if (normalized.value.declaredSpotCount != null && normalized.value.declaredSpotCount !== plan.derivedSpotCount) {
+    unresolved.push("DECLARED_SPOT_COUNT_MISMATCH");
+  }
+  if (unresolved.length) return unresolvedResult(unresolved, { operationPlan: plan.operations });
+
+  const tMachineSec =
+    plan.time.T_LOAD_SEAT_sec +
+    plan.time.T_REFERENCE_sec +
+    plan.time.T_INDEX_sec +
+    plan.time.T_SAW_sec +
+    plan.time.T_DRILL_SPOT_sec +
+    plan.time.T_MILL_sec +
+    plan.time.T_RELEASE_LABEL_sec;
+  const tMachineMin = tMachineSec / 60;
+  const rates = storeMachineSellRate();
+  const material = round(Number(item.sellingPrice), 2);
+  const machineService = round((tMachineMin / 60) * rates.sellRatePerHour, 2);
+  const Q = round(material + machineService, 2);
+
+  const governingInput = {
+    travelStandard: {
+      id: D001_TRAVEL_STANDARD.id,
+      version: D001_TRAVEL_STANDARD.version
+    },
+    executionPattern: {
+      id: D001_WHOLE_PARENT_BOARD_RUN.id,
+      version: D001_WHOLE_PARENT_BOARD_RUN.version
+    },
+    economics: {
+      id: D001_TRAVEL_STANDARD.economics.id,
+      version: D001_TRAVEL_STANDARD.economics.version,
+      annualCostPoolUsd: D001_TRAVEL_STANDARD.economics.annualCostPoolUsd,
+      forecastProductiveHours: D001_TRAVEL_STANDARD.economics.forecastProductiveHours,
+      targetGrossMargin: D001_TRAVEL_STANDARD.economics.targetGrossMargin
+    },
+    storeRevision,
+    offering: {
+      storeSku: item.storeSku,
+      sellingPrice: item.sellingPrice,
+      actualW: item.actualW,
+      actualT: item.actualT,
+      stockL_in: item.stockL_in
+    },
+    demand: normalized.value
+  };
+  const inputHash = calculationHash(governingInput);
+
+  const resultCore = {
+    material,
+    machineService,
+    Q,
+    derivedSawCuts: 0,
+    derivedSpotCount: plan.derivedSpotCount,
+    retainedControlRuleApplied: false,
+    time: {
+      ...plan.time,
+      T_MACHINE_sec: round(tMachineSec, 4),
+      T_MACHINE_min: round(tMachineMin, 4),
+      T_MACHINE_hr: round(tMachineMin / 60, 6)
+    },
+    sellRatePerHour: rates.sellRatePerHour,
+    operationPlan: plan.operations
+  };
+  const resultHash = calculationHash({ inputHash, resultCore });
+
+  return {
+    status: "BUDGETARY_ESTIMATE",
+    complete: true,
+    completeness: "COMPLETE_FOR_WHOLE_PARENT_TRAVEL_STANDARD",
+    unresolved: [],
+    standard: {
+      id: D001_TRAVEL_STANDARD.id,
+      version: D001_TRAVEL_STANDARD.version,
+      basis: D001_TRAVEL_STANDARD.basis,
+      measured: false,
+      commissioned: false
+    },
+    executionPattern: D001_WHOLE_PARENT_BOARD_RUN,
+    economics: {
+      ...D001_TRAVEL_STANDARD.economics,
+      ...rates,
+      setupCharge: 0,
+      setupTimeMin: 0,
+      formula: "Q = stock/sourced selling price + (T_MACHINE_hr × STORE_MACHINE_SELL_RATE)"
+    },
+    travel: {
+      configurationId: normalized.value.configurationId,
+      configurationVersion: normalized.value.configurationVersion,
+      datumA: D001_TRAVEL_STANDARD.datums.A,
+      datumB: D001_TRAVEL_STANDARD.datums.B,
+      datumC: {
+        ...D001_TRAVEL_STANDARD.datums.C,
+        establishmentMethod: normalized.value.datumCMethod,
+        stationId: D001_TRAVEL_STANDARD.stations.sawMiter.id
+      },
+      positionValidRequired: true,
+      parts: normalized.value.parts,
+      operationPlan: plan.operations,
+      derivedSawCuts: 0,
+      derivedSpotCount: plan.derivedSpotCount,
+      finalRemainderIn: null,
+      retainedControlRuleApplied: false,
+      wholeParent: true,
+      time: resultCore.time
+    },
+    totals: {
+      material,
+      hardware: 0,
+      machine_service: machineService,
+      Q,
+      Q_basis: "CALCULATED_FROM_DECLARED_STAGE2_MODEL"
+    },
+    calculationIdentity: {
+      inputHash,
+      resultHash
+    },
+    not_claimed: [
+      "commercial quote",
+      "seller-of-record",
+      "physical fabrication",
+      "live motion",
+      "physical stock count",
+      "measured machine performance"
+    ]
+  };
+}
+

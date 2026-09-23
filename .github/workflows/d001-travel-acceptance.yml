@@ -29,3 +29,5 @@ jobs:
         run: node d001-travel-standard.test.mjs
       - name: Alcove whole-parent fail-first characterization
         run: node alcove-whole-parent-fail-first.test.mjs
+      - name: D-001 whole-parent board-run acceptance
+        run: node d001-whole-parent-board-run.test.mjs

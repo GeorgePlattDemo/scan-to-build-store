@@ -7,7 +7,9 @@
  */
 import {
   D001_TRAVEL_STANDARD,
+  D001_WHOLE_PARENT_BOARD_RUN,
   evaluateD001UserDefinedBoard,
+  evaluateD001WholeParentBoard,
   sawFeedInPerMin,
   sawCycleSec,
   xIndexTimeSec,
@@ -225,6 +227,64 @@ export function estimateUserDefinedBoardTravel(catalog, {
           T_job_hr: evaluated.travel.time.T_MACHINE_hr,
           SFM: round(sfm(), 0),
           feed_fpm: round(feedFpm(), 2)
+        }
+      : null
+  };
+}
+
+export function estimateWholeParentBoardTravel(catalog, {
+  title = "Whole-parent Board",
+  classId = "whole_parent_board",
+  configurationId,
+  configurationVersion,
+  storeSku,
+  definedWorkpieceLengthIn,
+  datumCMethod = "MECHANICAL_REFERENCE",
+  parts,
+  declaredSawCuts = 0,
+  declaredSpotCount = null,
+  unresolvedConditions = [],
+  storeRevision = null
+} = {}) {
+  const item = findOffering(catalog, storeSku);
+  if (!item) return { status: "UNRESOLVED", complete: false, reason: "BOARD_OFFERING_REQUIRED", title };
+
+  const evaluated = evaluateD001WholeParentBoard({
+    item,
+    storeRevision,
+    demand: {
+      executionPattern: D001_WHOLE_PARENT_BOARD_RUN.executionPattern,
+      configurationId,
+      configurationVersion,
+      classId,
+      definedWorkpieceLengthIn,
+      datumC: {
+        method: datumCMethod,
+        stationId: D001_TRAVEL_STANDARD.stations.sawMiter.id
+      },
+      parts,
+      declaredSawCuts,
+      declaredSpotCount,
+      unresolvedConditions
+    }
+  });
+
+  return {
+    ...evaluated,
+    title,
+    classId,
+    documentKind: ENGINE.documentKind,
+    engine: ENGINE,
+    cycle: evaluated.complete
+      ? {
+          model: CYCLE_MODEL.id,
+          version: CYCLE_MODEL.version,
+          executionPattern: D001_WHOLE_PARENT_BOARD_RUN.id,
+          basis: CYCLE_MODEL.basis,
+          measured: false,
+          commissioned: false,
+          T_job_min: evaluated.travel.time.T_MACHINE_min,
+          T_job_hr: evaluated.travel.time.T_MACHINE_hr
         }
       : null
   };
