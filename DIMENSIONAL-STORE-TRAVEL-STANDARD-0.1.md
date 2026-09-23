@@ -65,6 +65,30 @@ Tests may preserve named historical fixtures where required, but generic Store a
 
 For Stage-2 modeled catalog pricing, exact current retail matching is not required. Modeled prices should remain **reasonably market-shaped and internally correlated** for comparable material classes. When a SKU price is not directly observed, its derivation must be declared and traceable to an observed or otherwise governed reference. Comparable length variants should preserve a plausible price/length relationship unless specific evidence justifies a different relationship. Later observed evidence may replace the modeled fixture value without changing the resolver.
 
+## 3B. Whole-parent board-run pattern
+
+The short-part cutoff planner and a whole-parent board run are different physical patterns and must remain different Store evaluations.
+
+`WHOLE_PARENT_BOARD_RUN` means the identified finished board run is the complete Store parent. Under this pattern:
+
+- the Store parent length must equal the identified finished workpiece length;
+- Store may not silently substitute a longer parent and invent a trimming operation;
+- no cleanup/reference cut is implied;
+- Datum C is established by an admitted non-cutting method (`MECHANICAL_REFERENCE` or `SENSED_FACE`);
+- derived saw cuts are zero;
+- the 24-in retained-tail rule is **not applicable**, because no cutoff creates a retained tail;
+- optional wide-face `SPOT_ON_LOCATION` features may be sequenced and timed under the declared 3/16-in face-spot station;
+- generic `DRILL`, arbitrary spot tooling, milling, edge spotting, and other undeclared operations are outside this pattern until separately admitted;
+- material, modeled occupied-cell time, Store machine-service price, and `Q` still use the same governing Store economics model as other complete dimensional work.
+
+The whole-parent selection policy is:
+
+`EXACT_COMPLETE_STORE_OFFERING`
+
+A whole-parent job therefore fails closed when the exact parent is not offered, unavailable, unresolved, or outside declared capability. The Store does not turn that failure into a different fabrication plan merely because a longer board exists.
+
+The original short-part travel path retains `SHORTEST_COMPLETE_STORE_OFFERING` and its 24-in retained-control rule. Adding this whole-parent pattern does not weaken or reinterpret that path.
+
 ## 4. Valid operation sequence
 
 Operations may be reordered only by the Store/machine planner and only while preserving geometry, dependencies, material identity, and the reference chain.
