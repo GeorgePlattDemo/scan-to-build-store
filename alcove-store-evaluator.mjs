@@ -8,13 +8,17 @@ import {
   stockAnswer
 } from "./store-zero-stage2-store.mjs";
 import { D001_STAGE2_ENVELOPE } from "./d001-stage2-envelope.mjs";
-import { calculationHash, D001_TRAVEL_STANDARD } from "./d001-travel-standard.mjs";
+import {
+  calculationHash,
+  D001_TRAVEL_STANDARD,
+  evaluateD001DimensionalBatch
+} from "./d001-travel-standard.mjs";
 
 export const ALCOVE_STORE_STANDARD = Object.freeze({
   id: "STB-ALCOVE-STORE-REQUEST-0.1",
   classId: "alcove.insert.square_shelves",
-  completeMachineEconomics: false,
-  unresolvedMachineCondition: "ALCOVE_WHOLE_BOARD_TRAVEL_STANDARD_REQUIRED",
+  completeMachineEconomics: true,
+  unresolvedMachineCondition: "ALCOVE_COMPONENT_PROGRAMS_REQUIRED",
   rule: "PROJECT_DERIVES_DEMAND_STORE_RESOLVES_SKU_STOCK_PRICE_CAPABILITY"
 });
 
@@ -175,9 +179,90 @@ function evaluateHardware(catalog, demand) {
   };
 }
 
+
+function requiredOpsForRequirement(requirement, componentPrograms) {
+  const ops = new Set(Array.isArray(requirement.requiredOps) ? requirement.requiredOps : ["CROSSCUT"]);
+  for (const component of componentPrograms) {
+    if (component.requirementId !== requirement.requirementId) continue;
+    for (const feature of Array.isArray(component.features) ? component.features : []) {
+      if (feature?.kind === "MILL_LONGITUDINAL_PROFILE") ops.add("MILL_LONGITUDINAL_PROFILE");
+    }
+  }
+  return [...ops];
+}
+
+function validateComponentMaterialCapacity(lines, componentPrograms) {
+  const unresolved = [];
+  const refused = [];
+  const kerfIn = Number(D001_TRAVEL_STANDARD.control.kerfIn);
+
+  for (const line of lines) {
+    const components = componentPrograms
+      .filter((component) => component.requirementId === line.requirementId)
+      .slice()
+      .sort((a, b) => Number(b.finishedLengthIn) - Number(a.finishedLengthIn));
+    if (!components.length) {
+      unresolved.push("COMPONENT_PROGRAM_MISSING_FOR_REQUIREMENT:" + line.requirementId);
+      continue;
+    }
+    const bins = Array.from({ length: Number(line.qty) }, () =>
+      Number(line.demandedStockLengthIn) - kerfIn
+    );
+    for (const component of components) {
+      const need = Number(component.finishedLengthIn) + kerfIn;
+      if (!Number.isFinite(need) || need <= kerfIn) {
+        unresolved.push("COMPONENT_FINISHED_LENGTH_REQUIRED:" + String(component.componentId || ""));
+        continue;
+      }
+      let placed = false;
+      for (let i = 0; i < bins.length; i += 1) {
+        if (bins[i] + 1e-9 >= need) {
+          bins[i] -= need;
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        refused.push("COMPONENTS_EXCEED_DECLARED_PARENT_MATERIAL:" + line.requirementId);
+        break;
+      }
+    }
+  }
+
+  const knownRequirementIds = new Set(lines.map((line) => line.requirementId));
+  for (const component of componentPrograms) {
+    if (!knownRequirementIds.has(component.requirementId)) {
+      unresolved.push("COMPONENT_REQUIREMENT_ID_NOT_FOUND:" + String(component.requirementId || ""));
+    }
+  }
+
+  return {
+    status: refused.length ? "REFUSED" : unresolved.length ? "UNRESOLVED" : "SUPPORTABLE",
+    unresolved,
+    refused
+  };
+}
+
+function componentRunsForStore(catalog, lines, componentPrograms) {
+  const lineByRequirement = new Map(lines.map((line) => [line.requirementId, line]));
+  return componentPrograms.map((component) => {
+    const line = lineByRequirement.get(component.requirementId);
+    return {
+      component: structuredClone(component),
+      item: line?.storeSku ? findSku(catalog, line.storeSku) : null
+    };
+  });
+}
+
 export function evaluateAlcoveJob(catalog, demand = {}) {
+  const componentPrograms = Array.isArray(demand.componentPrograms)
+    ? demand.componentPrograms
+    : [];
   const requirements = Array.isArray(demand.boardRequirements)
-    ? demand.boardRequirements
+    ? demand.boardRequirements.map((requirement) => ({
+        ...requirement,
+        requiredOps: requiredOpsForRequirement(requirement, componentPrograms)
+      }))
     : [];
   if (!requirements.length) {
     return {
@@ -214,16 +299,43 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
     ...lines.map((line) => line.status),
     ...(hardwareLine ? [hardwareLine.status] : [])
   ];
-  let status;
-  if (statuses.includes("REFUSED")) status = "REFUSED";
-  else if (statuses.includes("UNAVAILABLE")) status = "UNAVAILABLE";
-  else if (statuses.includes("UNRESOLVED")) status = "UNRESOLVED";
-  else status = "UNRESOLVED";
+  const incomingUnresolved = Array.isArray(demand.unresolvedConditions)
+    ? demand.unresolvedConditions.filter((value) => typeof value === "string" && value.trim())
+    : [];
 
-  const unresolvedConditions = [];
-  if (!statuses.includes("REFUSED") && !statuses.includes("UNAVAILABLE")) {
-    unresolvedConditions.push(ALCOVE_STORE_STANDARD.unresolvedMachineCondition);
+  const materialCapacity = componentPrograms.length
+    ? validateComponentMaterialCapacity(lines, componentPrograms)
+    : {
+        status: "UNRESOLVED",
+        unresolved: [ALCOVE_STORE_STANDARD.unresolvedMachineCondition],
+        refused: []
+      };
+
+  let batch = null;
+  if (
+    componentPrograms.length &&
+    !statuses.includes("REFUSED") &&
+    !statuses.includes("UNAVAILABLE") &&
+    materialCapacity.status === "SUPPORTABLE" &&
+    incomingUnresolved.length === 0 &&
+    demand.spotDemand?.enabled !== true
+  ) {
+    batch = evaluateD001DimensionalBatch({
+      componentRuns: componentRunsForStore(catalog, lines, componentPrograms),
+      storeRevision: demand.storeRevision || null
+    });
   }
+
+  const unresolvedConditions = [
+    ...incomingUnresolved,
+    ...(materialCapacity.unresolved || []),
+    ...(Array.isArray(batch?.unresolved) ? batch.unresolved : [])
+  ];
+  const refusalConditions = [
+    ...(materialCapacity.refused || []),
+    ...(Array.isArray(batch?.reasons) ? batch.reasons : [])
+  ];
+
   if (demand.spotDemand?.enabled === true) {
     const spotLine = lines.find((line) => line.requiredOps.includes("SPOT_ON_LOCATION"));
     if (spotLine?.capability?.status === "REFUSED") {
@@ -231,22 +343,51 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
     }
   }
 
+  let status;
+  if (statuses.includes("REFUSED") || refusalConditions.length || batch?.status === "REFUSED") status = "REFUSED";
+  else if (statuses.includes("UNAVAILABLE")) status = "UNAVAILABLE";
+  else if (unresolvedConditions.length || !batch || batch.complete !== true) status = "UNRESOLVED";
+  else status = "SUPPORTABLE";
+
+  const machineService = batch?.complete === true ? round(Number(batch.machineService), 2) : null;
+  const Q =
+    status === "SUPPORTABLE" &&
+    Number.isFinite(Number(material)) &&
+    Number.isFinite(Number(hardware)) &&
+    Number.isFinite(Number(machineService))
+      ? round(Number(material) + Number(hardware) + Number(machineService), 2)
+      : null;
+
   const estimate = {
-    status: "PARTIAL_BUDGETARY_ESTIMATE",
-    complete: false,
-    completeness: "ALCOVE_MACHINE_TRAVEL_STANDARD_REQUIRED",
+    status: Q == null ? "PARTIAL_BUDGETARY_ESTIMATE" : "BUDGETARY_ESTIMATE",
+    complete: Q != null,
+    completeness: Q == null
+      ? "ALCOVE_COMPONENT_TRAVEL_INCOMPLETE"
+      : "COMPLETE_FOR_DECLARED_COMPONENT_TRAVEL",
     documentKind: "BudgetaryEstimate",
+    cycle: batch
+      ? {
+          model: batch.standard.id,
+          version: batch.standard.version,
+          T_job_min: batch.time.T_MACHINE_min,
+          T_job_hr: batch.time.T_MACHINE_hr,
+          measured: false,
+          commissioned: false
+        }
+      : null,
+    machine: batch,
     totals: {
       material,
       hardware,
-      machine_service: null,
-      Q: null,
-      Q_basis: "UNRESOLVED"
+      machine_service: machineService,
+      Q,
+      Q_basis: Q == null ? "UNRESOLVED" : "CALCULATED_FROM_DECLARED_STAGE2_MODEL"
     },
-    unresolvedConditions: [
-      ALCOVE_STORE_STANDARD.unresolvedMachineCondition
-    ],
-    note: "Current Store material, stock, price and declared capability are evaluated. Complete Alcove machine time/service/Q is withheld until the whole-board travel standard is declared."
+    unresolvedConditions: [...new Set(unresolvedConditions)],
+    refusalConditions: [...new Set(refusalConditions)],
+    note: Q == null
+      ? "Store material/stock/price/capability was evaluated, but the complete component travel record did not support a full Q."
+      : "Store material plus the governed D-001 cut/mill component travel model produced this budgetary Q. It is not a commercial quote."
   };
 
   const resultCore = {
@@ -254,6 +395,8 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
     status,
     materialDemand: demand.materialDemand || null,
     boardRequirements: requirements,
+    componentPrograms,
+    materialCapacity,
     spotDemand: demand.spotDemand || null,
     lines: lines.map((line) => ({
       requirementId: line.requirementId,
@@ -278,7 +421,9 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
         }
       : null,
     totals: estimate.totals,
-    unresolvedConditions
+    machineCalculationIdentity: batch?.calculationIdentity || null,
+    unresolvedConditions,
+    refusalConditions
   };
 
   return {
@@ -287,7 +432,7 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
     stage: 2,
     store: "Store Zero",
     status,
-    complete: false,
+    complete: Q != null,
     materialResolution: {
       status: lines.every((line) => line.storeSku) ? "MAPPED" : status,
       species: demand.materialDemand?.species || null,
@@ -296,8 +441,12 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
     },
     lines,
     hardwareLine,
+    materialCapacity,
+    componentPrograms,
+    machineEvaluation: batch,
     estimate,
-    unresolvedConditions,
+    unresolvedConditions: [...new Set(unresolvedConditions)],
+    refusalConditions: [...new Set(refusalConditions)],
     calculationIdentity: {
       inputHash: calculationHash({
         standard: ALCOVE_STORE_STANDARD.id,
@@ -306,7 +455,6 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
       resultHash: calculationHash(resultCore)
     },
     not_claimed: [
-      "complete dimensional Q",
       "commercial quote",
       "seller-of-record",
       "physical fabrication",
