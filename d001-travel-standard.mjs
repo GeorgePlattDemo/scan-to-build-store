@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
+import { D001_STAGE2_ENVELOPE, millPassesForDepth } from "./d001-stage2-envelope.mjs";
 
 export const D001_TRAVEL_STANDARD = Object.freeze({
   id: "STB-D001-DIMENSIONAL-TRAVEL-0.1",
-  version: "0.1.0",
+  version: "0.2.0",
   basis: "DECLARED_STAGE2_MODEL",
   measured: false,
   commissioned: false,
@@ -23,6 +24,20 @@ export const D001_TRAVEL_STANDARD = Object.freeze({
       xIn: 0,
       motion: "DOWNSTROKE",
       capability: "SINGLE_PLANE_FACE_MITER_0_45"
+    }),
+    sawSquare: Object.freeze({
+      id: "SAW-R",
+      xIn: 72,
+      motion: "DOWNSTROKE",
+      capability: "SQUARE_FINISHED_CUT",
+      note: "Store Job 001 modeled outfeed finished-cut station; not commissioned iron."
+    }),
+    millLong: Object.freeze({
+      id: "MILL_LONG",
+      xIn: 36,
+      axisReference: "DATUM_A",
+      capability: "MILL_LONGITUDINAL_PROFILE",
+      note: "Stage-2 longitudinal mill station from the declared D-001 envelope; not commissioned iron."
     }),
     spotFace: Object.freeze({
       id: "SPOT-FACE-REF",
@@ -72,6 +87,15 @@ export const D001_TRAVEL_STANDARD = Object.freeze({
     depthIsPartRequirement: false,
     basis: "DECLARED_STAGE2_MODEL",
     note: "0.125 in is a timing reference only. The current SPOT_ON_LOCATION definition does not claim a finished-hole depth."
+  }),
+  mill: Object.freeze({
+    cuttingFeedInPerMin: D001_STAGE2_ENVELOPE.motion.MILL_CUTTING_FEED_IN_PER_MIN,
+    maxYIn: D001_STAGE2_ENVELOPE.motion.Y_MILL_TRAVEL_MAX_IN,
+    maxProfileLengthIn: D001_STAGE2_ENVELOPE.millLong.maxProfileLengthIn,
+    maxDepthPerPassIn: D001_STAGE2_ENVELOPE.millLong.maxDepthPerPassIn,
+    passReturnModel: "RETURN_AT_X_INDEX_RATE",
+    basis: "DECLARED_STAGE2_MODEL",
+    note: "Modeled longitudinal profile time = cutting path per pass plus rapid X return between repeated depth passes. No species-specific feed multiplier is claimed."
   }),
   control: Object.freeze({
     minRetainedControlIn: 24,
@@ -167,6 +191,45 @@ export function spotCycleSec(widthIn, spot = D001_TRAVEL_STANDARD.spot) {
     yPositionSec,
     plungeSec,
     totalSec: yPositionSec + spot.approachSec + plungeSec + spot.retractSec
+  };
+}
+
+export function millLongitudinalCycleSec({
+  pathLengthIn,
+  yIn,
+  totalDepthIn,
+} = {}, mill = D001_TRAVEL_STANDARD.mill) {
+  const path = Number(pathLengthIn);
+  const y = Number(yIn);
+  const depth = Number(totalDepthIn);
+  if (
+    !Number.isFinite(path) || path <= 0 ||
+    !Number.isFinite(y) || y < 0 ||
+    !Number.isFinite(depth) || depth <= 0
+  ) {
+    return { status: "UNRESOLVED", reason: "MILL_FEATURE_GEOMETRY_REQUIRED" };
+  }
+  if (path > mill.maxProfileLengthIn) {
+    return { status: "REFUSED", reason: "MILL_PROFILE_LENGTH_EXCEEDS_D001_STAGE2_ENVELOPE" };
+  }
+  if (y > mill.maxYIn) {
+    return { status: "REFUSED", reason: "MILL_Y_EXCEEDS_TOOL_TRAVEL" };
+  }
+  const passes = millPassesForDepth(depth);
+  const cutPerPassSec = (path / Number(mill.cuttingFeedInPerMin)) * 60;
+  const passReturnSec = passes > 1 ? xIndexTimeSec(path) * (passes - 1) : 0;
+  const yPositionSec = yIndexTimeSec(y);
+  return {
+    status: "SUPPORTABLE",
+    pathLengthIn: round(path, 6),
+    yIn: round(y, 6),
+    totalDepthIn: round(depth, 6),
+    passes,
+    cuttingFeedInPerMin: mill.cuttingFeedInPerMin,
+    cutPerPassSec: round(cutPerPassSec, 4),
+    passReturnSec: round(passReturnSec, 4),
+    yPositionSec: round(yPositionSec, 4),
+    totalSec: round(yPositionSec + cutPerPassSec * passes + passReturnSec, 4)
   };
 }
 
@@ -590,6 +653,308 @@ export function evaluateD001UserDefinedBoard({ item, demand, storeRevision = nul
       "live motion",
       "physical stock count",
       "measured machine performance"
+    ]
+  };
+}
+
+function normalizeBatchComponent(raw, item) {
+  const unresolved = [];
+  const refused = [];
+  if (!raw || typeof raw !== "object") unresolved.push("COMPONENT_PROGRAM_REQUIRED");
+  if (!item || item.form !== "board") unresolved.push("COMPONENT_STORE_BOARD_REQUIRED");
+  if (unresolved.length) return { unresolved, refused };
+
+  const componentId = String(raw.componentId || "");
+  const finishedLengthIn = Number(raw.finishedLengthIn);
+  const finishedWidthIn = Number(raw.finishedWidthIn);
+  if (!componentId) unresolved.push("COMPONENT_ID_REQUIRED");
+  if (!Number.isFinite(finishedLengthIn) || finishedLengthIn <= 0) unresolved.push("COMPONENT_FINISHED_LENGTH_REQUIRED");
+  if (!Number.isFinite(finishedWidthIn) || finishedWidthIn <= 0) unresolved.push("COMPONENT_FINISHED_WIDTH_REQUIRED");
+  if (finishedLengthIn < D001_STAGE2_ENVELOPE.stock.minControlledLengthIn) {
+    refused.push("COMPONENT_LENGTH_BELOW_TWO_ROLLER_CONTROL");
+  }
+  if (finishedLengthIn > D001_TRAVEL_STANDARD.stations.sawSquare.xIn) {
+    refused.push("COMPONENT_LENGTH_EXCEEDS_D001_TWO_SAW_SPAN");
+  }
+  if (Number.isFinite(finishedWidthIn) && Number.isFinite(Number(item.actualW)) && finishedWidthIn > Number(item.actualW) + 1e-9) {
+    refused.push("COMPONENT_WIDTH_EXCEEDS_STORE_BOARD_WIDTH");
+  }
+
+  const features = Array.isArray(raw.features) ? raw.features : [];
+  const normalizedFeatures = [];
+  for (const feature of features) {
+    if (!feature || feature.kind !== "MILL_LONGITUDINAL_PROFILE") {
+      unresolved.push("UNSUPPORTED_OR_MISSING_BATCH_FEATURE_KIND");
+      continue;
+    }
+    if (!(item.supportedOps || []).includes("MILL_LONGITUDINAL_PROFILE")) {
+      refused.push("OP_NOT_ON_OFFERING:MILL_LONGITUDINAL_PROFILE");
+      continue;
+    }
+    const pathLengthIn = Number(feature.pathLengthIn);
+    const yIn = Number(feature.yIn);
+    const totalDepthIn = Number(feature.totalDepthIn);
+    if (
+      !Number.isFinite(pathLengthIn) ||
+      !Number.isFinite(yIn) ||
+      !Number.isFinite(totalDepthIn)
+    ) {
+      unresolved.push("MILL_FEATURE_GEOMETRY_REQUIRED");
+      continue;
+    }
+    if (Math.abs(pathLengthIn - finishedLengthIn) > 1e-6) {
+      unresolved.push("MILL_PATH_MUST_MATCH_COMPONENT_LENGTH");
+    }
+    if (Math.abs(yIn - finishedWidthIn) > 1e-6) {
+      unresolved.push("MILL_Y_MUST_MATCH_FINISHED_WIDTH");
+    }
+    if (totalDepthIn > Number(item.actualT) + 1e-9) {
+      refused.push("MILL_DEPTH_EXCEEDS_STOCK_THICKNESS");
+    }
+    const timing = millLongitudinalCycleSec({ pathLengthIn, yIn, totalDepthIn });
+    if (timing.status === "UNRESOLVED") unresolved.push(timing.reason);
+    if (timing.status === "REFUSED") refused.push(timing.reason);
+    normalizedFeatures.push({
+      featureId: String(feature.featureId || ""),
+      kind: "MILL_LONGITUDINAL_PROFILE",
+      pathLengthIn,
+      yIn,
+      totalDepthIn,
+      timing
+    });
+  }
+
+  return {
+    unresolved,
+    refused,
+    value: {
+      componentId,
+      requirementId: String(raw.requirementId || ""),
+      finishedLengthIn,
+      finishedWidthIn,
+      features: normalizedFeatures
+    }
+  };
+}
+
+function deriveBatchComponentPlan(component, item) {
+  const M = D001_TRAVEL_STANDARD;
+  const operations = [];
+  let currentCIn = M.stations.sawMiter.xIn;
+  let tReferenceSec = 0;
+  let tIndexSec = 0;
+  let tSawSec = 0;
+  let tMillSec = 0;
+
+  const referenceSec = sawCycleSec(item.actualW, 0);
+  tReferenceSec += referenceSec;
+  operations.push({
+    sequence: operations.length + 1,
+    opId: component.componentId + ":REF",
+    kind: "REFERENCE_CUT",
+    stationId: M.stations.sawMiter.id,
+    datumEffect: "ESTABLISH_DATUM_C",
+    angleDeg: 0,
+    timeSec: round(referenceSec, 4)
+  });
+
+  const cutCIn = M.stations.sawSquare.xIn - component.finishedLengthIn;
+  const cutIndexDistanceIn = Math.abs(cutCIn - currentCIn);
+  const cutIndexSec = xIndexTimeSec(cutIndexDistanceIn);
+  tIndexSec += cutIndexSec;
+  operations.push({
+    sequence: operations.length + 1,
+    opId: component.componentId + ":INDEX-CUT",
+    kind: "INDEX",
+    purpose: "POSITION_FINISHED_CUT",
+    fromCIn: round(currentCIn, 6),
+    toCIn: round(cutCIn, 6),
+    distanceIn: round(cutIndexDistanceIn, 6),
+    timeSec: round(cutIndexSec, 4)
+  });
+  currentCIn = cutCIn;
+
+  const finishedCutSec = sawCycleSec(item.actualW, 0);
+  tSawSec += finishedCutSec;
+  operations.push({
+    sequence: operations.length + 1,
+    opId: component.componentId + ":CUT",
+    kind: "CROSSCUT",
+    stationId: M.stations.sawSquare.id,
+    finishedLengthIn: round(component.finishedLengthIn, 6),
+    angleDeg: 0,
+    timeSec: round(finishedCutSec, 4)
+  });
+
+  for (const feature of component.features) {
+    const startXIn = 0;
+    const millCIn = M.stations.millLong.xIn - startXIn;
+    const millIndexDistanceIn = Math.abs(millCIn - currentCIn);
+    const millIndexSec = xIndexTimeSec(millIndexDistanceIn);
+    tIndexSec += millIndexSec;
+    operations.push({
+      sequence: operations.length + 1,
+      opId: feature.featureId + ":INDEX",
+      kind: "INDEX",
+      purpose: "POSITION_LONGITUDINAL_MILL",
+      fromCIn: round(currentCIn, 6),
+      toCIn: round(millCIn, 6),
+      distanceIn: round(millIndexDistanceIn, 6),
+      timeSec: round(millIndexSec, 4)
+    });
+    currentCIn = millCIn;
+    tMillSec += feature.timing.totalSec;
+    operations.push({
+      sequence: operations.length + 1,
+      opId: feature.featureId || component.componentId + ":MILL",
+      kind: "MILL_LONGITUDINAL_PROFILE",
+      stationId: M.stations.millLong.id,
+      componentId: component.componentId,
+      pathLengthIn: feature.timing.pathLengthIn,
+      yIn: feature.timing.yIn,
+      totalDepthIn: feature.timing.totalDepthIn,
+      passes: feature.timing.passes,
+      cuttingFeedInPerMin: feature.timing.cuttingFeedInPerMin,
+      cutPerPassSec: feature.timing.cutPerPassSec,
+      passReturnSec: feature.timing.passReturnSec,
+      yPositionSec: feature.timing.yPositionSec,
+      timeSec: feature.timing.totalSec
+    });
+  }
+
+  const tMachineSec =
+    M.handling.loadSeatSec +
+    tReferenceSec +
+    tIndexSec +
+    tSawSec +
+    tMillSec +
+    M.handling.releaseLabelSec;
+
+  return {
+    componentId: component.componentId,
+    requirementId: component.requirementId,
+    storeSku: item.storeSku,
+    operations,
+    time: {
+      T_LOAD_SEAT_sec: M.handling.loadSeatSec,
+      T_REFERENCE_sec: round(tReferenceSec, 4),
+      T_INDEX_sec: round(tIndexSec, 4),
+      T_SAW_sec: round(tSawSec, 4),
+      T_DRILL_SPOT_sec: 0,
+      T_MILL_sec: round(tMillSec, 4),
+      T_RELEASE_LABEL_sec: M.handling.releaseLabelSec,
+      T_MACHINE_sec: round(tMachineSec, 4),
+      T_MACHINE_min: round(tMachineSec / 60, 4)
+    }
+  };
+}
+
+export function evaluateD001DimensionalBatch({ componentRuns = [], storeRevision = null } = {}) {
+  const unresolved = [];
+  const refused = [];
+  const normalized = [];
+  const seen = new Set();
+
+  if (!Array.isArray(componentRuns) || componentRuns.length === 0) {
+    return unresolvedResult(["DIMENSIONAL_COMPONENT_RUNS_REQUIRED"]);
+  }
+
+  for (const run of componentRuns) {
+    const item = run?.item || null;
+    const parsed = normalizeBatchComponent(run?.component, item);
+    unresolved.push(...(parsed.unresolved || []));
+    refused.push(...(parsed.refused || []));
+    if (parsed.value) {
+      if (seen.has(parsed.value.componentId)) unresolved.push("UNIQUE_COMPONENT_ID_REQUIRED");
+      seen.add(parsed.value.componentId);
+      normalized.push({ component: parsed.value, item });
+    }
+  }
+
+  if (unresolved.length) return unresolvedResult(unresolved);
+  if (refused.length) return refusedResult(refused);
+
+  const plans = normalized.map(({ component, item }) => deriveBatchComponentPlan(component, item));
+  const totals = plans.reduce((acc, plan) => {
+    for (const key of [
+      "T_LOAD_SEAT_sec",
+      "T_REFERENCE_sec",
+      "T_INDEX_sec",
+      "T_SAW_sec",
+      "T_DRILL_SPOT_sec",
+      "T_MILL_sec",
+      "T_RELEASE_LABEL_sec",
+      "T_MACHINE_sec"
+    ]) {
+      acc[key] += Number(plan.time[key] || 0);
+    }
+    return acc;
+  }, {
+    T_LOAD_SEAT_sec: 0,
+    T_REFERENCE_sec: 0,
+    T_INDEX_sec: 0,
+    T_SAW_sec: 0,
+    T_DRILL_SPOT_sec: 0,
+    T_MILL_sec: 0,
+    T_RELEASE_LABEL_sec: 0,
+    T_MACHINE_sec: 0
+  });
+  totals.T_MACHINE_min = totals.T_MACHINE_sec / 60;
+  totals.T_MACHINE_hr = totals.T_MACHINE_min / 60;
+
+  const rates = storeMachineSellRate();
+  const machineService = round(totals.T_MACHINE_hr * rates.sellRatePerHour, 2);
+  const governingInput = {
+    travelStandard: { id: D001_TRAVEL_STANDARD.id, version: D001_TRAVEL_STANDARD.version },
+    storeRevision,
+    componentRuns: normalized.map(({ component, item }) => ({
+      component,
+      offering: {
+        storeSku: item.storeSku,
+        actualW: item.actualW,
+        actualT: item.actualT,
+        stockL_in: item.stockL_in
+      }
+    }))
+  };
+  const inputHash = calculationHash(governingInput);
+  const resultCore = {
+    componentCount: plans.length,
+    time: Object.fromEntries(Object.entries(totals).map(([key, value]) => [key, round(value, key.endsWith("_hr") ? 6 : 4)])),
+    machineService,
+    sellRatePerHour: rates.sellRatePerHour,
+    componentPlans: plans
+  };
+  const resultHash = calculationHash({ inputHash, resultCore });
+
+  return {
+    status: "BUDGETARY_MACHINE_ESTIMATE",
+    complete: true,
+    completeness: "COMPLETE_FOR_DECLARED_COMPONENT_TRAVEL",
+    standard: {
+      id: D001_TRAVEL_STANDARD.id,
+      version: D001_TRAVEL_STANDARD.version,
+      basis: D001_TRAVEL_STANDARD.basis,
+      measured: false,
+      commissioned: false
+    },
+    economics: {
+      ...D001_TRAVEL_STANDARD.economics,
+      ...rates,
+      setupCharge: 0,
+      setupTimeMin: 0,
+      formula: "machine_service = T_MACHINE_hr × STORE_MACHINE_SELL_RATE"
+    },
+    time: resultCore.time,
+    machineService,
+    componentPlans: plans,
+    calculationIdentity: { inputHash, resultHash },
+    not_claimed: [
+      "commercial quote",
+      "physical fabrication",
+      "live motion",
+      "measured machine performance",
+      "commissioned workholding"
     ]
   };
 }

@@ -27,3 +27,5 @@ jobs:
         run: node store-zero-stage2.test.mjs
       - name: User 1 travel-standard acceptance
         run: node d001-travel-standard.test.mjs
+      - name: Alcove Store fail-first acceptance
+        run: node alcove-store-evaluator.test.mjs
