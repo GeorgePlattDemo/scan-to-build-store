@@ -405,6 +405,11 @@ function validateComponentMaterialCapacity(lines, componentPrograms) {
   const kerfIn = Number(D001_TRAVEL_STANDARD.control.kerfIn);
 
   for (const line of lines) {
+    // Material availability/candidate resolution is already owned by the line.
+    // Do not reinterpret an absent Store parent as a component-fit refusal.
+    if (!line.storeSku || !Number.isFinite(Number(line.demandedStockLengthIn)) || !Number.isFinite(Number(line.qty))) {
+      continue;
+    }
     const components = componentPrograms
       .filter((component) => component.requirementId === line.requirementId)
       .slice()
