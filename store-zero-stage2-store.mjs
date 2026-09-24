@@ -355,6 +355,7 @@ export function evaluateDimensionalTravelJob(catalog, demand = {}) {
       cutPlane: demand.cutPlane,
       spotDemand: firstSpot
         ? {
+            ...firstSpot,
             required: true,
             mode: "SPOT_ON_LOCATION",
             locationRule: "CENTERED_ON_PART",

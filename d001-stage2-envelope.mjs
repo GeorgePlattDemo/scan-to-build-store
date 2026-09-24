@@ -1,10 +1,13 @@
+import { D001_MACHINE_IMPLEMENTATION, checkSpotImplementation } from "./d001-machine-implementation.mjs";
+
 /**
  * D-001 Stage-2 machine-readable envelope
  * DECLARED_STAGE2_CAPABILITY. measured = false. commissioned = false.
  * Numbers exist to exercise fit → ops → minutes → Q. They do not authorize live motion.
  */
 export const D001_STAGE2_ENVELOPE = {
-  id: "D001-STAGE2-ENVELOPE-0.3",
+  id: "D001-STAGE2-ENVELOPE-0.5",
+  implementation: D001_MACHINE_IMPLEMENTATION,
   basis: "DECLARED_STAGE2_CAPABILITY",
   measured: false,
   commissioned: false,
@@ -46,6 +49,7 @@ export const D001_STAGE2_ENVELOPE = {
     toolDiameterLabel: "3/16 in",
     locationRule: "CENTERED_ON_PART",
     acrossWidthRule: "CENTERED_ON_WIDE_FACE",
+    operationContract: "SPOT_ON_LOCATION/0.1",
     depthClaimed: false,
     note: "Declared fixed 3/16 in spot/pilot tool. This is not a generic finished-hole envelope."
   },
@@ -59,6 +63,7 @@ export const D001_STAGE2_ENVELOPE = {
     "SAW-L": { xIn: 0, role: "infeed-end downstroke chop / single-plane miter 0–45 deg" },
     R1: { xIn: 24, role: "manipulating roller" },
     MILL_LONG: { xIn: 36, role: "longitudinal mill between R1 and R2" },
+    "SPOT-FACE-REF": { xIn: 36, role: "legacy centered face-spot model", toolSlot: "T4", physicalColocationProven: false },
     R2: { xIn: 48, role: "manipulating roller" },
     "SAW-R": { xIn: 72, role: "outfeed-end downstroke square chop" },
     MILL_END: { xIn: -6, role: "end mill outside roller interference" }
@@ -74,9 +79,8 @@ export const D001_STAGE2_ENVELOPE = {
     maxDepthIn: 0.5
   },
   unresolvedNamed: [
-    "third manipulating roller (patent 504 is three; Stage-2 fixture names two)",
-    "radial-arm vs second chop as distinct saw types",
-    "third router/drill on a vertical way",
+    "T1/T2/T3 physical binding and complete travel/timing: see D001_MACHINE_IMPLEMENTATION",
+    "T5 edge-spot envelope and depth-defined T4/T5 tool geometry",
     "generic DRILL diameter / depth / location beyond the declared 3/16 SPOT_ON_LOCATION operation",
     "unsupported overhang geometry",
     "whether a short part may run on one roller"
@@ -89,6 +93,7 @@ export function millPassesForDepth(totalDepthIn) {
 }
 
 function finiteNumber(value) {
+  if (value == null || value === "" || typeof value === "boolean") return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
@@ -151,6 +156,9 @@ export function envelopeCheck(item, req = {}) {
 
   const spot = req.spotDemand;
   if (spot && spot.required !== false) {
+    const implementation = checkSpotImplementation(spot);
+    reasons.push(...implementation.reasons);
+    unresolved.push(...implementation.unresolved);
     if (spot.mode !== D001_STAGE2_ENVELOPE.spot.mode) {
       reasons.push("SPOT_MODE_NOT_DECLARED");
     }

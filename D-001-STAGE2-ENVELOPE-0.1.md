@@ -1,4 +1,4 @@
-# D-001 Stage-2 MachineEnvelope — 0.3
+# D-001 Stage-2 MachineEnvelope — 0.5
 
 Declared reference capability. **Not commissioned. Not Cycle Start. Not generic CNC.**
 
@@ -10,13 +10,17 @@ CUT-001 remains a valid regression path. Later work must not break its informati
 
 ---
 
+## Machine implementation register
+
+The recovered three-router/two-spot roles and proposed sensing/control coordination are governed by [D001-MACHINE-IMPLEMENTATION-0.1.md](D001-MACHINE-IMPLEMENTATION-0.1.md). Existing functions below remain modeled; unresolved physical bindings do not silently remove their current cut/mill capability. The face-spot travel station is now explicitly registered at X=36. Fixed-depth spotting is a separate, incomplete contract and cannot reuse legacy spot timing.
+
 ## What this machine is (memory vs fixture)
 
 Three pictures exist. Do not smash them together.
 
 **Patent / cell spine correspondence** (`STB-CELL-0.1`, U.S. 10,768,609 FIG. 5): table and fence on a central base; **three** commonly-controlled manipulating rollers from above; idlers in the table; **a sawing station at each end** (chop, miter-capable); clamp rollers to the fence; vertical and horizontal ways that can carry drill/router heads.
 
-**Your working memory:** radial-arm on one end, chop/miter on the other, two symmetrical rotors in the center, routers not placed.
+**Historical memory note (superseded):** the earlier radial-arm/unspecified-router description does not control the current downstroke saw or recovered five-tool roles.
 
 **This Stage-2 fixture:** two named rollers and two named mill functions, so Store can refuse and price without inventing Stage-3 iron.
 
@@ -46,7 +50,7 @@ min controlled length     24 in    (R1–R2 spacing)
 
 14 in reach is not a 14 in board. Two inches stay unclaimed for tool body, guard, and fence relationship that Stage 3 must actually design.
 
-**Named unresolved, not designed here:** third roller; whether SAW-R is a radial arm; a third vertical-way router/drill; generic finished-hole drilling beyond the declared 3/16 in spot/pilot operation; external infeed/outfeed stands; one-roller short-stock mode.
+**Named unresolved:** complete physical bindings and travel/timing for T1–T5; selected tool geometry for depth-defined spotting; generic finished-hole drilling; external infeed/outfeed support; one-roller short-stock mode. The proposed Stage-2 arrangement has two manipulating rollers and downstroke saws.
 
 **Declared for the Stage-2 test envelope:** saw motion is downstroke; `MITER_LIMITED` is a single-plane face miter from 0° through 45° inclusive; `SPOT_ON_LOCATION` uses the fixed 3/16 in spot/pilot tool at the defined location. The spot operation does not claim a finished-hole depth.
 
