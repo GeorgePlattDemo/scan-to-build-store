@@ -211,7 +211,7 @@ This is the practical advantage of fixed tool geometry.
 
 ## Store capability and machine capability
 
-The Store uses the governed meaning of `MachineEnvelope`.
+The Store uses the System-defined shared operational meaning of `MachineEnvelope` and owns the particular capability instance it declares.
 
 A Store may declare or reference a machine-specific capability representation conforming to that contract.
 
