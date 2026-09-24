@@ -4,7 +4,9 @@
 
 Scan-to-Build crosses ordinary language, lumber commerce, wood science, manufacturing, machine control, software, and governance. This document keeps familiar words from silently changing meaning as information crosses those boundaries.
 
-It is a translation aid, not a complete dictionary, ontology, schema, or implementation specification.
+It is a Store-local translation aid, not the canonical cross-repository operational dictionary, ontology, schema, or application implementation specification.
+
+Shared operational job meaning is owned by `GeorgePlattDemo/scan-to-build-system`, beginning at `docs/definitions/README.md` and the executable contracts under `apps/stb/shared/`. This document owns Store-specific vocabulary and may summarize shared terms only to explain Store behavior.
 
 Terms are added when misunderstanding them could change what was requested, measured, supplied, manufactured, authorized, or recorded.
 
@@ -476,9 +478,9 @@ Terms that prevent software vocabulary from silently acquiring physical or gover
 
 ---
 
-## 7. Governed Scan-to-Build Terms
+## 7. Shared Scan-to-Build Operational Terms
 
-These meanings come from the governed reference. The Store consumes them rather than redefining them.
+These shared operational meanings are owned by Scan-to-Build System. The Store consumes them rather than redefining them. Historical Governed Reference wording remains provenance only.
 
 **DeclaredRecord** — Preserves a person's declared interest or intent without replacing it with system interpretation.
 
@@ -576,7 +578,7 @@ These are architectural propositions rather than individual data objects.
 
 **Machine does not infer the project** — Physical execution receives sufficiently resolved instructions; it does not decide what the person meant.
 
-**Store does not rewrite governance** — Store facts and Store convenience do not create or modify canonical governed rules.
+**Store does not rewrite the job definition** — Store facts and Store convenience do not create or modify the canonical shared operational meaning owned by System.
 
 **NO BLOOD ON WOOD** — Safety authority and refusal boundaries take precedence over convenience, throughput, demonstration success, or software completion.
 

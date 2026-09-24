@@ -2,11 +2,11 @@
 
 Private reference implementation for the Scan-to-Build store boundary.
 
-The Store resolves governed project requirements against available materials, stock, machine capability, simulation, and fulfillment capability.
+The Store resolves identified project/job requirements against available materials, stock, machine capability, simulation, economics, and fulfillment capability.
 
-It sits between the **Scan-to-Build Governed Reference** and user-facing applications.
+It consumes the shared operational job meaning owned by **Scan-to-Build System** and returns Store-owned facts and answers to consuming applications.
 
-The Store does not redefine project authority, silently repair unresolved information, or allow machine capability to override governance.
+The Store does not redefine the job, silently repair unresolved information, or allow machine capability or economics to override the upstream definition.
 
 ## Governing dimensional Store standard
 
@@ -43,17 +43,22 @@ The Store is intended to support both a reference implementation and future inde
 
 ## Repository Boundary
 
-### The Governed Reference owns
+### System owns shared operational meaning
 
-- canonical project and record semantics;
-- authority and authorization rules;
-- unresolved-condition handling;
-- governed gates and refusal behavior;
-- WorkPacket meaning;
-- provenance and record integrity;
-- simulation-versus-production authority boundaries.
+- canonical shared job/project definitions and semantic boundaries;
+- application/Store interface contracts;
+- shared record and custody semantics;
+- definition/readiness boundary meanings used to ask Store a bounded question;
+- WorkPacket and other shared operational object meanings where currently admitted;
+- simulation-versus-production distinctions carried by the application contract.
 
-The Store consumes those rules. It does not replace them.
+Canonical operational-definition navigation begins in `GeorgePlattDemo/scan-to-build-system/docs/definitions/README.md`, with executable contracts under `apps/stb/shared/`.
+
+The Store consumes the identified job meaning. It does not replace or silently rewrite it.
+
+### Program owns research and adoption records
+
+`GeorgePlattDemo/3d-solutions-program` owns research, experiments, evidence, machine-development questions/findings, reviewed decisions/adoption records, partnerships/economic/business work, and migration/retirement records. A Program proposal does not expand Store capability until Store deliberately adopts and tests a versioned capability.
 
 ### The Store owns
 
@@ -110,7 +115,7 @@ A Store may determine that work is:
 
 A Store must not manufacture missing facts or convert uncertainty into acceptance.
 
-An accepted project may proceed toward bounded planning or simulation only through the authority and integrity rules defined by the Governed Reference.
+An identified project may proceed toward bounded planning or simulation only through the applicable System operational contracts plus the Store-owned capability/refusal checks for the exact request.
 
 ---
 
@@ -134,7 +139,7 @@ This separation keeps the job portable: the part is not defined by one particula
 
 ### Capability declaration
 
-The Store uses the governed meaning of `MachineEnvelope`.
+The Store uses the System-defined shared operational meaning of `MachineEnvelope` and owns the particular Store/machine capability instance it declares.
 
 A Store may declare or reference a machine-specific capability representation conforming to that contract. It does not redefine the contract, silently extend an envelope because an operation once succeeded, or infer capability from observed behavior.
 
