@@ -70,7 +70,7 @@ The measurement claim remains attributable to the source that produced or suppli
 
 Scan-to-Build owns the **faithfulness of its later handling of that information**.
 
-The governed reference already prohibits software or a model from originating a measurement, converting inference into observation, silently filling a required field, or erasing provenance.
+The current System operational-definition boundary preserves the same rule: software or a model must not originate a measurement, convert inference into observation, silently fill a required field, or erase provenance. Historical Governed Reference text remains provenance for that lineage.
 
 ---
 
