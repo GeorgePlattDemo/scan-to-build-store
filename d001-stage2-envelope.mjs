@@ -46,8 +46,13 @@ export const D001_STAGE2_ENVELOPE = {
     toolDiameterLabel: "3/16 in",
     locationRule: "CENTERED_ON_PART",
     acrossWidthRule: "CENTERED_ON_WIDE_FACE",
-    depthClaimed: false,
-    note: "Declared fixed 3/16 in spot/pilot tool. This is not a generic finished-hole envelope."
+    acrossWidthRules: ["CENTERED_ON_WIDE_FACE", "INSET_FROM_EDGE"],
+    insetFromEdgeOptionsIn: [1.5, 2],
+    pointAngleDeg: 118,
+    fullDiameterDepthIn: 0.1875,
+    depthMeasuredFrom: "AFTER_DRILL_POINT",
+    depthClaimed: true,
+    note: "Declared fixed 3/16 in spot tool, one depth: 3/16 in at full diameter, measured after the 118 degree drill point. Placement is centered on the wide face or inset 1 1/2 in or 2 in from an edge. This is not a generic finished-hole envelope."
   },
   motion: {
     FEED_X_MAX_LOADED_IN_PER_MIN: 480,
@@ -157,8 +162,13 @@ export function envelopeCheck(item, req = {}) {
     if (spot.locationRule !== D001_STAGE2_ENVELOPE.spot.locationRule) {
       reasons.push("SPOT_LOCATION_RULE_NOT_DECLARED");
     }
-    if (spot.acrossWidthRule !== D001_STAGE2_ENVELOPE.spot.acrossWidthRule) {
+    if (!D001_STAGE2_ENVELOPE.spot.acrossWidthRules.includes(spot.acrossWidthRule)) {
       reasons.push("SPOT_ACROSS_WIDTH_RULE_NOT_DECLARED");
+    } else if (
+      spot.acrossWidthRule === "INSET_FROM_EDGE" &&
+      !D001_STAGE2_ENVELOPE.spot.insetFromEdgeOptionsIn.includes(Number(spot.insetFromEdgeIn))
+    ) {
+      reasons.push("SPOT_INSET_NOT_DECLARED");
     }
     const along = finiteNumber(spot.locationAlongLengthIn);
     if (along == null) {

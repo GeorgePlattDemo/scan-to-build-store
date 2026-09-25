@@ -394,6 +394,7 @@ function requiredOpsForRequirement(requirement, componentPrograms) {
     if (component.requirementId !== requirement.requirementId) continue;
     for (const feature of Array.isArray(component.features) ? component.features : []) {
       if (feature?.kind === "MILL_LONGITUDINAL_PROFILE") ops.add("MILL_LONGITUDINAL_PROFILE");
+      if (feature?.kind === "SPOT_ON_LOCATION") ops.add("SPOT_ON_LOCATION");
     }
   }
   return [...ops];
@@ -454,6 +455,14 @@ function validateComponentMaterialCapacity(lines, componentPrograms) {
     unresolved,
     refused
   };
+}
+
+// Spots are mapped when each one is declared as a feature of an identified component.
+function alcoveSpotMapping(demand, componentPrograms) {
+  if (demand.spotDemand?.enabled !== true) return { requested: false, mapped: false, count: 0 };
+  const count = componentPrograms.reduce((sum, component) =>
+    sum + (Array.isArray(component.features) ? component.features.filter((feature) => feature?.kind === "SPOT_ON_LOCATION").length : 0), 0);
+  return { requested: true, mapped: count > 0, count };
 }
 
 function componentRunsForStore(catalog, lines, componentPrograms) {
@@ -524,6 +533,7 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
         refused: []
       };
 
+  const spotMapping = alcoveSpotMapping(demand, componentPrograms);
   let batch = null;
   if (
     componentPrograms.length &&
@@ -531,7 +541,7 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
     !statuses.includes("UNAVAILABLE") &&
     materialCapacity.status === "SUPPORTABLE" &&
     incomingUnresolved.length === 0 &&
-    demand.spotDemand?.enabled !== true
+    (!spotMapping.requested || spotMapping.mapped)
   ) {
     batch = evaluateD001DimensionalBatch({
       componentRuns: componentRunsForStore(catalog, lines, componentPrograms),
@@ -549,11 +559,11 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
     ...(Array.isArray(batch?.reasons) ? batch.reasons : [])
   ];
 
-  if (demand.spotDemand?.enabled === true) {
+  if (spotMapping.requested) {
     const spotLine = lines.find((line) => line.requiredOps.includes("SPOT_ON_LOCATION"));
     if (spotLine?.capability?.status === "REFUSED") {
       refusalConditions.push("ALCOVE_FACE_SPOT_DEMAND_OUTSIDE_CURRENT_DECLARED_SPOT_ENVELOPE");
-    } else {
+    } else if (!spotMapping.mapped) {
       unresolvedConditions.push("ALCOVE_SPOT_TARGET_COMPONENT_MAPPING_REQUIRED");
     }
   }
@@ -592,7 +602,7 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
       "The requested component travel is outside the current declared D-001 capability."
     ))
   ];
-  if (demand.spotDemand?.enabled === true && !reasonRecords.some((reason) => reason.code === "ALCOVE_FACE_SPOT_DEMAND_OUTSIDE_CURRENT_DECLARED_SPOT_ENVELOPE")) {
+  if (spotMapping.requested && !spotMapping.mapped && !reasonRecords.some((reason) => reason.code === "ALCOVE_FACE_SPOT_DEMAND_OUTSIDE_CURRENT_DECLARED_SPOT_ENVELOPE")) {
     reasonRecords.push(storeReason(
       "DEFINITION_GAP",
       "ALCOVE_SPOT_TARGET_COMPONENT_MAPPING_REQUIRED",
@@ -623,7 +633,7 @@ export function evaluateAlcoveJob(catalog, demand = {}) {
       ? "ALCOVE_COMPONENT_TRAVEL_INCOMPLETE"
       : "COMPLETE_FOR_DECLARED_COMPONENT_TRAVEL",
     documentKind: "BudgetaryEstimate",
-    cycle: batch
+    cycle: batch?.time
       ? {
           model: batch.standard.id,
           version: batch.standard.version,

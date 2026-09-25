@@ -29,3 +29,5 @@ jobs:
         run: node d001-travel-standard.test.mjs
       - name: Alcove Store fail-first acceptance
         run: node alcove-store-evaluator.test.mjs
+      - name: Spot inset and depth (3/16 in after the point; 1 1/2 in or 2 in inset)
+        run: node spot-inset-depth.test.mjs

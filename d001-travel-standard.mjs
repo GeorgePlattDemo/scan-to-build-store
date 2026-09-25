@@ -81,12 +81,13 @@ export const D001_TRAVEL_STANDARD = Object.freeze({
     toolDiameterIn: 0.1875,
     rpm: 3000,
     feedPerRevIn: 0.008,
-    timingReferencePlungeIn: 0.125,
+    pointAngleDeg: 118,
+    fullDiameterDepthIn: 0.1875,
     approachSec: 0.35,
     retractSec: 0.35,
-    depthIsPartRequirement: false,
+    depthIsPartRequirement: true,
     basis: "DECLARED_STAGE2_MODEL",
-    note: "0.125 in is a timing reference only. The current SPOT_ON_LOCATION definition does not claim a finished-hole depth."
+    note: "One declared depth: 3/16 in at full diameter, measured after the 118 degree drill point. Plunge travel = point length + 3/16 in."
   }),
   mill: Object.freeze({
     cuttingFeedInPerMin: D001_STAGE2_ENVELOPE.motion.MILL_CUTTING_FEED_IN_PER_MIN,
@@ -179,16 +180,31 @@ export function sawCycleSec(widthIn, angleDeg = 0, saw = D001_TRAVEL_STANDARD.sa
   return saw.deploySec + cutSec + saw.retractSec;
 }
 
-export function spotCycleSec(widthIn, spot = D001_TRAVEL_STANDARD.spot) {
+export function spotPointLengthIn(spot = D001_TRAVEL_STANDARD.spot) {
+  return (Number(spot.toolDiameterIn) / 2) / Math.tan(((Number(spot.pointAngleDeg) / 2) * Math.PI) / 180);
+}
+
+export function spotPlungeIn(spot = D001_TRAVEL_STANDARD.spot) {
+  return spotPointLengthIn(spot) + Number(spot.fullDiameterDepthIn);
+}
+
+// Travel to the spot across the board (Y), then travel to depth (plunge at feed), then retract.
+// placement: { acrossWidthRule: "CENTERED_ON_WIDE_FACE" | "INSET_FROM_EDGE", insetFromEdgeIn }
+export function spotCycleSec(widthIn, spot = D001_TRAVEL_STANDARD.spot, placement = {}) {
   const width = Number(widthIn);
   if (!Number.isFinite(width) || width <= 0) return NaN;
-  const acrossWidthIn = width / 2;
+  const inset = Number(placement?.insetFromEdgeIn);
+  const acrossWidthIn = placement?.acrossWidthRule === "INSET_FROM_EDGE" && Number.isFinite(inset)
+    ? inset
+    : width / 2;
   const yPositionSec = yIndexTimeSec(acrossWidthIn);
   const drillFeedInPerMin = spot.rpm * spot.feedPerRevIn;
-  const plungeSec = (spot.timingReferencePlungeIn / drillFeedInPerMin) * 60;
+  const plungeIn = spotPlungeIn(spot);
+  const plungeSec = (plungeIn / drillFeedInPerMin) * 60;
   return {
     acrossWidthIn,
     yPositionSec,
+    plungeIn: round(plungeIn, 6),
     plungeSec,
     totalSec: yPositionSec + spot.approachSec + plungeSec + spot.retractSec
   };
@@ -281,16 +297,33 @@ function normalizedFeature(feature, part, widthIn) {
   if (xIn < 0 || xIn > part.lengthIn) {
     return { error: "SPOT_LOCATION_OUTSIDE_PART" };
   }
-  if (feature.acrossWidthRule !== "CENTERED_ON_WIDE_FACE") {
-    return { error: "SPOT_ACROSS_WIDTH_RULE_NOT_DECLARED" };
-  }
+  const placement = spotPlacement(feature, widthIn);
+  if (placement.error) return { error: placement.error };
   return {
     featureId: String(feature.featureId || ""),
     kind: "SPOT_ON_LOCATION",
     xIn,
-    acrossWidthRule: "CENTERED_ON_WIDE_FACE",
-    acrossWidthIn: widthIn / 2
+    ...placement
   };
+}
+
+// Declared spot placement across the board: centered on the wide face, or inset 1 1/2 in / 2 in from an edge.
+function spotPlacement(feature, widthIn) {
+  const rule = feature?.acrossWidthRule;
+  if (!D001_STAGE2_ENVELOPE.spot.acrossWidthRules.includes(rule)) {
+    return { error: "SPOT_ACROSS_WIDTH_RULE_NOT_DECLARED" };
+  }
+  if (rule === "CENTERED_ON_WIDE_FACE") {
+    return { acrossWidthRule: rule, insetFromEdgeIn: null, acrossWidthIn: widthIn / 2 };
+  }
+  const inset = Number(feature.insetFromEdgeIn);
+  if (!D001_STAGE2_ENVELOPE.spot.insetFromEdgeOptionsIn.includes(inset)) {
+    return { error: "SPOT_INSET_NOT_DECLARED" };
+  }
+  if (!(inset > 0 && inset < Number(widthIn))) {
+    return { error: "SPOT_INSET_OUTSIDE_BOARD_WIDTH" };
+  }
+  return { acrossWidthRule: rule, insetFromEdgeIn: inset, acrossWidthIn: inset };
 }
 
 function normalizedDemand(demand, item) {
@@ -430,7 +463,7 @@ function deriveOperationPlan(normalized) {
     });
     currentCIn = targetCIn;
 
-    const spotTiming = spotCycleSec(normalized.widthIn);
+    const spotTiming = spotCycleSec(normalized.widthIn, M.spot, feature);
     tSpotSec += spotTiming.totalSec;
     operations.push({
       sequence: operations.length + 1,
@@ -442,8 +475,9 @@ function deriveOperationPlan(normalized) {
       workpieceFeatureXIn: round(feature.workpieceFeatureXIn, 6),
       acrossWidthRule: feature.acrossWidthRule,
       acrossWidthIn: round(spotTiming.acrossWidthIn, 6),
-      timingReferencePlungeIn: M.spot.timingReferencePlungeIn,
-      depthIsPartRequirement: false,
+      fullDiameterDepthIn: M.spot.fullDiameterDepthIn,
+      plungeIn: spotTiming.plungeIn,
+      depthIsPartRequirement: true,
       timeSec: round(spotTiming.totalSec, 4)
     });
   }
@@ -682,7 +716,36 @@ function normalizeBatchComponent(raw, item) {
 
   const features = Array.isArray(raw.features) ? raw.features : [];
   const normalizedFeatures = [];
+  const spotFeatures = [];
   for (const feature of features) {
+    if (feature && feature.kind === "SPOT_ON_LOCATION") {
+      if (!(item.supportedOps || []).includes("SPOT_ON_LOCATION")) {
+        refused.push("OP_NOT_ON_OFFERING:SPOT_ON_LOCATION");
+        continue;
+      }
+      const xIn = Number(feature.xIn);
+      if (!Number.isFinite(xIn)) {
+        unresolved.push("SPOT_LOCATION_REQUIRED");
+        continue;
+      }
+      if (xIn < 0 || xIn > finishedLengthIn) {
+        refused.push("SPOT_LOCATION_OUTSIDE_COMPONENT");
+        continue;
+      }
+      const placement = spotPlacement(feature, finishedWidthIn);
+      if (placement.error) {
+        refused.push(placement.error);
+        continue;
+      }
+      spotFeatures.push({
+        featureId: String(feature.featureId || ""),
+        kind: "SPOT_ON_LOCATION",
+        xIn,
+        ...placement,
+        timing: spotCycleSec(finishedWidthIn, D001_TRAVEL_STANDARD.spot, placement)
+      });
+      continue;
+    }
     if (!feature || feature.kind !== "MILL_LONGITUDINAL_PROFILE") {
       unresolved.push("UNSUPPORTED_OR_MISSING_BATCH_FEATURE_KIND");
       continue;
@@ -732,7 +795,8 @@ function normalizeBatchComponent(raw, item) {
       requirementId: String(raw.requirementId || ""),
       finishedLengthIn,
       finishedWidthIn,
-      features: normalizedFeatures
+      features: normalizedFeatures,
+      spotFeatures: spotFeatures.sort((a, b) => a.xIn - b.xIn)
     }
   };
 }
@@ -745,6 +809,7 @@ function deriveBatchComponentPlan(component, item) {
   let tIndexSec = 0;
   let tSawSec = 0;
   let tMillSec = 0;
+  let tSpotSec = 0;
 
   const referenceSec = sawCycleSec(item.actualW, 0);
   tReferenceSec += referenceSec;
@@ -822,12 +887,49 @@ function deriveBatchComponentPlan(component, item) {
     });
   }
 
+  for (const spot of component.spotFeatures || []) {
+    const spotCIn = M.stations.spotFace.xIn - spot.xIn;
+    const spotIndexDistanceIn = Math.abs(spotCIn - currentCIn);
+    const spotIndexSec = xIndexTimeSec(spotIndexDistanceIn);
+    tIndexSec += spotIndexSec;
+    operations.push({
+      sequence: operations.length + 1,
+      opId: (spot.featureId || component.componentId + ":SPOT") + ":INDEX",
+      kind: "INDEX",
+      purpose: "POSITION_SPOT_ON_LOCATION",
+      fromCIn: round(currentCIn, 6),
+      toCIn: round(spotCIn, 6),
+      distanceIn: round(spotIndexDistanceIn, 6),
+      timeSec: round(spotIndexSec, 4)
+    });
+    currentCIn = spotCIn;
+    tSpotSec += spot.timing.totalSec;
+    operations.push({
+      sequence: operations.length + 1,
+      opId: spot.featureId || component.componentId + ":SPOT",
+      kind: "SPOT_ON_LOCATION",
+      stationId: M.stations.spotFace.id,
+      componentId: component.componentId,
+      componentRelativeXIn: round(spot.xIn, 6),
+      acrossWidthRule: spot.acrossWidthRule,
+      insetFromEdgeIn: spot.insetFromEdgeIn,
+      acrossWidthIn: round(spot.acrossWidthIn, 6),
+      toolDiameterIn: M.spot.toolDiameterIn,
+      fullDiameterDepthIn: M.spot.fullDiameterDepthIn,
+      plungeIn: spot.timing.plungeIn,
+      yPositionSec: round(spot.timing.yPositionSec, 4),
+      plungeSec: round(spot.timing.plungeSec, 4),
+      timeSec: round(spot.timing.totalSec, 4)
+    });
+  }
+
   const tMachineSec =
     M.handling.loadSeatSec +
     tReferenceSec +
     tIndexSec +
     tSawSec +
     tMillSec +
+    tSpotSec +
     M.handling.releaseLabelSec;
 
   return {
@@ -840,7 +942,7 @@ function deriveBatchComponentPlan(component, item) {
       T_REFERENCE_sec: round(tReferenceSec, 4),
       T_INDEX_sec: round(tIndexSec, 4),
       T_SAW_sec: round(tSawSec, 4),
-      T_DRILL_SPOT_sec: 0,
+      T_DRILL_SPOT_sec: round(tSpotSec, 4),
       T_MILL_sec: round(tMillSec, 4),
       T_RELEASE_LABEL_sec: M.handling.releaseLabelSec,
       T_MACHINE_sec: round(tMachineSec, 4),
