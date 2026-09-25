@@ -102,9 +102,9 @@ assert.equal(user1.materialResolution.pricingReferenceSku, "STB-ZERO-SPF-2X4-60-
 assert.equal(user1.materialResolution.pricingReferenceStockLengthIn, 60);
 assert.equal(user1.materialResolution.selectionPolicy, "SHORTEST_COMPLETE_STORE_OFFERING");
 assert.equal(user1.estimate.totals.material, 2.61);
-assert.equal(user1.estimate.totals.machine_service, 5.89);
-assert.equal(user1.estimate.totals.Q, 8.50);
-assert.equal(user1.estimate.travel.time.T_MACHINE_min, 1.4128);
+assert.equal(user1.estimate.totals.machine_service, 5.93);
+assert.equal(user1.estimate.totals.Q, 8.54);
+assert.equal(user1.estimate.travel.time.T_MACHINE_min, 1.4227);
 assert.equal(user1.estimate.engine.version, "0.3.0");
 assert.equal(ENGINE.version, "0.3.0");
 

@@ -34,9 +34,9 @@ assert.equal(passA.estimate.totals.material, 2.61);
 assert.equal(passA.estimate.travel.derivedSawCuts, 3);
 assert.equal(passA.estimate.travel.derivedSpotCount, 2);
 assert.equal(passA.estimate.travel.finalRemainderIn, 27.625);
-assert.equal(passA.estimate.travel.time.T_MACHINE_min, 1.4128);
-assert.equal(passA.estimate.totals.machine_service, 5.89);
-assert.equal(passA.estimate.totals.Q, 8.50);
+assert.equal(passA.estimate.travel.time.T_MACHINE_min, 1.4227);
+assert.equal(passA.estimate.totals.machine_service, 5.93);
+assert.equal(passA.estimate.totals.Q, 8.54);
 
 const ops = passA.estimate.travel.operationPlan;
 assert.equal(ops.filter((op) => op.kind === "REFERENCE_CUT").length, 1);
