@@ -31,3 +31,5 @@ jobs:
         run: node alcove-store-evaluator.test.mjs
       - name: Spot inset and depth (3/16 in after the point; 1 1/2 in or 2 in inset)
         run: node spot-inset-depth.test.mjs
+      - name: Cut packages and item lines (each line answered on its own)
+        run: node cut-package-evaluator.test.mjs
