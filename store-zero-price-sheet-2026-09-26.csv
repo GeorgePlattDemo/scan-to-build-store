@@ -1,0 +1,123 @@
+category,species,grade,nominal,actual_thickness_in,actual_width_in,length_ft,merchant_sku,everyday_price,basis,note
+Construction,SPF,kiln-dried,#2,2x2,1.5,1.5,8,1021004,3.14,OBSERVED,furring strip size may vary
+Construction,SPF,kiln-dried,#2,2x4,1.5,3.5,6,1021075,3.39,OBSERVED,
+Construction,SPF,kiln-dried,#2,2x4,1.5,3.5,8,,4.15,PLAUSIBLE,modeled on Menards 8 ft listings
+Construction,SPF,kiln-dried,#2,2x4,1.5,3.5,10,,5.50,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x4,1.5,3.5,12,,6.80,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x4,1.5,3.5,14,,8.20,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x4,1.5,3.5,16,1021143,12.13,OBSERVED,
+Construction,SPF,kiln-dried,#2,2x6,1.5,5.5,6,,5.20,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x6,1.5,5.5,8,,6.90,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x6,1.5,5.5,10,,8.90,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x6,1.5,5.5,12,,10.90,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x6,1.5,5.5,14,,13.20,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x6,1.5,5.5,16,1021790,19.44,OBSERVED,
+Construction,SPF,kiln-dried,#2,2x8,1.5,7.25,8,,9.80,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x8,1.5,7.25,10,,12.60,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x8,1.5,7.25,12,,15.40,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x8,1.5,7.25,14,,18.50,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x8,1.5,7.25,16,,24.80,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x10,1.5,9.25,8,,13.50,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x10,1.5,9.25,10,,17.40,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x10,1.5,9.25,12,,21.30,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x10,1.5,9.25,14,,25.50,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x10,1.5,9.25,16,,34.20,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x12,1.5,11.25,8,,17.80,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x12,1.5,11.25,10,,22.90,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x12,1.5,11.25,12,,28.00,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x12,1.5,11.25,14,,33.50,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,2x12,1.5,11.25,16,,44.90,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,4x4,3.5,3.5,8,,11.50,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,4x4,3.5,3.5,10,,14.80,PLAUSIBLE,
+Construction,SPF,kiln-dried,#2,4x4,3.5,3.5,12,,18.20,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x2,1.5,1.5,8,,4.80,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x4,1.5,3.5,6,,4.90,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x4,1.5,3.5,8,,5.90,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x4,1.5,3.5,10,,7.80,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x4,1.5,3.5,12,,9.60,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x4,1.5,3.5,14,,11.50,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x4,1.5,3.5,16,,15.20,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x6,1.5,5.5,6,,7.40,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x6,1.5,5.5,8,,9.80,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x6,1.5,5.5,10,,12.60,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x6,1.5,5.5,12,,15.40,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x6,1.5,5.5,14,,18.50,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x6,1.5,5.5,16,,24.50,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x8,1.5,7.25,8,,13.80,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x8,1.5,7.25,10,,17.80,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x8,1.5,7.25,12,,21.80,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,2x8,1.5,7.25,16,,34.80,PLAUSIBLE,
+Treated-AG,SYP,AC2 #2 Prime AG,5/4x6,1.0,5.5,8,,6.50,PLAUSIBLE,decking
+Treated-AG,SYP,AC2 #2 Prime AG,5/4x6,1.0,5.5,10,,8.40,PLAUSIBLE,decking
+Treated-AG,SYP,AC2 #2 Prime AG,5/4x6,1.0,5.5,12,,10.30,PLAUSIBLE,decking
+Treated-AG,SYP,AC2 #2 Prime AG,5/4x6,1.0,5.5,16,,14.20,PLAUSIBLE,decking
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,6,,5.90,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,8,1110818,7.14,OBSERVED,
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,10,1110821,10.87,OBSERVED,
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,12,,13.40,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,14,,16.00,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,16,1110850,18.24,OBSERVED,
+Treated-GC,SYP,AC2 #2 Prime GC,2x6,1.5,5.5,6,,8.90,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,2x6,1.5,5.5,8,,11.80,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,2x6,1.5,5.5,10,1111037,15.50,OBSERVED,
+Treated-GC,SYP,AC2 #2 Prime GC,2x6,1.5,5.5,12,,19.00,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,2x6,1.5,5.5,14,,22.80,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,2x6,1.5,5.5,16,,29.50,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,2x8,1.5,7.25,8,,16.50,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,2x8,1.5,7.25,10,1111338,19.60,OBSERVED,
+Treated-GC,SYP,AC2 #2 Prime GC,2x8,1.5,7.25,12,,24.00,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,2x8,1.5,7.25,16,1111367,32.07,OBSERVED,
+Treated-GC,SYP,AC2 #2 Prime GC,4x4,3.5,3.5,8,,14.90,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,4x4,3.5,3.5,10,,19.20,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Prime GC,4x4,3.5,3.5,12,,23.50,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Critical Structural,6x6,5.5,5.5,8,,32.00,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Critical Structural,6x6,5.5,5.5,10,,41.00,PLAUSIBLE,
+Treated-GC,SYP,AC2 #2 Critical Structural,6x6,5.5,5.5,12,,50.00,PLAUSIBLE,
+CedarTone,SYP,AC2 #1 Prime GC CedarTone,2x4,1.5,3.5,8,,9.80,PLAUSIBLE,
+CedarTone,SYP,AC2 #1 Prime GC CedarTone,2x4,1.5,3.5,10,,13.50,PLAUSIBLE,
+CedarTone,SYP,AC2 #1 Prime GC CedarTone,2x4,1.5,3.5,12,,16.80,PLAUSIBLE,
+CedarTone,SYP,AC2 #1 Prime GC CedarTone,2x4,1.5,3.5,16,,22.50,PLAUSIBLE,
+CedarTone,SYP,AC2 #1 Prime GC CedarTone,2x6,1.5,5.5,8,,15.80,PLAUSIBLE,
+CedarTone,SYP,AC2 #1 Prime GC CedarTone,2x6,1.5,5.5,10,,20.50,PLAUSIBLE,
+CedarTone,SYP,AC2 #1 Prime GC CedarTone,2x6,1.5,5.5,12,,25.20,PLAUSIBLE,
+CedarTone,SYP,AC2 #1 Prime GC CedarTone,2x6,1.5,5.5,16,,33.80,PLAUSIBLE,
+Cedar,Western Red Cedar,S4S,2x4,1.5,3.5,8,,12.50,PLAUSIBLE,
+Cedar,Western Red Cedar,S4S,2x4,1.5,3.5,10,,16.80,PLAUSIBLE,
+Cedar,Western Red Cedar,S4S,2x4,1.5,3.5,12,,20.90,PLAUSIBLE,
+Cedar,Western Red Cedar,S4S,2x6,1.5,5.5,8,,22.00,PLAUSIBLE,
+Cedar,Western Red Cedar,S4S,2x6,1.5,5.5,10,,29.50,PLAUSIBLE,
+Cedar,Western Red Cedar,S4S,2x6,1.5,5.5,12,,36.50,PLAUSIBLE,
+Cedar,Western Red Cedar,S4S,5/4x6,1.0,5.5,8,,14.50,PLAUSIBLE,decking
+Cedar,Western Red Cedar,S4S,5/4x6,1.0,5.5,12,,22.80,PLAUSIBLE,decking
+Cedar,Western Red Cedar,S4S,5/4x6,1.0,5.5,16,,31.50,PLAUSIBLE,decking
+Plywood,Pine,BC sanded,1/4,0.234,48,8,,18.50,PLAUSIBLE,4x8 sheet
+Plywood,Pine,BC sanded,1/2,0.472,48,8,,32.00,PLAUSIBLE,4x8 sheet
+Plywood,Pine,BC sanded,3/4,0.703,48,8,,48.00,PLAUSIBLE,4x8 sheet
+Plywood,Pine,ACX,1/2,0.472,48,8,,38.00,PLAUSIBLE,4x8 sheet
+Plywood,Pine,ACX,3/4,0.703,48,8,,55.00,PLAUSIBLE,4x8 sheet
+Plywood,SYP,Treated,1/2,0.472,48,8,,42.00,PLAUSIBLE,4x8 sheet
+Plywood,SYP,Treated,3/4,0.703,48,8,,62.00,PLAUSIBLE,4x8 sheet
+Plywood,Birch,Cabinet grade,1/2,0.472,48,8,,65.00,PLAUSIBLE,4x8 sheet
+Plywood,Birch,Cabinet grade,3/4,0.703,48,8,,95.00,PLAUSIBLE,4x8 sheet
+Plywood,Pine,BC sanded,3/4,0.703,24,4,,28.00,PLAUSIBLE,2x4 half sheet
+Plywood,Birch,Cabinet grade,3/4,0.703,24,4,,55.00,PLAUSIBLE,2x4 half sheet
+Hardware,Steel,Exterior,Deck screw 2.5in 1lb,,,,8.50,PLAUSIBLE,1 lb box
+Hardware,Steel,Exterior,Deck screw 2.5in 5lb,,,,32.00,PLAUSIBLE,5 lb box
+Hardware,Steel,Exterior,Deck screw 3in 1lb,,,,9.50,PLAUSIBLE,1 lb box
+Hardware,Steel,Exterior,Deck screw 3in 5lb,,,,36.00,PLAUSIBLE,5 lb box
+Hardware,Steel,Exterior,Carriage bolt 3/8x4 single,,,,0.85,PLAUSIBLE,with nut+washer
+Hardware,Steel,Exterior,Carriage bolt 3/8x4 25pk,,,,18.00,PLAUSIBLE,with nuts+washers
+Hardware,Steel,Exterior,Carriage bolt 3/8x5 single,,,,0.95,PLAUSIBLE,with nut+washer
+Hardware,Steel,Exterior,Carriage bolt 3/8x5 25pk,,,,20.50,PLAUSIBLE,with nuts+washers
+Treated-GC,SYP,AC2 #2 Prime GC,2x6,1.5,5.5,6,1111011,10.79,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
+Treated-GC,SYP,AC2 #2 Prime GC,2x6,1.5,5.5,8,1111024,11.97,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
+Treated-GC,SYP,AC2 #2 Prime GC,2x6,1.5,5.5,10,1111037,15.5,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
+Treated-GC,SYP,AC2 #2 Prime GC,2x6,1.5,5.5,12,1111040,19.48,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
+Treated-GC,SYP,AC2 #2 Prime GC,2x6,1.5,5.5,14,1111053,22.59,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
+Treated-GC,SYP,AC2 #2 Prime GC,2x2,1.5,1.5,8,1110740,5.28,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,6,1110805,6.49,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,8,1110818,7.14,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,10,1110821,10.87,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,12,1110834,13.4,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,14,1110847,16.39,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
+Treated-GC,SYP,AC2 #2 Prime GC,2x4,1.5,3.5,16,1110850,18.24,OBSERVED,reported earlier in chat 2026-09-25 (owner via Grok)
