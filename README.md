@@ -1,275 +1,104 @@
 # Scan-to-Build Store
 
-Private reference implementation for the Scan-to-Build store boundary.
+**The yard's answer: yes, no, or not yet — and why.**
 
-The Store resolves identified project/job requirements against available materials, stock, machine capability, simulation, economics, and fulfillment capability.
+<a href="https://georgeplattdemo.github.io/scan-to-build-system/system-build-current.html"><kbd>▶ OPEN THE APP</kbd></a> &nbsp;<sub>Pick any project. This Store answers it.</sub>
 
-It consumes the shared operational job meaning owned by **Scan-to-Build System** and returns Store-owned facts and answers to consuming applications.
-
-The Store does not redefine the job, silently repair unresolved information, or allow machine capability or economics to override the upstream definition.
-
-## Governing dimensional Store standard
-
-For every **complete dimensional Store Q**, [`DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md`](DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) controls the path from identified configuration → Store capability → modeled D-001 work → modeled occupied-cell time → Store economics → Q → confirmed reconciliation.
-
-There is one governing dimensional Store evaluator. Configure may present the answer it returns; Configure may not reproduce Store pricing/capability logic. The confirmed Store reconciliation calls the same evaluator again. Missing authority fails closed.
-
+3D Solutions LLC · Greensboro, North Carolina
 
 ---
 
-## Purpose
+## A yard already does most of this
 
-This repository exists to answer a bounded operational question:
+Every paint counter takes ordinary stock and a chosen formula and hands back a finish you can repeat. Every cut desk takes a board and a length and hands back a piece. People trust those because they're local, bounded and predictable.
 
-> Given a governed project requirement, what can this store actually provide, make, simulate, defer, or refuse?
+This repository asks for the same thing in three dimensions: ordinary lumber, changed only when a clearly defined job and a declared machine justify it.
 
-The Store converts governed requirements into a store-specific answer without changing the meaning of the originating project.
+A yard already has most of what that takes — stock, suppliers, forklifts, saws, people who know wood, customers who trust them. What it rarely gets is a job that arrives already defined. Usually it gets a conversation: *"I need shelves in this opening. Can you get the wood? Can you cut any of it here?"*
 
-Its job includes:
+The Store is how a yard answers a defined job instead. It keeps its own systems, suppliers, margins, people, equipment and the right to say no. It exposes answers, not its database.
 
-- material and offering resolution;
-- local stock and availability;
-- machine and process capability;
-- project-to-capability evaluation;
-- bounded translation into machine-neutral operations;
-- simulation;
-- fulfillment planning;
-- execution-boundary definition;
-- outcome reporting.
+## Store Zero: a yard you can test against
 
-The Store is intended to support both a reference implementation and future independently implemented stores, yards, cells, machines, and fulfillment providers.
+Store Zero is a fictional lumberyard, specified in enough detail to answer real questions:
 
----
+- **183 offerings** — 137 boards, 9 sheet goods, 37 hardware items — priced at a declared 5% mark-on over reference list prices — some observed at retail, the rest calculated or declared, and every one labeled with its basis.
+- **Declared stock** for each item, so a job can come back short.
+- **A declared machine**, D-001, with limits it will actually enforce.
+- **Four honest answers**: *supportable*, *unresolved*, *refused* or *unavailable*, each with its reason.
 
-## Repository Boundary
+Ask the same question twice against the same version and you get the same answer. Change something — the stock, a price, the job — and the answer changes, and the record says what moved.
 
-### System owns shared operational meaning
+## The X-brace, from the yard's side
 
-- canonical shared job/project definitions and semantic boundaries;
-- application/Store interface contracts;
-- shared record and custody semantics;
-- definition/readiness boundary meanings used to ask Store a bounded question;
-- WorkPacket and other shared operational object meanings where currently admitted;
-- simulation-versus-production distinctions carried by the application contract.
+A customer's app sends a job: two 16-inch parts with 30° ends and a center spot, on a 60-inch 2×4.
 
-Canonical operational-definition navigation begins in `GeorgePlattDemo/scan-to-build-system/docs/definitions/README.md`, with executable contracts under `apps/stb/shared/`.
+The Store checks that it carries that board and has enough on hand. It checks that the saws can make 30° cuts, that the spot drill can reach, and that the machine can grip the board through every cut — the two rollers need at least 24 inches of board between them. It works out how long the machine would take, prices the wood and the machine time together, and answers: *supportable*, about 27⅝ inches left over, here's the budgetary price.
 
-The Store consumes the identified job meaning. It does not replace or silently rewrite it.
+Make the parts too long for that board and the answer becomes *refused* — with the reason: the last cut would leave too little board for the two rollers to hold. The Store never quietly changes the job to make it fit.
 
-### Program owns research and adoption records
+## The machine
 
-`GeorgePlattDemo/3d-solutions-program` owns research, experiments, evidence, machine-development questions/findings, reviewed decisions/adoption records, partnerships/economic/business work, and migration/retirement records. A Program proposal does not expand Store capability until Store deliberately adopts and tests a versioned capability.
+The reference cell, D-001, is modeled on the dimensional machine the patents disclose: a table and fence, servo-driven rollers that move the board from above, clamps that hold it to the fence, and a saw at each end, with room on the machine for drill and router heads.
 
-### The Store owns
+D-001 as declared for Stage 2:
 
-- what materials or offerings are locally available;
-- what stock is actually present or obtainable;
-- what processes and machines are available;
-- what those machines can and cannot perform;
-- whether a governed requirement fits the declared store capability;
-- translation from an accepted requirement into bounded machine operations;
-- store-side simulation and fulfillment results.
+- **2 rollers** move and hold the board
+- **2 saws**, one at each end — one does miters up to 45°
+- **3 routers** — two working along clean axes, one end mill
+- **2 spot drills** for marking hole locations
 
-### Applications own
+The tools stay in fixed, known positions, set once when the machine is commissioned. The job says what the part is — lengths, angles, where the features go. The machine's own setup says where its tools are. The controller puts those together. Nobody programs each order by hand at the machine, and nobody reconstructs the drawing at the saw.
 
-- user entry and project journeys;
-- presentation and interaction;
-- capture and configuration workflows;
-- resuming existing work;
-- presenting Store results to the user.
+It's designed around things you can order: open-source motion control ([LinuxCNC](https://linuxcnc.org/)), a commercial motion board, standard G-code, commercial saw heads and router spindles. Nothing exotic.
 
-Applications may ask the Store questions. They do not determine Store capability or issue Store authorization.
+## The stages
 
----
+| Stage | What it is | Where it stands |
+| --- | --- | --- |
+| **1 — One board** | One roller moves one board between two fixed saws and cuts it to a defined length. The test is whether the job reaches the saw without being redrawn — not whether a saw can cut wood. | Works in software |
+| **2 — Store Zero and the reference cell** | The fictional yard above and the D-001 design, answering real project requests with prices and refusals. | Works in software; machine time is modeled |
+| **3 — Physical cell** | A real build: guarding, safety-rated controls, measured cycles. Measured minutes start replacing modeled ones. | Next |
+| **4 — Evidence-informed system** | Demand, refusals, measured cycles, material behavior and economics decide what the mature yard and cell should become. The patents' full machine is the upper bound being tested — the data may justify some of it, all of it, or none. | Not predetermined |
 
-## Core Separation
+A real yard doesn't have to look like Store Zero. It only has to answer the same questions its own way.
 
-The following concepts remain distinct:
+## What's in this repository
 
-**Project requirement** is not **material offering**.
+Store Zero runs. The evaluators, catalog and tests live at the top level:
 
-**Material offering** is not **stock availability**.
+| File | What it does |
+| --- | --- |
+| [`store-zero-catalog.json`](store-zero-catalog.json) | The 183 offerings, prices and declared stock |
+| [`store-zero-pricing-engine.mjs`](store-zero-pricing-engine.mjs) | Material, machine time and the budgetary price |
+| [`d001-stage2-envelope.mjs`](d001-stage2-envelope.mjs) | What the machine will and won't accept |
+| [`d001-travel-standard.mjs`](d001-travel-standard.mjs) | The one rule every board job goes through: fit, machine work, time, price |
+| [`cut-package-evaluator.mjs`](cut-package-evaluator.mjs) · [`alcove-store-evaluator.mjs`](alcove-store-evaluator.mjs) | Answers for multi-part jobs and fitted inserts |
 
-**Stock availability** is not **machine capability**.
+Run the tests (tested on Node 22):
 
-**Machine capability** is not **authorization**.
+```sh
+node --test *.test.mjs
+```
 
-**Authorization** is not **physical execution**.
+The same Store runs hosted, and the app calls it live at a pinned version.
 
-A valid Store implementation must preserve these distinctions.
+## Where the support lives
 
----
+| If you want to know… | Read | Why it's the evidence |
+| --- | --- | --- |
+| What is Store Zero, exactly? | [Store Zero](STORE-ZERO.md) | The yard, what it keeps private, what it exposes |
+| What does the machine accept and refuse? | [D-001 envelope](D-001-STAGE2-ENVELOPE-0.1.md) | Station layout, limits, what's still unresolved |
+| How does a job become a price? | [Travel standard](DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) | Fit, machine work, time and price, in one rule |
+| What does each stage prove? | [Stages](STB-STORE-CELL-STAGES-0.1.md) | What each stage may and may not claim |
+| What does one order look like, cut to closeout? | [Store Job 001](STORE-JOB-001.md) | One alcove insert through the yard |
+| What would a real yard need to add? | [Asset-to-implementation map](STORE-ASSET-TO-IMPLEMENTATION-MAP.md) | Existing assets first, smallest addition second |
+| What do the Store's words mean? | [Store terms](DEFINITIONS.md) | Store vocabulary, mapped to the app's shared meanings |
 
-## Store Evaluation
+The bigger question lives in the [3D Solutions Program](https://github.com/GeorgePlattDemo/3d-solutions-program). The customer's side lives in the [Scan-to-Build System](https://github.com/GeorgePlattDemo/scan-to-build-system).
 
-A Store receives a governed request and evaluates it against its declared resources and capabilities.
+## The fine print
 
-A Store may determine that work is:
+Store Zero is fictional. Its stock is declared, not counted. Its prices are budgetary estimates, not quotes. Machine times are modeled. No machine has been commissioned. Publication here grants no patent license.
 
-- supportable;
-- unsupported;
-- unavailable;
-- unresolved;
-- deferred;
-- refused.
-
-A Store must not manufacture missing facts or convert uncertainty into acceptance.
-
-An identified project may proceed toward bounded planning or simulation only through the applicable System operational contracts plus the Store-owned capability/refusal checks for the exact request.
-
----
-
-## Machine Capability
-
-Machine implementation is modular.
-
-The Store should be able to describe and evaluate machine capability without requiring every store to use the same physical equipment.
-
-### Fixed Tool Geometry
-
-The reference cell uses a determinate known tool set — a small fixed group of saws, drills, mills, and routers. Tool positions, machine references, station locations, and controlled motion relationships are established as part of commissioning and held in the machine configuration.
-
-The job supplies what the part is: finished dimensions, feature positions referenced to the part, required operations, and part identity. The machine configuration supplies where the tools are and how stock moves between them. The controller combines those two facts to position the work.
-
-For the fixed-tool reference cell, there is no per-job tool-location map, no manual machine-offset setting at Cycle Start, and no programmer reconstructing the drawing beside the machine.
-
-The machine-specific lowering logic still exists. It is established and validated as part of commissioning and configuration, then executes deterministically for accepted jobs rather than being manually authored again for each order.
-
-This separation keeps the job portable: the part is not defined by one particular cell's station coordinates.
-
-### Capability declaration
-
-The Store uses the System-defined shared operational meaning of `MachineEnvelope` and owns the particular Store/machine capability instance it declares.
-
-A Store may declare or reference a machine-specific capability representation conforming to that contract. It does not redefine the contract, silently extend an envelope because an operation once succeeded, or infer capability from observed behavior.
-
-Capability remains distinct from readiness, authorization, and physical execution.
-
-### Operating conditions
-
-Three machine-side conditions remain separate:
-
-**Local manual / jog operation** — an operator commands permitted machine motion through local controls. Servos may still perform the movement.
-
-**Local automatic operation** — the cell executes an accepted machine program under local control.
-
-**Network communication** — the network delivers a validated job and receives status.
-
-> **Loss of network communication shall not affect real-time motion, interlocks, state management, or stopping. The network delivers a validated job and receives status.**
-
-A change between manual and automatic operation is an explicit local machine event. Network presence is not motion authority.
-
-### `POSITION_VALID`
-
-The machine knows where the applicable workpiece reference is, or it knows that it does not.
-
-`POSITION_VALID` is the machine-local condition that the workpiece reference required for the commanded motion has been established and remains valid under the declared machine conditions.
-
-When `POSITION_VALID` is false, the machine must not execute a command whose geometry depends on known workpiece position. Position must be established again under the applicable machine procedure.
-
-`POSITION_VALID` is not readiness, authorization, or proof that a finished part conforms.
-
-### Capability progression
-
-Initial development uses four capability levels:
-
-### MCL-1 — Transmission Proof
-
-The smallest complete machine path.
-
-One governed instruction.  
-One board.  
-One established workpiece reference.  
-One bounded operation.  
-One observed result.
-
-Its purpose is to prove transmission, interpretation, execution-boundary behavior, and outcome recording with the smallest practical machine system.
-
-A useful comparison exists below MCL-1:
-
-**Position-assisted operation** — controlled stock positioning with an operator completing the physical cut or operation through independently controlled equipment.
-
-This is a comparison point, not an additional formal MCL.
-
-### MCL-2 — Minimum Useful Cell
-
-The minimum bounded machine capability capable of supporting a viable initial project class or fulfillment offering.
-
-This level is expected to contain the first meaningful multi-operation implementation.
-
-For the D-001 reference path, the number of times the workpiece must be released and re-referenced is a primary complexity and error driver. The preferred pattern is to establish the workpiece once and perform the required operations inside a maintained reference chain.
-
-### MCL-3 — Extended Capability
-
-A broader capability envelope built from demonstrated needs and limitations discovered through MCL-1 and MCL-2.
-
-Requirements may be defined before every implementation choice is fixed.
-
-### MCL-4 — Frontier Capability
-
-Long-range capability, advanced automation, and future machine concepts.
-
-MCL-4 may guide architecture and research but must not create active implementation obligations merely because a concept is documented.
-
-An MCL label does not itself grant operations. Each implemented capability must explicitly declare the operations and limits it supports.
-
----
-
-## Modularity
-
-The Store should be designed so that individual implementations can be replaced or extended without redefining the complete system.
-
-Expected separations include:
-
-- governed request intake;
-- material resolution;
-- stock resolution;
-- capability declaration;
-- job evaluation;
-- translation;
-- machine adapter;
-- simulation;
-- execution boundary;
-- outcome reporting.
-
-A future lumberyard, machine builder, software developer, or fulfillment provider should be able to implement a conforming module without inheriting unrelated internal machinery.
-
----
-
-## Development Rule
-
-This repository begins clean intentionally.
-
-Existing Scan-to-Build repositories, exploratory work, machine drafts, reference-node work, and prior design studies are **source material**, not automatically part of this implementation.
-
-Prior work enters this repository only when it is deliberately adopted because the Store requires it.
-
-Useful prior ideas may remain preserved elsewhere without becoming active Store architecture.
-
-Planned concepts do not become requirements merely because they are documented.
-
----
-
-## Initial Build Direction
-
-The initial Store work should establish, in order:
-
-1. the Store contract;
-2. Store input and output objects;
-3. capability and availability semantics;
-4. bounded Store evaluation;
-5. MCL-1;
-6. simulation and outcome handling;
-7. MCL-2 requirements and implementation.
-
-Higher capability levels should grow from demonstrated requirements rather than anticipated complexity.
-
----
-
-## Current Status
-
-**Early private development.**
-
-This repository is not a production lumberyard system, production machine controller, commerce service, or claim of production readiness.
-
-The immediate goal is to establish a clean, testable, modular Store boundary capable of growing without weakening the Scan-to-Build governance model.
+**NO BLOOD ON WOOD.**
