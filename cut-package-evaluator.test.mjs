@@ -111,6 +111,77 @@ assert.equal(fresh.evaluationReceipt.authority.storeRevision, "TEST-REV");
 assert.equal(fresh.evaluationReceipt.authority.cutPackageStandard.id, CUT_PACKAGE_STANDARD.id);
 assert.equal(evaluateCutPackageStoreRequest(catalog, demand, {}).freshEvaluation, false);
 
+// Hardware requirement lines: neutral meaning in, Store-resolved SKU, packages and price out.
+const hw = (lineId, qty, requirement) => ({ lineId, qty, requirement });
+const screw = (lengthIn, finish) => ({ kind: "wood-screw", gauge: "#10", lengthIn, finish, unit: "piece" });
+const carriageBolt = (lengthIn, finish) => ({ kind: "carriage-bolt", diameterIn: 0.375, lengthIn, finish, unit: "piece" });
+const reqs = job([], [
+  hw("S25", 100, screw(2.5, "coated")),
+  hw("S45", 26, screw(4.5, "coated")),
+  hw("B5", 8, carriageBolt(5, "coated")),
+  hw("GALV", 48, screw(2.5, "hot-dip-galvanized")),
+  hw("SS", 48, screw(2.5, "stainless")),
+  hw("SIB", 48, screw(2.5, "silicon-bronze")),
+  hw("BULK", 400, screw(2.5, "coated")),
+  hw("NONE", 10, screw(2.0, "coated")),
+  hw("NOFIN", 10, screw(2.5, "brass")),
+  hw("PART", 10, { kind: "wood-screw", lengthIn: 2.5, finish: "coated" }),
+  hw("BOTHSIZE", 10, { kind: "wood-screw", gauge: "#10", diameterIn: 0.19, lengthIn: 2.5, finish: "coated" }),
+  hw("BYWEIGHT", 10, { ...screw(2.5, "coated"), unit: "pound" }),
+  { lineId: "EXACT", storeSku: "STB-ZERO-HW-COATED-SCR10-2P5-90-001", qty: 2 }
+]);
+for (const [id, finish] of [["S25", "COATED"], ["S45", "COATED"], ["B5", "COATED"], ["GALV", "HOT_DIP_GALVANIZED"], ["SS", "STAINLESS"], ["SIB", "SILICON_BRONZE"]]) {
+  const answer = line(reqs, id);
+  assert.equal(answer.status, "SUPPORTABLE", id + " " + JSON.stringify(answer.reasonCodes));
+  const item = findSku(catalog, answer.storeSku);
+  assert.ok(item && item.offered, id + " resolves to an offered Store SKU");
+  assert.equal(item.fastener.tier, finish, id + " keeps the stated finish");
+  assert.equal(answer.piecesPerPackage, item.fastener.piecesPerPackage);
+  assert.equal(answer.packages, Math.ceil(answer.requiredPieces / answer.piecesPerPackage));
+  assert.equal(answer.piecesSupplied, answer.packages * answer.piecesPerPackage);
+  assert.ok(answer.piecesSupplied >= answer.requiredPieces);
+  assert.equal(answer.sellingPrice, item.sellingPrice);
+  assert.equal(answer.Q, Math.round(item.sellingPrice * answer.packages * 100) / 100);
+}
+// Exact match on every field: a bolt line gets a bolt of that diameter and length; a screw line a #10 screw.
+assert.equal(findSku(catalog, line(reqs, "B5").storeSku).fastener.kind, "CARRIAGE_BOLT_3_8_NUT_WASHER");
+assert.equal(findSku(catalog, line(reqs, "S45").storeSku).fastener.lengthIn, 4.5);
+// Packaging is the Store's: 100 pieces from 90-piece boxes is 2 boxes (180 pieces), cheaper than one 450 box.
+assert.equal(line(reqs, "S25").piecesPerPackage, 90);
+assert.equal(line(reqs, "S25").packages, 2);
+assert.equal(line(reqs, "S25").piecesSupplied, 180);
+// Several package sizes match: the lowest total Store cost wins, and the choice is reported.
+const bulk = line(reqs, "BULK");
+const totalFor = (sku, pieces) => { const item = findSku(catalog, sku); return Math.round(item.sellingPrice * Math.ceil(pieces / item.fastener.piecesPerPackage) * 100) / 100; };
+assert.ok(bulk.matchedOfferings.length >= 2);
+for (const sku of bulk.matchedOfferings) assert.ok(bulk.Q <= totalFor(sku, 400), "no matching package size is cheaper than " + bulk.storeSku);
+assert.equal(bulk.storeSku, "STB-ZERO-HW-COATED-SCR10-2P5-450-001");
+assert.deepEqual(job([], [hw("A", 400, screw(2.5, "coated"))]).items[0].storeSku, bulk.storeSku, "deterministic");
+// Nothing close enough: no 2 in screw, no brass. Fail closed, no substitute.
+for (const id of ["NONE", "NOFIN"]) {
+  assert.equal(line(reqs, id).status, "REFUSED", id);
+  assert.deepEqual(line(reqs, id).reasonCodes, ["NO_MATCHING_HARDWARE_OFFERING"], id);
+  assert.equal(line(reqs, id).storeSku, null, id);
+  assert.equal(line(reqs, id).Q, null, id);
+}
+// An incomplete or ambiguous requirement is unresolved.
+for (const id of ["PART", "BOTHSIZE", "BYWEIGHT"]) {
+  assert.equal(line(reqs, id).status, "UNRESOLVED", id);
+  assert.deepEqual(line(reqs, id).reasonCodes, ["HARDWARE_REQUIREMENT_INCOMPLETE"], id);
+}
+// Exact-SKU mode is unchanged.
+const exactLine = line(reqs, "EXACT");
+assert.equal(exactLine.status, "SUPPORTABLE");
+assert.equal(exactLine.storeSku, "STB-ZERO-HW-COATED-SCR10-2P5-90-001");
+assert.equal(exactLine.Q, Math.round(findSku(catalog, exactLine.storeSku).sellingPrice * 2 * 100) / 100);
+assert.equal(exactLine.packages, undefined, "exact-SKU lines count SKUs, not pieces");
+// Not enough stock of any matching package: unavailable, reported against the cheapest match, never substituted.
+const short = job([], [hw("SHORT", 100000, screw(2.5, "coated"))]).items[0];
+assert.equal(short.status, "UNAVAILABLE");
+assert.equal(short.Q, null);
+// The resolver reads structured catalog facts, not SKU strings or descriptions.
+assert.ok(!/storeSku\s*\.\s*(includes|match|startsWith|split)|description\s*\.\s*(includes|match)/.test(source), "no SKU or description parsing");
+
 console.log("cut-package: ok", JSON.stringify({
   mixed: Object.fromEntries([...mixed.packages, ...mixed.items].map((l) => [l.packageId ?? l.lineId, l.status === "SUPPORTABLE" ? `${l.boards ? l.boards + "x" + l.storeSku.replace("STB-ZERO-", "") + " " : ""}$${l.Q}` : l.reasonCodes[0]])),
   sum: mixed.totals.sumOfSupportableLines
