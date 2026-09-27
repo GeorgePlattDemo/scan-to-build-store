@@ -9,10 +9,13 @@
  *     Store Zero picks the offered board length, nests the parts, times the D-001 cell and prices it,
  *     or refuses with a reason. It never changes the wood the customer chose.
  *
- *   itemLines: an exact catalog SKU and a count, for example a box of screws.
+ *   itemLines: either an exact catalog SKU and a count, for example a box of screws:
  *     { lineId, storeSku, qty }
- *     Store Zero answers whether that SKU is offered and in stock, and its price. It never picks,
- *     suggests or substitutes an item.
+ *     Store Zero answers whether that SKU is offered and in stock, and its price. It never substitutes it.
+ *   or a neutral hardware requirement counted in pieces:
+ *     { lineId, qty, requirement: { kind, gauge | diameterIn, lengthIn, finish, unit: "piece" } }
+ *     Store Zero resolves it to its own offering by exact match on structured catalog facts, works out
+ *     the packages, and answers the SKU, packages and price, or refuses. No nearest size, no finish swap.
  *
  * Every line is answered on its own. A refused line does not stop the others, and nothing is
  * combined into a kit price. The sum of the supportable lines is reported for convenience only.
@@ -350,8 +353,113 @@ function evaluatePackage(catalog, pkg, identity) {
   return line;
 }
 
+// Hardware requirement resolution (item lines with no storeSku).
+// A line may state neutral hardware meaning instead of a SKU:
+//   { lineId, qty (pieces), requirement: { kind, gauge | diameterIn, lengthIn, finish, unit: "piece" } }
+// Store Zero matches it only against its own structured catalog facts (offering.fastener), never against
+// SKU strings or descriptions. Every stated field must match exactly; there is no nearest size and no
+// finish substitution. Store Zero owns packaging: packages = ceil(pieces / piecesPerPackage). When more than
+// one package size matches, it picks the single SKU with the lowest total Store cost (sellingPrice x
+// packages) whose stock covers the packages, ties broken by SKU; it never mixes package sizes.
+// The vocabulary below reads Store Zero's own fastener codes; it names no project.
+const FASTENER_KINDS = Object.freeze({
+  WOOD_SCREW_10: Object.freeze({ kind: "wood-screw", gauge: "#10" }),
+  CARRIAGE_BOLT_3_8_NUT_WASHER: Object.freeze({ kind: "carriage-bolt", diameterIn: 0.375, includes: "nut and washer" })
+});
+const FASTENER_FINISHES = Object.freeze({
+  COATED: "coated",
+  HOT_DIP_GALVANIZED: "hot-dip-galvanized",
+  STAINLESS: "stainless",
+  SILICON_BRONZE: "silicon-bronze",
+  ZINC_INTERIOR: "zinc-interior"
+});
+const REQUIREMENT_FIELDS = ["kind", "gauge", "diameterIn", "lengthIn", "finish", "unit"];
+
+function fastenerMeaning(item) {
+  const f = item?.fastener;
+  if (!f || typeof f !== "object") return null;
+  const kind = FASTENER_KINDS[f.kind];
+  const finish = FASTENER_FINISHES[f.tier];
+  const pieces = Number(f.piecesPerPackage);
+  if (!kind || !finish || !Number.isFinite(Number(f.lengthIn)) || !Number.isInteger(pieces) || pieces <= 0) return null;
+  return { ...kind, lengthIn: Number(f.lengthIn), finish, unit: "piece", piecesPerPackage: pieces };
+}
+
+function requirementIncomplete(req) {
+  if (!req || typeof req !== "object" || Array.isArray(req)) return "The requirement must be an object.";
+  const extra = Object.keys(req).filter((key) => !REQUIREMENT_FIELDS.includes(key));
+  if (extra.length) return "Unknown requirement fields: " + extra.join(", ") + ".";
+  if (!req.kind || !req.finish || req.lengthIn == null) return "A hardware requirement states kind, lengthIn and finish.";
+  if ((req.gauge == null) === (req.diameterIn == null)) return "A hardware requirement states exactly one of gauge or diameterIn.";
+  if (!Number.isFinite(Number(req.lengthIn)) || Number(req.lengthIn) <= 0) return "lengthIn must be a positive number.";
+  if (req.diameterIn != null && (!Number.isFinite(Number(req.diameterIn)) || Number(req.diameterIn) <= 0)) return "diameterIn must be a positive number.";
+  if (req.unit != null && req.unit !== "piece") return "Hardware requirements are counted in pieces.";
+  return null;
+}
+
+function meaningMatches(meaning, req) {
+  if (meaning.kind !== req.kind || meaning.finish !== req.finish) return false;
+  if (meaning.lengthIn !== Number(req.lengthIn)) return false;
+  if (req.gauge != null) return meaning.gauge === req.gauge;
+  return meaning.diameterIn === Number(req.diameterIn);
+}
+
+function evaluateRequirement(catalog, line, lineId, qty) {
+  const req = line.requirement;
+  const base = { kind: "ITEM", lineId, storeSku: null, qty, requirement: req, requiredPieces: qty };
+  const incomplete = requirementIncomplete(req);
+  if (incomplete) return answerLine(base, "UNRESOLVED", "HARDWARE_REQUIREMENT_INCOMPLETE", "DEFINITION_GAP", incomplete);
+  if (!Number.isInteger(qty) || qty <= 0) return answerLine(base, "UNRESOLVED", "WHOLE_QUANTITY_REQUIRED", "DEFINITION_GAP", "A hardware requirement needs a whole number of pieces.");
+  const candidates = catalog.offerings
+    .filter((item) => item.offered === true)
+    .map((item) => ({ item, meaning: fastenerMeaning(item) }))
+    .filter(({ meaning }) => meaning && meaningMatches(meaning, req))
+    .map(({ item, meaning }) => {
+      const packages = Math.ceil(qty / meaning.piecesPerPackage);
+      const price = priceAnswer(item);
+      return { item, meaning, packages, price, total: price.status === "UNRESOLVED" ? null : round(Number(item.sellingPrice) * packages, 2) };
+    });
+  if (!candidates.length) {
+    return answerLine(base, "REFUSED", "NO_MATCHING_HARDWARE_OFFERING", "MATERIAL_GAP", "Store Zero offers no hardware that matches every stated field of this requirement.");
+  }
+  const priced = candidates
+    .filter((c) => c.total != null)
+    .sort((a, b) => a.total - b.total || String(a.item.storeSku).localeCompare(String(b.item.storeSku)));
+  if (!priced.length) {
+    return answerLine(base, "UNRESOLVED", "MISSING_PRICE", "STORE_DATA_GAP", "Store Zero has no selling price for the hardware that matches this requirement.");
+  }
+  const chosen = priced.find((c) => stockAnswer(c.item, c.packages).sufficient === true);
+  const resolution = (c) => ({
+    storeSku: c.item.storeSku,
+    description: c.item.description || null,
+    uom: c.item.uom || null,
+    piecesPerPackage: c.meaning.piecesPerPackage,
+    packages: c.packages,
+    piecesSupplied: c.packages * c.meaning.piecesPerPackage,
+    sellingPrice: Number(c.item.sellingPrice),
+    resolvedBy: "HARDWARE_REQUIREMENT_EXACT_MATCH",
+    resolutionPolicy: "lowest total Store cost among exact matches with stock; ties by SKU; one package size",
+    matchedOfferings: priced.map((p) => p.item.storeSku)
+  });
+  if (!chosen) {
+    const cheapest = priced[0];
+    return answerLine(base, "UNAVAILABLE", stockAnswer(cheapest.item, cheapest.packages).status, "AVAILABILITY_GAP", "Store Zero does not have enough packages of the matching hardware on hand.", resolution(cheapest));
+  }
+  const extension = chosen.total;
+  return {
+    ...base,
+    ...resolution(chosen),
+    status: "SUPPORTABLE",
+    totals: { item: extension, Q: extension },
+    Q: extension,
+    reasonCodes: [],
+    reasonRecord: null
+  };
+}
+
 function evaluateItem(catalog, line) {
   const lineId = String(line?.lineId || "");
+  if (lineId && !line?.storeSku && line?.requirement != null) return evaluateRequirement(catalog, line, lineId, Number(line?.qty));
   const storeSku = String(line?.storeSku || "");
   const qty = Number(line?.qty);
   const base = { kind: "ITEM", lineId, storeSku, qty };
