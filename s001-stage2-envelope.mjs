@@ -2,7 +2,12 @@
  * S-001 Stage-2 reference envelope: the sheet cell and the yard panel saw.
  * Declared capability. measured = false. commissioned = false. Not Cycle Start. Not generic CNC.
  *
- * Human copy: S-001-STAGE2-ENVELOPE-0.1.md. Every number here is a Stage-2 fixture assumption.
+ * Human copy: S-001-STAGE2-ENVELOPE-0.1.md.
+ *
+ * Every feed rate, handling time, clearance and minimum below is a NEWLY ADOPTED Stage-2 reference
+ * assumption (DECLARED_STAGE2_MODEL / DECLARED_STAGE2_CAPABILITY). None is recovered or measured.
+ * measured = false, commissioned = false. They are not physical-machine evidence and do not make a
+ * commercial quote. Measured Stage-3 evidence replaces them later; earlier results are not rewritten.
  * Sheet work never falls through D-001 dimensional logic, and D-001 never accepts a sheet.
  *
  * Two stations carry sheet work:
@@ -12,7 +17,8 @@
  *                Coordinated sheet-X and tool-Y routing makes straight and curvilinear profiles inside one
  *                centered working field. Routed pieces stay attached to the sheet by tabs.
  *
- *   YARD-PANEL-SAW  a vertical panel saw in the yard, run by a yard operator to a measured line.
+ *   YARD-PANEL-SAW  a vertical panel saw in the yard, run by a yard operator to a measured line
+ *                   (newly adopted Stage-2 reference station).
  *                   It makes the straight full-width crosscuts and rips already declared on sheet
  *                   offerings (CROSSCUT, RIP). It runs after routing, so the sheet stays whole and
  *                   registered while it is routed.
@@ -25,6 +31,16 @@ export const S001_STAGE2_ENVELOPE = Object.freeze({
   measured: false,
   commissioned: false,
   physicalStatus: "NOT_CLAIMED",
+  assumptions: Object.freeze({
+    capabilityBasis: "DECLARED_STAGE2_CAPABILITY",
+    timingBasis: "DECLARED_STAGE2_MODEL",
+    status: "NEWLY_ADOPTED_REFERENCE_ASSUMPTIONS",
+    adoptedIn: "S001-STAGE2-ENVELOPE-0.1",
+    source: "not recovered, not measured",
+    physicalMachineEvidence: false,
+    commercialQuote: false,
+    replacedBy: "MEASURED_STAGE3_EVIDENCE"
+  }),
   relationship: Object.freeze({
     toolingX: "vertical tooling assembly remains at the machine centerline in X",
     toolingY: "tooling platform moves vertically / in Y",
@@ -75,9 +91,15 @@ export const S001_STAGE2_ENVELOPE = Object.freeze({
     runsAfterRouting: true
   }),
   label: Object.freeze({ perPieceSec: 10 }),
-  // Stage 2 uses the one declared Store Zero machine-hour basis for every station (see d001-travel-standard.mjs
-  // economics). S-001 has no separate measured economics.
-  economicsBasis: "STB-D001-STORE-ECONOMICS-S2-0.1",
+  // Intentional: S-001 machine service is priced with the existing Store Zero Stage-2 economics object.
+  // That object is still named for D-001 (D001_TRAVEL_STANDARD.economics); its use here is shared Store Zero
+  // Stage-2 economics, not a claim that S-001 is D-001. Renaming it is a separate later task.
+  economicsBasis: Object.freeze({
+    id: "STB-D001-STORE-ECONOMICS-S2-0.1",
+    use: "SHARED_STORE_ZERO_STAGE2_MACHINE_HOUR_RATE",
+    intentional: true,
+    renameDeferred: true
+  }),
   featureKinds: Object.freeze(["ARCHED_APERTURE", "STRAIGHT_SPLIT", "CROSSCUT"]),
   requiredOps: Object.freeze({
     ARCHED_APERTURE: "ROUTE_PROFILE",

@@ -3,7 +3,8 @@
 **Status:** REFERENCE planning policy  
 **Policy id:** `S001-STENCIL-TAB-POLICY-V0`  
 **Evidence class:** REFERENCE  
-**Physical retention status:** NOT MEASURED
+**Physical retention status:** NOT MEASURED  
+**Provenance:** carried forward from Store `4402abeb6b0299a5b6db2eec85ed04c3b0236bcc` unchanged, except the split rule, which is newly adopted with `S001-STAGE2-ENVELOPE-0.1`
 
 This policy gives Store Zero a deterministic answer to two different questions:
 

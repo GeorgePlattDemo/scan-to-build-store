@@ -364,8 +364,23 @@ export function evaluateSheetPackageJob(catalog, demand = {}) {
   if (field && Number.isFinite(parent.lengthIn)) {
     const cut = piecesFor(parent, crosscuts.map((c) => c.geometry.xIn), apertures, splits);
     pieces = cut.pieces;
-    [...new Set(cut.refusals)].forEach((code) => refuse(code, "crosscuts", crosscutText(code)));
+    // A piece too short to cut belongs to the crosscuts that make it.
+    [...new Set(cut.refusals)].forEach((code) => crosscuts.forEach((c) => refuse(code, c.featureId, crosscutText(code))));
   }
+
+  // Every requested feature gets its own answer, so nothing is silently dropped.
+  const featureAnswers = features.map((feature) => {
+    const id = feature?.featureId || "feature";
+    const codes = records.filter((r) => r.subject === id).map((r) => r.code);
+    const refused = codes.some((code) => refusals.includes(code));
+    const open = codes.some((code) => unresolved.includes(code));
+    return {
+      featureId: id,
+      kind: feature?.kind ?? null,
+      status: refused ? "REFUSED" : open ? "UNRESOLVED" : "ANSWERED",
+      reasonCodes: [...new Set(codes)]
+    };
+  });
 
   const uniqueRefusals = [...new Set(refusals)];
   const uniqueUnresolved = [...new Set(unresolved)];
@@ -432,6 +447,7 @@ export function evaluateSheetPackageJob(catalog, demand = {}) {
     reasonRecords: records,
     material: answerMaterial,
     workField: field ? { id: ENV.workField.id, ...field } : null,
+    featureAnswers,
     features: {
       apertures: apertures.map((a) => ({ featureId: a.featureId, ...a.geometry, tabPlan: a.tabPlan })),
       splits: splits.map((s) => ({ featureId: s.featureId, within: s.host.featureId, ...s.geometry })),
@@ -444,9 +460,16 @@ export function evaluateSheetPackageJob(catalog, demand = {}) {
     Q: totals ? totals.Q : null,
     evidence: {
       evidenceClass: ENV.evidenceClass,
+      capabilityBasis: ENV.assumptions.capabilityBasis,
+      timingBasis: ENV.assumptions.timingBasis,
+      assumptions: ENV.assumptions.status,
       measured: false,
       commissioned: false,
       physicalStatus: ENV.physicalStatus,
+      physicalMachineEvidence: false,
+      commercialQuote: false,
+      replacedBy: ENV.assumptions.replacedBy,
+      economics: ENV.economicsBasis,
       tabRetention: STENCIL_TAB_POLICY_V0.physicalRetentionStatus
     },
     note: "Budgetary estimate from declared Stage-2 reference capability. Not a commercial quote, not a cut.",

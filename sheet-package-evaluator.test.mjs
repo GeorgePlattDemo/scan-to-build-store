@@ -146,3 +146,33 @@ test("D-001 still refuses sheets: a sheet never falls through dimensional cut pa
   });
   assert.notEqual(answer.status, "SUPPORTABLE");
 });
+
+test("every requested feature is answered; nothing is silently dropped", () => {
+  const withExtra = playhouse({ cuts: [4, 18] });
+  withExtra.features.push({ featureId: "HINGE-HOLES", kind: "DRILL", xIn: 30 });
+  const answer = evaluateSheetPackageJob(loadCatalog(), withExtra);
+  assert.deepEqual(answer.featureAnswers.map((f) => f.featureId), withExtra.features.map((f) => f.featureId));
+  const byId = Object.fromEntries(answer.featureAnswers.map((f) => [f.featureId, f]));
+  assert.equal(byId["HINGE-HOLES"].status, "REFUSED");
+  assert.deepEqual(byId["HINGE-HOLES"].reasonCodes, ["FEATURE_KIND_NOT_DECLARED"]);
+  assert.equal(byId["CUT-LEFT"].status, "REFUSED");
+  assert.equal(byId["OPENING"].status, "ANSWERED");
+  // The requested geometry is echoed as asked, not simplified.
+  assert.equal(answer.features.apertures[0].widthIn, 36);
+  assert.equal(answer.features.crosscuts.find((c) => c.featureId === "CUT-LEFT").xIn, 4);
+});
+
+test("assumptions are labeled as newly adopted Stage-2 reference, not measured or quoted", () => {
+  const answer = evaluateSheetPackageJob(loadCatalog(), playhouse());
+  assert.equal(answer.evidence.capabilityBasis, "DECLARED_STAGE2_CAPABILITY");
+  assert.equal(answer.evidence.timingBasis, "DECLARED_STAGE2_MODEL");
+  assert.equal(answer.evidence.assumptions, "NEWLY_ADOPTED_REFERENCE_ASSUMPTIONS");
+  assert.equal(answer.evidence.measured, false);
+  assert.equal(answer.evidence.commissioned, false);
+  assert.equal(answer.evidence.physicalMachineEvidence, false);
+  assert.equal(answer.evidence.commercialQuote, false);
+  assert.equal(answer.evidence.replacedBy, "MEASURED_STAGE3_EVIDENCE");
+  assert.equal(answer.evidence.economics.use, "SHARED_STORE_ZERO_STAGE2_MACHINE_HOUR_RATE");
+  assert.equal(answer.time.measured, false);
+  assert.ok(!JSON.stringify(answer).match(/G0|G1 |M3|cycleStart/i));
+});

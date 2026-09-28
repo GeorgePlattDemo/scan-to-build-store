@@ -63,7 +63,7 @@ S-001 as declared for Stage 2 (the machine-readable copy is [`s001-stage2-envelo
 - **The sheet cell** holds a full 48 × 96 in sheet on rollers and moves it past a router that stays at the machine's centerline. It routes straight and curved profiles inside one centered 48 × 36 in working field, and leaves the routed pieces attached by tabs for the owner to separate.
 - **The yard panel saw** makes straight full-width crosscuts after routing, at least 1 in clear of anything routed.
 
-A playhouse window is the first job it answers: one 1/2 in sheet, a centered arched opening, the center split in two for shutters, and a crosscut 18 in from each end. The Store picks the sheet, plans the tabs, times the router and the saw, prices it, and returns every piece. Make the opening too tall for the field and the answer is *refused* — with the reason. See [S-001 envelope](S-001-STAGE2-ENVELOPE-0.1.md).
+A playhouse window is the first job it answers: one 1/2 in sheet, a centered arched opening, the center split in two for shutters, and a crosscut 18 in from each end. The Store picks the sheet, plans the tabs, times the router and the saw from newly adopted Stage-2 reference assumptions (modeled, not measured), prices it with the same declared Store Zero machine-hour rate D-001 uses, and returns every piece. Make the opening too tall for the field and the answer is *refused* — with the reason. See [S-001 envelope](S-001-STAGE2-ENVELOPE-0.1.md).
 
 ## The stages
 
