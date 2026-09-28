@@ -13,6 +13,7 @@ The live app in `scan-to-build-system` calls the hosted Store on Railway at one 
 
 ## Working rules
 
+- Shared terms are defined once, in System's `docs/definitions/README.md`. `DEFINITIONS.md` here holds only yard, merchant and Store Zero terms.
 - Store answers from its own declared facts. It never rewrites the customer's job to make it fit.
 - Missing Store facts stay `UNRESOLVED`, `REFUSED` or `UNAVAILABLE`. No fallback prices, no invented capability.
 - Run the tests before and after any change: `node --test *.test.mjs`.
