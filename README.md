@@ -93,6 +93,7 @@ The same Store runs hosted, and the app calls it live at a pinned version.
 | What does each stage prove? | [Stages](STB-STORE-CELL-STAGES-0.1.md) | What each stage may and may not claim |
 | What does one order look like, cut to closeout? | [Store Job 001](STORE-JOB-001.md) | One alcove insert through the yard |
 | What would a real yard need to add? | [Asset-to-implementation map](STORE-ASSET-TO-IMPLEMENTATION-MAP.md) | Existing assets first, smallest addition second |
+| What comes after Store Zero? | [Store 1](store-1/README.md) | The build surface for the first real Store adapter |
 | What do the Store's words mean? | [Store terms](DEFINITIONS.md) | Store vocabulary, mapped to the app's shared meanings |
 
 The bigger question lives in the [3D Solutions Program](https://github.com/GeorgePlattDemo/3d-solutions-program). The customer's side lives in the [Scan-to-Build System](https://github.com/GeorgePlattDemo/scan-to-build-system).

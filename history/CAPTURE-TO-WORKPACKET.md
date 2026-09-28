@@ -1,3 +1,5 @@
+> **Historical.** Parked here on 2026-09-28. This is the earlier mixed capture-to-WorkPacket paper; it is not current Store doctrine. Current Store rules live in [STORE-ZERO.md](../STORE-ZERO.md), the [travel standard](../DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) and the [D-001 envelope](../D-001-STAGE2-ENVELOPE-0.1.md). Content below is unchanged.
+
 # Scan-to-Build
 
 ## Capture-to-WorkPacket Boundary

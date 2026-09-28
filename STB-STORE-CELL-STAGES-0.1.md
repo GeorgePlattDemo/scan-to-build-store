@@ -29,7 +29,7 @@ material behavior and economics determine
 what the mature architecture should become
 ```
 
-Research context only: a related North Carolina study has been accepted through UNC Charlotte to ask whether there is a practical productive middle between conventional yard/manual processing and distant custom-shop / factory / high-capability automation. That student project is independent. It does not study our machine specifications. It does not validate Scan-to-Build. This internal Store/cell roadmap is not a UNC deliverable and does not establish that the answer is yes. A negative answer remains legitimate.
+Research context only: regional studies of the practical productive middle, between manual yard processing and distant custom-shop, factory or high-capability automation, are ongoing. They do not study our machine specifications and do not validate Scan-to-Build. This roadmap does not establish that the answer is yes. A negative answer remains legitimate.
 
 Future Store shape (not implemented here):
 
@@ -156,7 +156,7 @@ Current on this branch. Role and basis only.
 | File | Role | Authority / basis |
 |---|---|---|
 | `store-zero-observations.json` | Frozen public list-price pegs, 2026-09-10 | `OBSERVED` list. Not a Store Zero sell. Rebate excluded. |
-| `store-zero-catalog.json` | Callable Store Zero offerings (92 SKUs) | Sell `CALCULATED` by `SZ-MARK-ON-5`. On-hand `SYNTHETIC_FIXTURE`. Allocation `SIMULATED_STATE`. |
+| `store-zero-catalog.json` | Callable Store Zero offerings (183 SKUs) | Sell `CALCULATED` by `SZ-MARK-ON-5`. On-hand `SYNTHETIC_FIXTURE`. Allocation `SIMULATED_STATE`. |
 | `store-zero-pricing-engine.mjs` | Takeoff → extension → modeled cycle → budgetary Q | Sell rule `DECLARED_FIXTURE`. Cycle model `STB-D001-CYCLE-MODEL-S2-0.1` (`CALCULATED`, not measured). Q is not a quote. |
 | `store-zero-stage2-store.mjs` | Bounded Store answers and job disposition | Fixture answers. Job: `SUPPORTABLE` / `UNRESOLVED` / `REFUSED` / `UNAVAILABLE`. |
 | `store-zero-stage2.test.mjs` | Provenance, pine ticket, assertion-level basis | Regression for Commit 2 facts. |
