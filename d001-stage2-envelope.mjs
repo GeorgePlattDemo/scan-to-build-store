@@ -74,6 +74,19 @@ export const D001_STAGE2_ENVELOPE = {
     maxDepthPerPassIn: 0.375,
     maxCutWidthIn: 1.0
   },
+  // Pass-through edge mill: the clamping rollers hold the board against the fence (Datum A) and feed it
+  // past the longitudinal router, set at the finished width from the fence. The fence edge is kept; the
+  // far edge is milled. One board stays one board. Length is limited only by the stocked board and the
+  // two rollers keeping hold of it, the same as the saw cuts; the 60 in profile cap above is for a profile
+  // milled at a station, not for a board fed through.
+  millPassThrough: {
+    mode: "EDGE_MILL_PASS_THROUGH",
+    station: "MILL_LONG",
+    reference: "DATUM_A_FENCE_EDGE_KEPT",
+    lengthRule: "FULL_BOARD_LENGTH_UNDER_TWO_ROLLER_CONTROL",
+    maxCutWidthIn: 1.0,
+    maxDepthPerPassIn: 0.375
+  },
   millEnd: {
     reachFromEndIn: 8,
     maxDepthIn: 0.5

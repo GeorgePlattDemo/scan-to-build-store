@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { loadCatalog, findSku } from "./store-zero-stage2-store.mjs";
 import { CUT_PACKAGE_STANDARD, evaluateCutPackageJob, evaluateCutPackageStoreRequest } from "./cut-package-evaluator.mjs";
+import { millLongitudinalCycleSec } from "./d001-travel-standard.mjs";
 
 // Neutral test lines only. What a cut list means belongs to the project that sends it.
 const catalog = loadCatalog();
@@ -16,7 +17,8 @@ const line = (answer, id) => [...answer.packages, ...answer.items].find((entry) 
 // 1. The file carries no project knowledge.
 const source = fs.readFileSync(new URL("./cut-package-evaluator.mjs", import.meta.url), "utf8");
 assert.ok(!/picnic|ana white|myoutdoor|make.it.yours|\bbench|\btables?\b/i.test(source), "no project names in the Store evaluator");
-assert.equal(CUT_PACKAGE_STANDARD.cutRules.length, 5);
+assert.equal(CUT_PACKAGE_STANDARD.cutRules.length, 6);
+assert.ok(CUT_PACKAGE_STANDARD.cutRules.includes("EDGE_MILL_WHOLE_BOARD_BEFORE_PARTS"));
 
 // 2. A mixed order: every line answered on its own, nothing combined.
 const mixed = job(
@@ -181,6 +183,45 @@ assert.equal(short.status, "UNAVAILABLE");
 assert.equal(short.Q, null);
 // The resolver reads structured catalog facts, not SKU strings or descriptions.
 assert.ok(!/storeSku\s*\.\s*(includes|match|startsWith|split)|description\s*\.\s*(includes|match)/.test(source), "no SKU or description parsing");
+
+
+// Edge mill: a package may ask for its boards finished narrower than they come. Each board is fed through
+// the longitudinal router at the finished width from the fence, over its whole length, before its parts
+// are cut. Same timed mill model as the station profile; its time is machine service in Q.
+{
+  const pine8 = (id, parts, finishedWidthIn) => ({ packageId: id, material: { species: "pine", form: "board", nominalT: 1, nominalW: 8, grade: "select" },
+    endCut: { angleDeg: 0 }, ...(finishedWidthIn != null ? { finishedWidthIn } : {}), parts });
+  const parts = [{ partId: "A", lengthIn: 94 }, { partId: "B", lengthIn: 22.5 }, { partId: "C", lengthIn: 22.5 }];
+  const plain = line(job([pine8("P", parts)]), "P");
+  const milled = line(job([pine8("M", parts, 7)]), "M");
+  const same = line(job([pine8("S", parts, 7.25)]), "S");
+  assert.equal(plain.status, "SUPPORTABLE");
+  assert.equal(milled.status, "SUPPORTABLE", JSON.stringify(milled.reasonCodes));
+  assert.equal(milled.storeSku, plain.storeSku, "the wood is never changed to avoid milling");
+  assert.ok(milled.requiredOps.includes("MILL_LONGITUDINAL_PROFILE"));
+  assert.deepEqual(milled.edgeMill && [milled.edgeMill.boardWidthIn, milled.edgeMill.finishedWidthIn, milled.edgeMill.removedIn], [7.25, 7, 0.25]);
+  assert.ok(milled.time.T_MILL_sec > 0 && plain.time.T_MILL_sec === 0);
+  assert.ok(milled.totals.machine_service > plain.totals.machine_service, "mill time is priced");
+  assert.equal(milled.totals.material, plain.totals.material);
+  assert.equal(milled.Q, Math.round((milled.totals.material + milled.totals.machine_service) * 100) / 100);
+  assert.ok(milled.cutPlan.every((b) => b.edgeMill && b.edgeMill.status === "SUPPORTABLE" && b.edgeMill.passes === 2));
+  // The whole board is milled, so a board longer than the 60 in station profile cap still mills.
+  assert.ok(milled.stockLengthIn > 60);
+  // Its own width asks for no milling.
+  assert.equal(same.edgeMill, undefined);
+  assert.equal(same.Q, plain.Q);
+  // Limits: up to 1 in off one edge; never wider than the board; a finished width must be a number.
+  assert.ok(line(job([pine8("W", parts, 6)]), "W").reasonCodes.includes("EDGE_MILL_REMOVAL_EXCEEDS_D001_MAX_CUT_WIDTH"));
+  assert.ok(line(job([pine8("X", parts, 7.5)]), "X").reasonCodes.includes("FINISHED_WIDTH_EXCEEDS_BOARD_WIDTH"));
+  assert.deepEqual(line(job([pine8("U", parts, "seven")]), "U").reasonCodes, ["FINISHED_WIDTH_REQUIRED"]);
+  // A spot centered on a milled board is centered on the finished width.
+  const spotted = line(job([pine8("K", [{ partId: "K1", lengthIn: 30, spots: [{ xIn: 10, acrossWidthRule: "CENTERED_ON_WIDE_FACE" }] }], 7)]), "K");
+  assert.equal(spotted.status, "SUPPORTABLE");
+  // The station profile keeps its 60 in cap.
+  assert.equal(millLongitudinalCycleSec({ pathLengthIn: 61, yIn: 5, totalDepthIn: 0.75 }).status, "REFUSED");
+  assert.equal(millLongitudinalCycleSec({ pathLengthIn: 144, yIn: 5, totalDepthIn: 0.75, passThrough: true }).status, "SUPPORTABLE");
+  assert.equal(millLongitudinalCycleSec({ pathLengthIn: 20, yIn: 5, totalDepthIn: 0.75, passThrough: true }).reason, "EDGE_MILL_BOARD_BELOW_TWO_ROLLER_CONTROL");
+}
 
 console.log("cut-package: ok", JSON.stringify({
   mixed: Object.fromEntries([...mixed.packages, ...mixed.items].map((l) => [l.packageId ?? l.lineId, l.status === "SUPPORTABLE" ? `${l.boards ? l.boards + "x" + l.storeSku.replace("STB-ZERO-", "") + " " : ""}$${l.Q}` : l.reasonCodes[0]])),
