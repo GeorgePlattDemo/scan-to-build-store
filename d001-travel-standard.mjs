@@ -210,10 +210,14 @@ export function spotCycleSec(widthIn, spot = D001_TRAVEL_STANDARD.spot, placemen
   };
 }
 
+// The one longitudinal mill model (Alcove uses it too). `passThrough: true` is the pass-through edge mill:
+// the rollers feed the whole board past the router, so the length limit is the rollers keeping hold of the
+// board (D001_STAGE2_ENVELOPE.millPassThrough), not the 60 in station profile cap. Time is the same model.
 export function millLongitudinalCycleSec({
   pathLengthIn,
   yIn,
   totalDepthIn,
+  passThrough = false,
 } = {}, mill = D001_TRAVEL_STANDARD.mill) {
   const path = Number(pathLengthIn);
   const y = Number(yIn);
@@ -225,7 +229,11 @@ export function millLongitudinalCycleSec({
   ) {
     return { status: "UNRESOLVED", reason: "MILL_FEATURE_GEOMETRY_REQUIRED" };
   }
-  if (path > mill.maxProfileLengthIn) {
+  if (passThrough) {
+    if (path < D001_STAGE2_ENVELOPE.stock.minControlledLengthIn - 1e-9) {
+      return { status: "REFUSED", reason: "EDGE_MILL_BOARD_BELOW_TWO_ROLLER_CONTROL" };
+    }
+  } else if (path > mill.maxProfileLengthIn) {
     return { status: "REFUSED", reason: "MILL_PROFILE_LENGTH_EXCEEDS_D001_STAGE2_ENVELOPE" };
   }
   if (y > mill.maxYIn) {
@@ -237,6 +245,7 @@ export function millLongitudinalCycleSec({
   const yPositionSec = yIndexTimeSec(y);
   return {
     status: "SUPPORTABLE",
+    ...(passThrough ? { mode: D001_STAGE2_ENVELOPE.millPassThrough.mode } : {}),
     pathLengthIn: round(path, 6),
     yIn: round(y, 6),
     totalDepthIn: round(depth, 6),

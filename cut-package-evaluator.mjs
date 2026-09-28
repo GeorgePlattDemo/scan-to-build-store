@@ -4,8 +4,13 @@
  * A project (System) sends two kinds of lines. The evaluator knows nothing about any project.
  *
  *   cutPackages: one wood choice plus the parts to cut from it.
- *     { packageId, material: { species, nominalT, nominalW, grade }, endCut: { angleDeg },
+ *     { packageId, material: { species, nominalT, nominalW, grade }, endCut: { angleDeg }, finishedWidthIn?,
  *       parts: [{ partId, lengthIn, spots: [{ xIn, acrossWidthRule, insetFromEdgeIn? }] }] }
+ *     finishedWidthIn (optional): every board in the package is edge-milled to this width before its parts
+ *     are cut. The rollers hold the board to the fence and feed it past the longitudinal router, set at the
+ *     finished width from the fence; the fence edge is kept and the far edge is milled (one board stays one
+ *     board). It is the same timed mill Alcove uses, run over the whole board, and its time is machine
+ *     service in Q. Leave it out, or send the board's own width, and nothing is milled.
  *     Store Zero picks the offered board length, nests the parts, times the D-001 cell and prices it,
  *     or refuses with a reason. It never changes the wood the customer chose.
  *
@@ -28,6 +33,8 @@
  *      what is left is a stub, returned with the package.
  *   5. Length: only the stocked board lengths and the D-001 cell's own saw span and control length
  *      limit a part. There is no separate board-length ceiling in this evaluator.
+ *   6. Edge mill first: a board milled to a finished width is milled over its whole length while it is
+ *      long and held by both rollers, then its parts are cut. Up to 1 in comes off one edge.
  *
  * Two declared D-001 paths carry the work:
  *   - sequence path (evaluateD001UserDefinedBoard): parts cut off one after another at the miter saw,
@@ -50,6 +57,7 @@ import {
   D001_TRAVEL_STANDARD,
   evaluateD001DimensionalBatch,
   evaluateD001UserDefinedBoard,
+  millLongitudinalCycleSec,
   storeMachineSellRate
 } from "./d001-travel-standard.mjs";
 
@@ -63,7 +71,8 @@ export const CUT_PACKAGE_STANDARD = Object.freeze({
     "PART_AT_LEAST_HALF_INCH_UNDER_BOARD",
     "SPOTS_FROM_FRESH_REFERENCE_CUT",
     "SHORT_PIECES_FIRST_STUB_RETURNED",
-    "LENGTH_LIMITED_ONLY_BY_STOCK_AND_CELL_GEOMETRY"
+    "LENGTH_LIMITED_ONLY_BY_STOCK_AND_CELL_GEOMETRY",
+    "EDGE_MILL_WHOLE_BOARD_BEFORE_PARTS"
   ])
 });
 
@@ -71,6 +80,18 @@ const KERF_IN = Number(D001_TRAVEL_STANDARD.control.kerfIn);
 const CONTROL_IN = Number(D001_TRAVEL_STANDARD.control.minRetainedControlIn);
 const MIN_COMPONENT_IN = Number(D001_STAGE2_ENVELOPE.stock.minControlledLengthIn);
 const SAW_SPAN_IN = Number(D001_TRAVEL_STANDARD.stations.sawSquare.xIn);
+const EDGE_MILL_MAX_CUT_IN = Number(D001_STAGE2_ENVELOPE.millPassThrough.maxCutWidthIn);
+
+// The edge mill a package needs on this board, or null when the finished width is the board's own width.
+function edgeMillFor(item, finishedWidthIn) {
+  if (finishedWidthIn == null) return null;
+  const boardW = Number(item.actualW);
+  if (Math.abs(boardW - finishedWidthIn) < 1e-6) return null;
+  if (finishedWidthIn > boardW) return { refused: "FINISHED_WIDTH_EXCEEDS_BOARD_WIDTH" };
+  const removedIn = boardW - finishedWidthIn;
+  if (removedIn > EDGE_MILL_MAX_CUT_IN + 1e-9) return { refused: "EDGE_MILL_REMOVAL_EXCEEDS_D001_MAX_CUT_WIDTH" };
+  return { finishedWidthIn, boardWidthIn: boardW, removedIn: round(removedIn, 6) };
+}
 const TIME_KEYS = ["T_LOAD_SEAT_sec", "T_REFERENCE_sec", "T_INDEX_sec", "T_SAW_sec", "T_DRILL_SPOT_sec", "T_MILL_sec", "T_RELEASE_LABEL_sec", "T_MACHINE_sec"];
 
 function round(value, places = 2) {
@@ -167,10 +188,36 @@ function answerLine(base, status, code, category, explanation, extra = {}) {
   };
 }
 
-function machineForPackage(item, angleDeg, plan, packageId, identity) {
+function machineForPackage(stockItem, angleDeg, plan, packageId, identity, edgeMill = null) {
   const answers = [];
   const boards = [];
+  // After the edge mill the board is the finished width; the saw and the spots work on that board.
+  const item = edgeMill ? { ...stockItem, actualW: edgeMill.finishedWidthIn } : stockItem;
+  const millRefused = [];
+  const millUnresolved = [];
+  let millSec = 0;
+  function millBoard() {
+    if (!edgeMill) return null;
+    const timing = millLongitudinalCycleSec({
+      pathLengthIn: Number(stockItem.stockL_in),
+      yIn: edgeMill.finishedWidthIn,
+      totalDepthIn: Number(stockItem.actualT),
+      passThrough: true
+    });
+    if (timing.status === "REFUSED") millRefused.push(timing.reason);
+    else if (timing.status !== "SUPPORTABLE") millUnresolved.push(timing.reason);
+    else millSec += timing.totalSec;
+    return {
+      kind: "EDGE_MILL_PASS_THROUGH",
+      finishedWidthIn: edgeMill.finishedWidthIn,
+      removedIn: edgeMill.removedIn,
+      passes: timing.passes ?? null,
+      timeSec: timing.totalSec ?? null,
+      status: timing.status
+    };
+  }
   plan.sequenceBoards.forEach((board, index) => {
+    const edge = millBoard();
     const answer = evaluateD001UserDefinedBoard({
       item,
       storeRevision: identity.storeRevision || null,
@@ -192,6 +239,7 @@ function machineForPackage(item, angleDeg, plan, packageId, identity) {
       stockLengthIn: Number(item.stockL_in),
       partsInCutOrder: board.parts.map((part) => ({ partId: part.partId, lengthIn: part.lengthIn })),
       stubIn: answer.travel?.finalRemainderIn ?? null,
+      ...(edge ? { edgeMill: edge } : {}),
       status: answer.status
     });
   });
@@ -205,12 +253,14 @@ function machineForPackage(item, angleDeg, plan, packageId, identity) {
           requirementId: packageId,
           finishedLengthIn: part.lengthIn,
           finishedWidthIn: Number(item.actualW),
+          // milled boards arrive at the batch already at their finished width
           features: spotFeatures(part)
         }
       }))
     });
     answers.push(batch);
     for (const part of plan.longParts) {
+      const edge = millBoard();
       boards.push({
         boardId: `${packageId}-${part.partId}`,
         path: "LONG_PART",
@@ -219,12 +269,13 @@ function machineForPackage(item, angleDeg, plan, packageId, identity) {
         partsInCutOrder: [{ partId: part.partId, lengthIn: part.lengthIn }],
         stubIn: null,
         offcutIn: round(Number(item.stockL_in) - part.lengthIn, 3),
+        ...(edge ? { edgeMill: edge } : {}),
         status: batch.status
       });
     }
   }
-  const refused = [];
-  const unresolved = [];
+  const refused = [...millRefused];
+  const unresolved = [...millUnresolved];
   for (const answer of answers) {
     if (answer.status === "REFUSED") refused.push(...(answer.reasons || answer.refused || ["MACHINE_REFUSED"]));
     else if (answer.complete !== true) unresolved.push(...(answer.unresolved || ["MACHINE_UNRESOLVED"]));
@@ -234,6 +285,8 @@ function machineForPackage(item, angleDeg, plan, packageId, identity) {
     const t = answer.travel?.time || answer.time || {};
     for (const key of TIME_KEYS) time[key] += Number(t[key] || 0);
   }
+  time.T_MILL_sec += millSec;
+  time.T_MACHINE_sec += millSec;
   const rates = storeMachineSellRate();
   const hours = time.T_MACHINE_sec / 3600;
   return {
@@ -250,11 +303,17 @@ function evaluatePackage(catalog, pkg, identity) {
   const packageId = String(pkg?.packageId || "");
   const material = pkg?.material || {};
   const angleDeg = Number(pkg?.endCut?.angleDeg ?? 0);
-  const base = { kind: "CUT_PACKAGE", packageId, material: { ...material }, endCut: { angleDeg, plane: "miter-face", ends: "BOTH_PARALLEL" } };
+  const hasFinishedWidth = pkg?.finishedWidthIn != null;
+  const finishedWidthIn = hasFinishedWidth ? Number(pkg.finishedWidthIn) : null;
+  const base = { kind: "CUT_PACKAGE", packageId, material: { ...material }, endCut: { angleDeg, plane: "miter-face", ends: "BOTH_PARALLEL" },
+    ...(hasFinishedWidth ? { finishedWidthIn } : {}) };
   if (!packageId) return answerLine(base, "UNRESOLVED", "PACKAGE_ID_REQUIRED", "DEFINITION_GAP", "Each cut package needs its own id.");
   const { parts, problems } = validateParts(pkg);
   if (problems.length) return answerLine(base, "UNRESOLVED", problems[0], "DEFINITION_GAP", "The cut package is missing a definition Store Zero needs.");
   if (!Number.isFinite(angleDeg)) return answerLine(base, "UNRESOLVED", "END_CUT_ANGLE_REQUIRED", "DEFINITION_GAP", "The end-cut angle must be a number.");
+  if (hasFinishedWidth && !(Number.isFinite(finishedWidthIn) && finishedWidthIn > 0)) {
+    return answerLine(base, "UNRESOLVED", "FINISHED_WIDTH_REQUIRED", "DEFINITION_GAP", "A finished width must be a positive number of inches.");
+  }
   if (!material.species || !material.nominalT || !material.nominalW) {
     return answerLine(base, "UNRESOLVED", "MATERIAL_CHOICE_REQUIRED", "DEFINITION_GAP", "The customer's wood choice (species, thickness, width) must be sent.");
   }
@@ -276,7 +335,10 @@ function evaluatePackage(catalog, pkg, identity) {
 
   const considered = candidates.map((item) => {
     const plan = planForBoard(item, angleDeg, parts);
-    const capability = capabilityAnswer(item, requiredOps, { sawAngleDeg: angleDeg, cutPlane: "miter-face" });
+    const edgeMill = edgeMillFor(item, finishedWidthIn);
+    if (edgeMill?.refused) plan.refusals.push(edgeMill.refused);
+    const ops = edgeMill && !edgeMill.refused ? [...requiredOps, "MILL_LONGITUDINAL_PROFILE"] : requiredOps;
+    const capability = capabilityAnswer(item, ops, { sawAngleDeg: angleDeg, cutPlane: "miter-face", ...(edgeMill && !edgeMill.refused ? { millYIn: edgeMill.finishedWidthIn } : {}) });
     // Rule 5: the envelope's board-length support note is not applied to cut packages.
     const capabilityMissing = (capability.missing || []).filter((code) => code !== "PARENT_LENGTH_REQUIRES_UNDECLARED_EXTERNAL_SUPPORT");
     const stock = stockAnswer(item, Math.max(plan.qty, 1));
@@ -287,7 +349,7 @@ function evaluatePackage(catalog, pkg, identity) {
     else if (capability.status === "REFUSED" && capabilityMissing.length) { status = "REFUSED"; why = capabilityMissing[0]; }
     else if (capability.status === "UNRESOLVED" || price.status === "UNRESOLVED") { status = "UNRESOLVED"; why = capability.unresolved?.[0] || price.reason || "STORE_INPUT_UNRESOLVED"; }
     else if (stock.sufficient !== true) { status = "UNAVAILABLE"; why = stock.status; }
-    return { item, plan, status, reason: why, extension: price.status !== "UNRESOLVED" ? round(Number(item.sellingPrice) * plan.qty, 2) : null };
+    return { item, plan, edgeMill: edgeMill && !edgeMill.refused ? edgeMill : null, ops, status, reason: why, extension: price.status !== "UNRESOLVED" ? round(Number(item.sellingPrice) * plan.qty, 2) : null };
   });
 
   const consideredPublic = considered.map((entry) => ({
@@ -307,7 +369,7 @@ function evaluatePackage(catalog, pkg, identity) {
   // cell refuses it, the next one is tried. The wood itself is never changed.
   const machineRefusals = [];
   for (const entry of supportable) {
-    const machine = machineForPackage(entry.item, angleDeg, entry.plan, packageId, identity);
+    const machine = machineForPackage(entry.item, angleDeg, entry.plan, packageId, identity, entry.edgeMill);
     if (machine.refused.length || machine.unresolved.length) {
       machineRefusals.push({ storeSku: entry.item.storeSku, refused: machine.refused, unresolved: machine.unresolved });
       continue;
@@ -320,7 +382,8 @@ function evaluatePackage(catalog, pkg, identity) {
       stockLengthIn: Number(entry.item.stockL_in),
       boards: entry.plan.qty,
       sellingPrice: Number(entry.item.sellingPrice),
-      requiredOps,
+      requiredOps: entry.ops,
+      ...(entry.edgeMill ? { edgeMill: { mode: "EDGE_MILL_PASS_THROUGH", boardWidthIn: entry.edgeMill.boardWidthIn, finishedWidthIn: entry.edgeMill.finishedWidthIn, removedIn: entry.edgeMill.removedIn, boards: entry.plan.qty } } : {}),
       cutPlan: machine.boards,
       stubs: machine.boards.filter((board) => board.stubIn != null).map((board) => ({ boardId: board.boardId, stubIn: board.stubIn })),
       spotCount: parts.reduce((sum, part) => sum + part.spots.length, 0),

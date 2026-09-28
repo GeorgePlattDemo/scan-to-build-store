@@ -96,6 +96,8 @@ Passes for a mill feature:
 
 Exclusion concept: mill path must not claim the volume of R1, R2, SAW-L, SAW-R. Coordinates inside those names are not free.
 
+**Edge mill to a finished width (pass-through).** The rollers hold the board to the fence and feed it past `MILL_LONG`, set at the finished width from the fence. The fence edge is kept; up to 1 in comes off the far edge; one board stays one board. The whole board is milled before its parts are cut, so the limit is the stocked length and the two rollers keeping hold of it, not the 60 in station profile cap. Time is the same longitudinal mill model: `passes = ceil(thickness / 0.375)`, each pass the full board length at `MILL_CUTTING_FEED`, with an X-rate return between passes. That time is machine service in Q. A cut-package line asks for it with `finishedWidthIn`.
+
 ---
 
 ## Picnic-leg economic proof
