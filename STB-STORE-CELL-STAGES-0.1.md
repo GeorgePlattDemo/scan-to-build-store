@@ -85,6 +85,7 @@ Can a sufficiently realistic but still fictional reference lumberyard accept str
 - Store Zero merchant identifiers (example: `STB-ZERO-PINE-1X6-96-001`).  
 - Assertion-level basis on each Store fact.  
 - D-001 declared Stage-2 envelope: Stage-1 square-cut path plus bounded `MILL_LONGITUDINAL_PROFILE` and `MILL_END_PROFILE`.  
+- S-001 declared Stage-2 envelope for full sheets: a centered routed working field (arched apertures, straight splits, tabs) plus the yard panel saw's crosscuts. See `S-001-STAGE2-ENVELOPE-0.1.md`.  
 - Deterministic budgetary estimate and declared job dispositions: `SUPPORTABLE`, `UNRESOLVED`, `REFUSED`, `UNAVAILABLE`. Line stock facts may be `ON_HAND_SUFFICIENT`, `ON_HAND_SHORT`, or `NOT_ON_HAND`. A short or empty line makes the job `UNAVAILABLE`. `DEFERRED` and `REFERRED` are not Stage-2 Store Zero meanings.
 
 **What may we truthfully claim?**  

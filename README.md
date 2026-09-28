@@ -24,7 +24,7 @@ Store Zero is a fictional lumberyard, specified in enough detail to answer real 
 
 - **183 offerings** — 137 boards, 9 sheet goods, 37 hardware items — priced at a declared 5% mark-on over reference list prices — some observed at retail, the rest calculated or declared, and every one labeled with its basis.
 - **Declared stock** for each item, so a job can come back short.
-- **A declared machine**, D-001, with limits it will actually enforce.
+- **Two declared stations for two kinds of stock**, each with limits it will actually enforce: D-001 for boards, and S-001 (a sheet router cell plus the yard panel saw) for full 48 × 96 in sheets.
 - **Four honest answers**: *supportable*, *unresolved*, *refused* or *unavailable*, each with its reason.
 
 Ask the same question twice against the same version and you get the same answer. Change something — the stock, a price, the job — and the answer changes, and the record says what moved.
@@ -41,23 +41,36 @@ Make the parts too long for that board and the answer becomes *refused* — with
 
 The reference cell, D-001, is modeled on the dimensional machine the patents disclose: a table and fence, servo-driven rollers that move the board from above, clamps that hold it to the fence, and a saw at each end, with room on the machine for drill and router heads.
 
-D-001 as declared for Stage 2:
+D-001 as declared for Stage 2 (the machine-readable copy is [`d001-stage2-envelope.mjs`](d001-stage2-envelope.mjs)):
 
-- **2 rollers** move and hold the board
-- **2 saws**, one at each end — one does miters up to 45°
-- **3 routers** — two working along clean axes, one end mill
-- **2 spot drills** for marking hole locations
+- **2 rollers** (R1, R2) move and hold the board
+- **2 saws**, one at each end — SAW-L does miters from 0° to 45°, SAW-R cuts square
+- **2 named mill functions** — a longitudinal mill between the rollers (`MILL_LONG`, which also edge-mills a board to a finished width) and an end mill (`MILL_END`)
+- **1 spot operation** — a fixed 3/16 in spot/pilot at a defined location
+
+The patents disclose more than this (a third roller, a third vertical-way router or drill, external infeed and outfeed support). Those stay **unresolved**: they are candidate research in the [3D Solutions Program](https://github.com/GeorgePlattDemo/3d-solutions-program), not Store Zero capability. See [D-001 envelope](D-001-STAGE2-ENVELOPE-0.1.md): three pictures exist, and they are not smashed together.
 
 The tools stay in fixed, known positions, set once when the machine is commissioned. The job says what the part is — lengths, angles, where the features go. The machine's own setup says where its tools are. The controller puts those together. Nobody programs each order by hand at the machine, and nobody reconstructs the drawing at the saw.
 
 It's designed around things you can order: open-source motion control ([LinuxCNC](https://linuxcnc.org/)), a commercial motion board, standard G-code, commercial saw heads and router spindles. Nothing exotic.
+
+## Sheets: S-001
+
+Boards and sheets never share a machine. D-001 refuses a sheet outright; a sheet job goes to S-001.
+
+S-001 as declared for Stage 2 (the machine-readable copy is [`s001-stage2-envelope.mjs`](s001-stage2-envelope.mjs)):
+
+- **The sheet cell** holds a full 48 × 96 in sheet on rollers and moves it past a router that stays at the machine's centerline. It routes straight and curved profiles inside one centered 48 × 36 in working field, and leaves the routed pieces attached by tabs for the owner to separate.
+- **The yard panel saw** makes straight full-width crosscuts after routing, at least 1 in clear of anything routed.
+
+A playhouse window is the first job it answers: one 1/2 in sheet, a centered arched opening, the center split in two for shutters, and a crosscut 18 in from each end. The Store picks the sheet, plans the tabs, times the router and the saw from newly adopted Stage-2 reference assumptions (modeled, not measured), prices it with the same declared Store Zero machine-hour rate D-001 uses, and returns every piece. Make the opening too tall for the field and the answer is *refused* — with the reason. See [S-001 envelope](S-001-STAGE2-ENVELOPE-0.1.md).
 
 ## The stages
 
 | Stage | What it is | Where it stands |
 | --- | --- | --- |
 | **1 — One board** | One roller moves one board between two fixed saws and cuts it to a defined length. The test is whether the job reaches the saw without being redrawn — not whether a saw can cut wood. | Works in software |
-| **2 — Store Zero and the reference cell** | The fictional yard above and the D-001 design, answering real project requests with prices and refusals. | Works in software; machine time is modeled |
+| **2 — Store Zero and the reference cells** | The fictional yard above and the D-001 and S-001 designs, answering real project requests with prices and refusals. | Works in software; machine time is modeled |
 | **3 — Physical cell** | A real build: guarding, safety-rated controls, measured cycles. Measured minutes start replacing modeled ones. | Next |
 | **4 — Evidence-informed system** | Demand, refusals, measured cycles, material behavior and economics decide what the mature yard and cell should become. The patents' full machine is the upper bound being tested — the data may justify some of it, all of it, or none. | Not predetermined |
 
@@ -74,6 +87,7 @@ Store Zero runs. The evaluators, catalog and tests live at the top level:
 | [`d001-stage2-envelope.mjs`](d001-stage2-envelope.mjs) | What the machine will and won't accept |
 | [`d001-travel-standard.mjs`](d001-travel-standard.mjs) | The one rule every board job goes through: fit, machine work, time, price |
 | [`cut-package-evaluator.mjs`](cut-package-evaluator.mjs) · [`alcove-store-evaluator.mjs`](alcove-store-evaluator.mjs) | Answers for multi-part jobs and fitted inserts |
+| [`s001-stage2-envelope.mjs`](s001-stage2-envelope.mjs) · [`sheet-package-evaluator.mjs`](sheet-package-evaluator.mjs) | What the sheet cell and panel saw accept, and the answer for a sheet job |
 
 Run the tests (tested on Node 22):
 
@@ -81,14 +95,14 @@ Run the tests (tested on Node 22):
 node --test *.test.mjs
 ```
 
-The same Store runs hosted, and the app calls it live at a pinned version.
+The same Store runs hosted, and the app calls it live at one pinned version: `STORE_PIN` in System's [`apps/stb/shared/contracts.mjs`](https://github.com/GeorgePlattDemo/scan-to-build-system/blob/main/apps/stb/shared/contracts.mjs). A new commit here does not move that pin.
 
 ## Where the support lives
 
 | If you want to know… | Read | Why it's the evidence |
 | --- | --- | --- |
 | What is Store Zero, exactly? | [Store Zero](STORE-ZERO.md) | The yard, what it keeps private, what it exposes |
-| What does the machine accept and refuse? | [D-001 envelope](D-001-STAGE2-ENVELOPE-0.1.md) | Station layout, limits, what's still unresolved |
+| What does the machine accept and refuse? | [D-001 envelope](D-001-STAGE2-ENVELOPE-0.1.md) · [S-001 envelope](S-001-STAGE2-ENVELOPE-0.1.md) | Station layout, limits, what's still unresolved |
 | How does a job become a price? | [Travel standard](DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) | Fit, machine work, time and price, in one rule |
 | What does each stage prove? | [Stages](STB-STORE-CELL-STAGES-0.1.md) | What each stage may and may not claim |
 | What does one order look like, cut to closeout? | [Store Job 001](STORE-JOB-001.md) | One alcove insert through the yard |
