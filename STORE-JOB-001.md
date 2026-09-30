@@ -1,5 +1,7 @@
 # Store Job 001 — Alcove Insert, Cut Through Closeout
 
+> **STATUS — MODELED REFERENCE PRODUCTION NARRATIVE.** This document describes a Store-side reference sequence for a synthetic Store Zero job. It is not an observed machine run, not commissioned D-001 production, and not evidence that physical fabrication occurred. References to Ready / Cycle Start / cut / staging / fulfillment below describe the modeled/local sequence a later physical cell would follow.
+
 **Store Zero production cell:** dimensional machine `D-001`  
 **Bounded class:** alcove insert  
 **Scope:** one received order, one machine run, one staged package, one closeout
