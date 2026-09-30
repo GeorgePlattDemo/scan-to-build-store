@@ -20,6 +20,12 @@ Publicly callable does not mean publicly visible.
 
 Connected does not mean surrendered.
 
+## What is declared, implemented, and not commissioned
+
+- **Declared fixture:** Store Zero's dealer model, stock, people, commercial practices, machine capabilities, and economics are controlled fictional declarations used for testing and audit.
+- **Implemented evaluators:** Store code executes bounded evaluators against those declared facts and returns Store-owned outcomes such as `SUPPORTABLE`, `UNRESOLVED`, `REFUSED`, or `UNAVAILABLE`.
+- **Physical production:** the current software evidence does not establish commissioned D-001 or S-001 production. Modeled capability, travel, time, and economics are not proof that a physical machine ran.
+
 ## Dimensional completion authority
 
 For dimensional work, `DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md` is the governing Store completion rule. A complete dimensional `Q` is valid only when the identified configuration passes the Store capability, D-001 travel/kinematic calculation, and declared Store economics through the one governing evaluator. Configure and Store reconciliation call that same evaluator; neither the application nor a project wrapper may locally recreate its answer.
