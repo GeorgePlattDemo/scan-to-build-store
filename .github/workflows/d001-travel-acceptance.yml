@@ -16,20 +16,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-      - name: D-001 envelope
-        run: node d001-stage2-envelope.test.mjs
-      - name: Store dispositions
-        run: node store-zero-disposition.test.mjs
-      - name: Legacy mill migration boundary
-        run: node d-001-stage2-mill.test.mjs
-      - name: Store Stage-2
-        run: node store-zero-stage2.test.mjs
-      - name: User 1 travel-standard acceptance
-        run: node d001-travel-standard.test.mjs
-      - name: Alcove Store fail-first acceptance
-        run: node alcove-store-evaluator.test.mjs
-      - name: Spot inset and depth (3/16 in after the point; 1 1/2 in or 2 in inset)
-        run: node spot-inset-depth.test.mjs
-      - name: Cut packages and item lines (each line answered on its own)
-        run: node cut-package-evaluator.test.mjs
+          node-version: "22"
+      - name: Store test suite (documented command)
+        run: node --test *.test.mjs
