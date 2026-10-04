@@ -27,7 +27,7 @@ The reason travels with the answer.
 
 Four statements matter at the front door:
 
-- **Fixture declared.** [Store Zero](STORE-ZERO.md) is a fictional lumber and building-materials dealer with controlled declarations for stock, commercial practices, capability, and economics.
+- **Fixture declared.** [Store Zero](STORE-ZERO.md) is a modeled reference lumber and building-materials dealer with controlled declarations for stock, commercial practices, capability, and economics.
 - **Evaluator implemented.** The Store code evaluates bounded requests against those declared facts and returns Store-owned outcomes. The application calls that Store through a pinned version.
 - **Economics modeled.** Material and machine-work values are budgetary reference estimates. Machine time is calculated from declared assumptions, not measured commissioned production.
 - **Production not commissioned.** Current software evidence does not establish a commissioned D-001 or S-001 machine, physical fabrication, live inventory allocation, binding quotation, payment, or production authority.
@@ -64,7 +64,15 @@ The README does not define the machines. Store-owned capability is recorded in t
 - [Dimensional Store travel standard](DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) — the governing dimensional completion rule.
 - [Store and cell stages](STB-STORE-CELL-STAGES-0.1.md) — what Stage 1, Stage 2, Stage 3, and Stage 4 may claim.
 
-Candidate machine engineering that is not admitted Store capability belongs in the [3D Solutions Program](https://github.com/GeorgePlattDemo/3d-solutions-program).
+Broader candidate machine engineering and its adoption decisions remain in the [3D Solutions Program](https://github.com/GeorgePlattDemo/3d-solutions-program). Store also holds the specifically identified Project 1 reference record below; its publication does not admit its controller or mechanical assumptions as Store capability.
+
+## Project 1: the written digital trail
+
+The [Project 1 digital manufacturing trail](docs/project-1-digital-trail/README.md) follows one identified definition through System derivation, the exact pinned Store answer, material selection, modeled work and Q, local coordinates, and all 45 generated virtual commands. Its 22-page review and reproducible evidence package make the transformations, information handoffs, and refusal boundaries inspectable.
+
+The precise CAM claim is that the user's definition supplies the controlling part requirements from which the bounded sequence is generated. Store and local machine facts supply material, tooling, registration, and manufacturing constraints. The reproduced Store answer is $11.09; the reference model does not replace that answer. Fourteen local checks passed. TwinCAT source remains uncompiled, physical admission remains BLOCKED, and the identified mechanical gaps remain open.
+
+Store owns this specimen's documentary custody. Program owns broader research and adoption; System owns operational job meaning and the application. Read the publication record for exact artifact identities and the distinction between custody, technical adoption, and physical release.
 
 ## How Store Zero should be read
 
@@ -83,6 +91,7 @@ If a required Store-owned fact is missing, the answer remains unresolved, refuse
 | How dimensional work becomes a Store answer | [Travel standard](DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) | Fit, modeled work, time, and reference economics through one Store rule |
 | What each evidence stage may claim | [Stages](STB-STORE-CELL-STAGES-0.1.md) | Reference software vs. later physical commissioning |
 | What one modeled Store-side sequence looks like | [Store Job 001](STORE-JOB-001.md) | A reference production narrative explicitly marked as modeled, not an observed run |
+| How one definition reaches Q and explicit reference commands | [Project 1 digital trail](docs/project-1-digital-trail/README.md) | Preserved review, reproducible calculation, command ledger, handoffs, and unresolved physical requirements |
 | What an actual Store adapter would add | [Store 1](store-1/README.md) | The bounded surface for a later real Store implementation |
 | What shared words mean | [System definitions](https://github.com/GeorgePlattDemo/scan-to-build-system/blob/main/docs/definitions/README.md) · [Store terms](DEFINITIONS.md) | Shared meaning in System; Store-local commerce and capability terms here |
 
@@ -90,6 +99,6 @@ The customer/job-definition side lives in [Scan-to-Build System](https://github.
 
 ## Limits
 
-Store Zero is fictional. Declared stock is not counted inventory. Reference prices are budgetary, not binding quotations. Machine time is modeled, not measured. No physical D-001 or S-001 cell has been commissioned by the current software evidence. Publication here grants no patent license.
+Store Zero is a modeled reference dealer. Declared stock is not counted inventory. Reference prices are budgetary, not binding quotations. Machine time is modeled, not measured. No physical D-001 or S-001 cell has been commissioned by the current software evidence. Publication here grants no patent license.
 
 **NO BLOOD ON WOOD.**
