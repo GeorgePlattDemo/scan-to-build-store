@@ -1,0 +1,19 @@
+{
+  "record": "D001 PROJECT1 DIGITAL TRAIL REVIEW 0.2",
+  "publicationDate": "2026-10-04",
+  "disposition": "Store documentary custody; reference engineering only",
+  "artifacts": {
+    "D001_Project1_Review.docx": {
+      "sha256": "5439bd25e7870b6155468dc0da7e3dd0c574f98aaf456c7ff0f1d5c6f7c10eba",
+      "bytes": 70136
+    },
+    "D001_Project1_Review.md": {
+      "sha256": "30d6cf8d27894dd0342a368c4f674c415198349838a0cf1fcc746b1403301136",
+      "bytes": 61789
+    },
+    "D001_Project1_Evidence.zip": {
+      "sha256": "c65b62bfa9a389f01f5c387ce03726d94e2858fd0bf9e8236201a4d96f624366",
+      "bytes": 79479
+    }
+  }
+}
