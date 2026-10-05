@@ -1,51 +1,77 @@
 # Scan-to-Build Store
 
-**The yard's answer: yes, no, or not yet — and why.**
+**Sell the wood. Supply the work that makes it useful.**
 
 <a href="https://georgeplattdemo.github.io/scan-to-build-system/system-build-current.html"><kbd>▶ OPEN THE APP</kbd></a>
 
 3D Solutions LLC · Greensboro, North Carolina
 
----
+## From stock on the rack to a project someone can build
 
-## What this repository owns
+A customer needs two replacement braces, shelves for an opening, or a panel with an arch. The yard has material. The opportunity is to supply the cut, mill, and drill work that turns that material into useful components.
 
-System defines the job. Store answers what this Store can provide.
+Scan-to-Build Store makes the yard’s side of that exchange explicit: **which material, which operations, how much modeled work, and what price?**
 
-A Store answer comes from Store-owned facts: catalog, declared stock, capability, modeled work, and economics. Store does not rewrite the customer's project to make it fit.
+System carries the customer’s defined requirements. Store evaluates them against its own catalog, declared stock, equipment capability, timing, and economics. The answer tells the customer what this yard can provide and gives the yard an identified job to work from.
 
-The Stage-2 reference implementation returns one of four bounded outcomes:
+That is the proposed service: sell material together with the work a project requires, using the yard’s existing inventory, handling, customer relationships, and fulfillment knowledge. Bring the project information to wood already on the rack, and the yard could capture more of the value of making it useful. Whether the service earns its keep is a practical question for [Program research](https://github.com/GeorgePlattDemo/3d-solutions-program).
 
-- `SUPPORTABLE`
-- `UNRESOLVED`
-- `REFUSED`
-- `UNAVAILABLE`
+## Two material classes, useful work
 
-The reason travels with the answer.
+Store Zero is the modeled reference yard used to develop and test this service. Its evaluators run today against declared material and capability facts.
 
-## Current status
-
-Four statements matter at the front door:
-
-- **Fixture declared.** [Store Zero](STORE-ZERO.md) is a modeled reference lumber and building-materials dealer with controlled declarations for stock, commercial practices, capability, and economics.
-- **Evaluator implemented.** The Store code evaluates bounded requests against those declared facts and returns Store-owned outcomes. The application calls that Store through a pinned version.
-- **Economics modeled.** Material and machine-work values are budgetary reference estimates. Machine time is calculated from declared assumptions, not measured commissioned production.
-- **Production not commissioned.** Current software evidence does not establish a commissioned D-001 or S-001 machine, physical fabrication, live inventory allocation, binding quotation, payment, or production authority.
-
-That boundary is deliberate: Stage 2 is a software/reference Store, not Stage 3 physical commissioning. See the [Store and cell stages](STB-STORE-CELL-STAGES-0.1.md).
-
-## What runs here
-
-The top-level implementation contains the reference Store facts, evaluators, capability envelopes, pricing logic, and tests.
-
-| Surface | Role |
+| Class | Work represented here |
 | --- | --- |
-| [`store-zero-catalog.json`](store-zero-catalog.json) | Store Zero offerings, declared stock, price basis, and item identity |
-| [`store-zero-pricing-engine.mjs`](store-zero-pricing-engine.mjs) | Reference material + modeled machine-work economics |
-| [`d001-travel-standard.mjs`](d001-travel-standard.mjs) | Governing dimensional fit / travel / modeled-work evaluation |
-| [`cut-package-evaluator.mjs`](cut-package-evaluator.mjs) · [`alcove-store-evaluator.mjs`](alcove-store-evaluator.mjs) | Multi-part dimensional Store requests |
-| [`sheet-package-evaluator.mjs`](sheet-package-evaluator.mjs) | Bounded sheet-package Store requests |
-| [`d001-stage2-envelope.mjs`](d001-stage2-envelope.mjs) · [`s001-stage2-envelope.mjs`](s001-stage2-envelope.mjs) | Machine-readable Stage-2 capability declarations |
+| **Dimensional — D-001** | Cut to length, bounded miters, declared milling profiles, and a defined 3/16-in spot/pilot operation. |
+| **Sheet — S-001** | Bounded routed openings, retained tabs, supported center splits, and panel-saw crosscuts. |
+
+The [D-001 envelope](D-001-STAGE2-ENVELOPE-0.1.md) and [S-001 envelope](S-001-STAGE2-ENVELOPE-0.1.md) give the exact accepted operations and geometry. The sheet plan keeps the routed center pieces attached by planned tabs for later separation.
+
+**Cut, mill, and drill are operations with material, geometry, tooling, and time behind them.** The Store answer connects those facts to the requested result.
+
+## One request, a yard’s answer
+
+The evaluator follows the identified job through material selection, capability, modeled work, and economics. For dimensional work, the [travel standard](DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) provides the governing completion rule. Multi-part and sheet requests have their own evaluators.
+
+Every request receives a bounded outcome with its reasons:
+
+- **`SUPPORTABLE`** — the declared material and capability can support the request.
+- **`UNRESOLVED`** — a required fact is missing.
+- **`REFUSED`** — the request falls outside the declared capability.
+- **`UNAVAILABLE`** — the required supply is unavailable under the declared facts.
+
+The yard keeps control of its own service. Another Store can use different suppliers, stock, equipment, pricing, and operating systems through the same bounded request-and-answer interface. The [Store membrane](STORE-ZERO.md) explains how outside demand calls selected services while the dealer retains its internal systems.
+
+## The instructions are digital
+
+The intended production chain carries the accepted definition into a registered local compiler. Software translates the part requirements, Store plan, machine geometry, tooling, and references into ordered machine instructions. **A person does not manually write a new machine program for each supported job.**
+
+The operator’s role is concrete: verify the correct board or sheet, load and register it to the machine’s established references, check tooling and readiness, and follow the local operating procedure. The digital chain supplies the job instructions; local engineering establishes the machine and its dependable operating conditions.
+
+The [**Project 1 digital manufacturing trail**](docs/project-1-digital-trail/README.md) lets you inspect that proposition for one specimen. One identified definition leads to a reproduced Store answer of **$11.09**, modeled work and time, local coordinates, and **45 generated virtual commands**, without a second design entry. Its evidence package includes a reproducible run, controller-oriented Structured Text, and fourteen local reference checks.
+
+The record is a reference derivation: the controller source is uncompiled and physical admission remains blocked. Its [publication record](docs/project-1-digital-trail/README.md) preserves the exact artifacts, handoffs, and open engineering questions. Program owns broader controller and machine-development work; Store holds this specimen’s documentary record.
+
+## Three connected homes
+
+| Repository | Contribution |
+| --- | --- |
+| [**Program**](https://github.com/GeorgePlattDemo/3d-solutions-program) | Why a small local manufacturing service might be worth pursuing, and how to test its engineering and business case. |
+| [**System**](https://github.com/GeorgePlattDemo/scan-to-build-system) | The customer’s project definition, application, shared job meaning, and consequential records. |
+| **Store** | Its material, capability, modeled work, economics, and answers for that definition. |
+
+The application consumes one exact Store version, owned by System’s [`STORE_PIN`](https://github.com/GeorgePlattDemo/scan-to-build-system/blob/main/apps/stb/shared/contracts.mjs). Publishing a Store document does not move that runtime version.
+
+## Explore the implementation
+
+| Surface | What to inspect |
+| --- | --- |
+| [Catalog](store-zero-catalog.json) | Offerings, item identities, declared stock, and material prices. |
+| [Pricing engine](store-zero-pricing-engine.mjs) | Material and modeled machine-work economics. |
+| [Dimensional travel standard](d001-travel-standard.mjs) | Fit, travel, modeled work, and the dimensional completion calculation. |
+| [Cut-package evaluator](cut-package-evaluator.mjs) · [Alcove evaluator](alcove-store-evaluator.mjs) | Multi-part dimensional requests. |
+| [Sheet-package evaluator](sheet-package-evaluator.mjs) | Routed sheet work, tabs, and supported panel cuts. |
+| [D-001 declarations](d001-stage2-envelope.mjs) · [S-001 declarations](s001-stage2-envelope.mjs) | Machine-readable capability facts. |
 
 Run the repository tests on Node 22:
 
@@ -53,52 +79,16 @@ Run the repository tests on Node 22:
 node --test *.test.mjs
 ```
 
-The working application consumes one exact Store version. The current pin owner is System `STORE_PIN` in [`apps/stb/shared/contracts.mjs`](https://github.com/GeorgePlattDemo/scan-to-build-system/blob/main/apps/stb/shared/contracts.mjs). A new Store commit does not move that pin.
+## Reference status and further reading
 
-## Machine detail lives below the front door
+Store Zero uses declared reference stock, budgetary prices, and modeled machine time. Physical D-001/S-001 production is not commissioned; the demonstration does not transact real payment or issue a production release. The [stage guide](STB-STORE-CELL-STAGES-0.1.md) separates the software/reference work from physical commissioning.
 
-The README does not define the machines. Store-owned capability is recorded in the envelope documents and their machine-readable counterparts:
-
-- [D-001 Stage-2 envelope](D-001-STAGE2-ENVELOPE-0.1.md) — declared dimensional capability, limits, and unresolved items.
-- [S-001 Stage-2 envelope](S-001-STAGE2-ENVELOPE-0.1.md) — declared sheet capability, limits, and unresolved items.
-- [Dimensional Store travel standard](DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) — the governing dimensional completion rule.
-- [Store and cell stages](STB-STORE-CELL-STAGES-0.1.md) — what Stage 1, Stage 2, Stage 3, and Stage 4 may claim.
-
-Broader candidate machine engineering and its adoption decisions remain in the [3D Solutions Program](https://github.com/GeorgePlattDemo/3d-solutions-program). Store also holds the specifically identified Project 1 reference record below; its publication does not admit its controller or mechanical assumptions as Store capability.
-
-## Project 1: the written digital trail
-
-The [Project 1 digital manufacturing trail](docs/project-1-digital-trail/README.md) follows one identified definition through System derivation, the exact pinned Store answer, material selection, modeled work and Q, local coordinates, and all 45 generated virtual commands. Its 22-page review and reproducible evidence package make the transformations, information handoffs, and refusal boundaries inspectable.
-
-The precise CAM claim is that the user's definition supplies the controlling part requirements from which the bounded sequence is generated. Store and local machine facts supply material, tooling, registration, and manufacturing constraints. The reproduced Store answer is $11.09; the reference model does not replace that answer. Fourteen local checks passed. TwinCAT source remains uncompiled, physical admission remains BLOCKED, and the identified mechanical gaps remain open.
-
-Store owns this specimen's documentary custody. Program owns broader research and adoption; System owns operational job meaning and the application. Read the publication record for exact artifact identities and the distinction between custody, technical adoption, and physical release.
-
-## How Store Zero should be read
-
-Store Zero is a controlled test fixture, not a claim about how lumberyards generally operate. Another Store may use different stock, systems, suppliers, equipment, services, prices, and refusal rules while answering the same bounded interface.
-
-The Store membrane is the key boundary: outside demand may ask for selected Store answers without taking possession of the Store's internal systems or authority.
-
-If a required Store-owned fact is missing, the answer remains unresolved, refused, or unavailable. Missing facts are not permission for System or a project wrapper to substitute a fallback Store answer.
-
-## Where the support lives
-
-| If you want to know… | Read | What it establishes |
-| --- | --- | --- |
-| What Store Zero is | [Store Zero](STORE-ZERO.md) | The declared reference dealer, Store membrane, and status boundaries |
-| What the machines accept or refuse | [D-001 envelope](D-001-STAGE2-ENVELOPE-0.1.md) · [S-001 envelope](S-001-STAGE2-ENVELOPE-0.1.md) | Store-owned Stage-2 capability and limits |
-| How dimensional work becomes a Store answer | [Travel standard](DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) | Fit, modeled work, time, and reference economics through one Store rule |
-| What each evidence stage may claim | [Stages](STB-STORE-CELL-STAGES-0.1.md) | Reference software vs. later physical commissioning |
-| What one modeled Store-side sequence looks like | [Store Job 001](STORE-JOB-001.md) | A reference production narrative explicitly marked as modeled, not an observed run |
-| How one definition reaches Q and explicit reference commands | [Project 1 digital trail](docs/project-1-digital-trail/README.md) | Preserved review, reproducible calculation, command ledger, handoffs, and unresolved physical requirements |
-| What an actual Store adapter would add | [Store 1](store-1/README.md) | The bounded surface for a later real Store implementation |
-| What shared words mean | [System definitions](https://github.com/GeorgePlattDemo/scan-to-build-system/blob/main/docs/definitions/README.md) · [Store terms](DEFINITIONS.md) | Shared meaning in System; Store-local commerce and capability terms here |
-
-The customer/job-definition side lives in [Scan-to-Build System](https://github.com/GeorgePlattDemo/scan-to-build-system). The research question and candidate engineering live in the [3D Solutions Program](https://github.com/GeorgePlattDemo/3d-solutions-program).
-
-## Limits
-
-Store Zero is a modeled reference dealer. Declared stock is not counted inventory. Reference prices are budgetary, not binding quotations. Machine time is modeled, not measured. No physical D-001 or S-001 cell has been commissioned by the current software evidence. Publication here grants no patent license.
+- [**Store Zero**](STORE-ZERO.md) — the reference dealer and its service interface.
+- [**Store Job 001**](STORE-JOB-001.md) — a modeled Store-side production narrative.
+- [**Store 1**](store-1/README.md) — the surface for a later real Store implementation.
+- [**System definitions**](https://github.com/GeorgePlattDemo/scan-to-build-system/blob/main/docs/definitions/README.md) · [**Store terms**](DEFINITIONS.md) — shared job meaning and local yard vocabulary.
+- [**Candidate machine engineering**](https://github.com/GeorgePlattDemo/3d-solutions-program/tree/main/research/machine-development) — the broader development work in Program.
 
 **NO BLOOD ON WOOD.**
+
+<sub>Publication grants no patent license. Maintainers: [AGENTS.md](AGENTS.md).</sub>
