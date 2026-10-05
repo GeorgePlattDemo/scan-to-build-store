@@ -48,7 +48,7 @@ The intended production chain carries the accepted definition into a registered 
 
 The operator’s role is concrete: verify the correct board or sheet, load and register it to the machine’s established references, check tooling and readiness, and follow the local operating procedure. The digital chain supplies the job instructions; local engineering establishes the machine and its dependable operating conditions.
 
-The [**Project 1 digital manufacturing trail**](docs/project-1-digital-trail/README.md) lets you inspect that proposition for one specimen. One identified definition leads to a reproduced Store answer of **$11.09**, modeled work and time, local coordinates, and **45 generated virtual commands**, without a second design entry. Its evidence package includes a reproducible run, controller-oriented Structured Text, and fourteen local reference checks.
+The [**Project 1 digital manufacturing trail**](docs/project-1-digital-trail/D001_Project1_Review.md) lets you inspect that proposition for one specimen. One identified definition leads to a reproduced Store answer of **$11.09**, modeled work and time, local coordinates, and **45 generated virtual commands**, without a second design entry. Its evidence package includes a reproducible run, controller-oriented Structured Text, and fourteen local reference checks.
 
 The record is a reference derivation: the controller source is uncompiled and physical admission remains blocked. Its [publication record](docs/project-1-digital-trail/README.md) preserves the exact artifacts, handoffs, and open engineering questions. Program owns broader controller and machine-development work; Store holds this specimen’s documentary record.
 
