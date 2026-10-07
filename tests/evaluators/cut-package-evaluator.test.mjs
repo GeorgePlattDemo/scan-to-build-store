@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { loadCatalog, findSku } from "../../store-zero-stage2-store.mjs";
-import { CUT_PACKAGE_STANDARD, evaluateCutPackageJob, evaluateCutPackageStoreRequest } from "../../cut-package-evaluator.mjs";
-import { millLongitudinalCycleSec } from "../../d001-travel-standard.mjs";
+import { loadCatalog, findSku } from "../../src/store-zero-stage2-store.mjs";
+import { CUT_PACKAGE_STANDARD, evaluateCutPackageJob, evaluateCutPackageStoreRequest } from "../../src/evaluators/cut-package-evaluator.mjs";
+import { millLongitudinalCycleSec } from "../../src/engine/d001-travel-standard.mjs";
 
 // Neutral test lines only. What a cut list means belongs to the project that sends it.
 const catalog = loadCatalog();
@@ -15,7 +15,7 @@ const job = (cutPackages = [], itemLines = []) => evaluateCutPackageJob(catalog,
 const line = (answer, id) => [...answer.packages, ...answer.items].find((entry) => (entry.packageId ?? entry.lineId) === id);
 
 // 1. The file carries no project knowledge.
-const source = fs.readFileSync(new URL("../../cut-package-evaluator.mjs", import.meta.url), "utf8");
+const source = fs.readFileSync(new URL("../../src/evaluators/cut-package-evaluator.mjs", import.meta.url), "utf8");
 assert.ok(!/picnic|ana white|myoutdoor|make.it.yours|\bbench|\btables?\b/i.test(source), "no project names in the Store evaluator");
 assert.equal(CUT_PACKAGE_STANDARD.cutRules.length, 6);
 assert.ok(CUT_PACKAGE_STANDARD.cutRules.includes("EDGE_MILL_WHOLE_BOARD_BEFORE_PARTS"));

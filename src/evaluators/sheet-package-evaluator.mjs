@@ -26,11 +26,11 @@
  * split → release the sheet → crosscut at the yard panel saw → label every piece. Routed pieces stay in
  * their frame on their tabs; the owner separates them. Every piece goes back to the owner.
  */
-import { STORE_EVALUATION_FRESHNESS, loadCatalog, priceAnswer, stockAnswer } from "./store-zero-stage2-store.mjs";
-import { calculationHash, D001_TRAVEL_STANDARD, storeMachineSellRate } from "./d001-travel-standard.mjs";
-import { S001_STAGE2_ENVELOPE, centeredField } from "./src/envelopes/s001-stage2-envelope.mjs";
-import { evaluateCircularSegment } from "./src/engine/circular-segment.mjs";
-import { STENCIL_TAB_POLICY_V0, archedAperturePerimeter, planArchedStencilTabs, planSplitStencilTabs } from "./src/engine/stencil-tab-policy.mjs";
+import { STORE_EVALUATION_FRESHNESS, loadCatalog, priceAnswer, stockAnswer } from "../store-zero-stage2-store.mjs";
+import { calculationHash, D001_TRAVEL_STANDARD, storeMachineSellRate } from "../engine/d001-travel-standard.mjs";
+import { S001_STAGE2_ENVELOPE, centeredField } from "../envelopes/s001-stage2-envelope.mjs";
+import { evaluateCircularSegment } from "../engine/circular-segment.mjs";
+import { STENCIL_TAB_POLICY_V0, archedAperturePerimeter, planArchedStencilTabs, planSplitStencilTabs } from "../engine/stencil-tab-policy.mjs";
 
 export const SHEET_PACKAGE_STANDARD = Object.freeze({
   id: "STB-SHEET-PACKAGE-0.1",

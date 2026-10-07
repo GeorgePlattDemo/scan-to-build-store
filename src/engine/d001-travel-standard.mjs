@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { D001_STAGE2_ENVELOPE, millPassesForDepth } from "./d001-stage2-envelope.mjs";
+import { D001_STAGE2_ENVELOPE, millPassesForDepth } from "../envelopes/d001-stage2-envelope.mjs";
 
 export const D001_TRAVEL_STANDARD = Object.freeze({
   id: "STB-D001-DIMENSIONAL-TRAVEL-0.1",

@@ -50,8 +50,8 @@ import {
   offerMaterial,
   priceAnswer,
   stockAnswer
-} from "./store-zero-stage2-store.mjs";
-import { D001_STAGE2_ENVELOPE } from "./d001-stage2-envelope.mjs";
+} from "../store-zero-stage2-store.mjs";
+import { D001_STAGE2_ENVELOPE } from "../envelopes/d001-stage2-envelope.mjs";
 import {
   calculationHash,
   D001_TRAVEL_STANDARD,
@@ -59,7 +59,7 @@ import {
   evaluateD001UserDefinedBoard,
   millLongitudinalCycleSec,
   storeMachineSellRate
-} from "./d001-travel-standard.mjs";
+} from "../engine/d001-travel-standard.mjs";
 
 export const CUT_PACKAGE_STANDARD = Object.freeze({
   id: "STB-CUT-PACKAGE-0.1",

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import { loadCatalog } from "../../store-zero-stage2-store.mjs";
-import { ALCOVE_STORE_STANDARD, evaluateAlcoveJob } from "../../alcove-store-evaluator.mjs";
-import { D001_STAGE2_ENVELOPE } from "../../d001-stage2-envelope.mjs";
-import { spotPlungeIn, spotPointLengthIn } from "../../d001-travel-standard.mjs";
+import { loadCatalog } from "../../src/store-zero-stage2-store.mjs";
+import { ALCOVE_STORE_STANDARD, evaluateAlcoveJob } from "../../src/evaluators/alcove-store-evaluator.mjs";
+import { D001_STAGE2_ENVELOPE } from "../../src/envelopes/d001-stage2-envelope.mjs";
+import { spotPlungeIn, spotPointLengthIn } from "../../src/engine/d001-travel-standard.mjs";
 
 // Declared spot: 3/16 in wide, one depth of 3/16 in at full diameter measured after the 118 degree point.
 // Placement across the board: centered, or inset 1 1/2 in or 2 in from an edge.

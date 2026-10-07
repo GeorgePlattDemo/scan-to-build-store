@@ -6,11 +6,11 @@ import {
   evaluateDimensionalStoreRequest,
   requestDimensionalStoreEvaluation,
   STORE_EVALUATION_FRESHNESS
-} from "../../store-zero-stage2-store.mjs";
+} from "../../src/store-zero-stage2-store.mjs";
 import {
   D001_TRAVEL_STANDARD,
   storeMachineSellRate
-} from "../../d001-travel-standard.mjs";
+} from "../../src/engine/d001-travel-standard.mjs";
 import { USER1_DIMENSIONAL_TRAVEL_DEMAND } from "../fixtures/user1-dimensional-travel-fixture.mjs";
 
 const catalog = loadCatalog();
@@ -223,7 +223,7 @@ const countMismatch = evaluateDimensionalTravelJob(catalog, mismatch);
 assert.equal(countMismatch.status, "UNRESOLVED");
 assert.ok(countMismatch.estimate.unresolved.includes("DECLARED_SPOT_COUNT_MISMATCH"));
 
-const storeSource = readFileSync(new URL("../../store-zero-stage2-store.mjs", import.meta.url), "utf8");
+const storeSource = readFileSync(new URL("../../src/store-zero-stage2-store.mjs", import.meta.url), "utf8");
 assert.match(
   storeSource,
   /return evaluateDimensionalStoreRequest\(loadCatalog\(\), demand, request\)/,
@@ -235,7 +235,7 @@ assert.equal(
   "fresh-evaluation anti-cache invariant disappeared from Store source"
 );
 
-const engineSource = readFileSync(new URL("../../store-zero-pricing-engine.mjs", import.meta.url), "utf8");
+const engineSource = readFileSync(new URL("../../src/engine/store-zero-pricing-engine.mjs", import.meta.url), "utf8");
 for (const rejected of ["setupCharge: 35", "machineHourRate: 100", "jobSetupMin: 8"]) {
   assert.equal(engineSource.includes(rejected), false, "rejected legacy constant returned: " + rejected);
 }
