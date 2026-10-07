@@ -5,9 +5,9 @@ import {
   capabilityAnswer,
   evaluateJob,
   resolveBoardMaterial
-} from "../../store-zero-stage2-store.mjs";
-import { envelopeCheck, millPassesForDepth, D001_STAGE2_ENVELOPE } from "../../d001-stage2-envelope.mjs";
-import { estimatePineAlcove, estimatePicnicLegTapered } from "../../store-zero-pricing-engine.mjs";
+} from "../../src/store-zero-stage2-store.mjs";
+import { envelopeCheck, millPassesForDepth, D001_STAGE2_ENVELOPE } from "../../src/envelopes/d001-stage2-envelope.mjs";
+import { estimatePineAlcove, estimatePicnicLegTapered } from "../../src/engine/store-zero-pricing-engine.mjs";
 
 const catalog = loadCatalog();
 assert.equal(D001_STAGE2_ENVELOPE.id, "D001-STAGE2-ENVELOPE-0.3");

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { loadCatalog, evaluateJob, STAGE2_JOB_DISPOSITIONS } from "../../store-zero-stage2-store.mjs";
-import { estimatePineAlcove, CYCLE_MODEL } from "../../store-zero-pricing-engine.mjs";
+import { loadCatalog, evaluateJob, STAGE2_JOB_DISPOSITIONS } from "../../src/store-zero-stage2-store.mjs";
+import { estimatePineAlcove, CYCLE_MODEL } from "../../src/engine/store-zero-pricing-engine.mjs";
 
 const catalog = loadCatalog();
 assert.deepEqual(STAGE2_JOB_DISPOSITIONS.sort(), [

@@ -31,7 +31,7 @@ The [D-001 envelope](docs/standards/D-001-STAGE2-ENVELOPE-0.1.md) and [S-001 env
 
 ## One request, a yard’s answer
 
-The evaluator follows the identified job through material selection, capability, modeled work, and economics. For dimensional work, the [travel standard](DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) provides the governing completion rule. Multi-part and sheet requests have their own evaluators.
+The evaluator follows the identified job through material selection, capability, modeled work, and economics. For dimensional work, the [travel standard](docs/standards/DIMENSIONAL-STORE-TRAVEL-STANDARD-0.1.md) provides the governing completion rule. Multi-part and sheet requests have their own evaluators.
 
 Every request receives a bounded outcome with its reasons:
 
@@ -66,14 +66,14 @@ The application consumes one exact Store version, owned by System’s [`STORE_PI
 
 | Surface | What to inspect |
 | --- | --- |
-| [Catalog](store-zero-catalog.json) | Offerings, item identities, declared stock, and material prices. |
-| [Pricing engine](store-zero-pricing-engine.mjs) | Material and modeled machine-work economics. |
-| [Dimensional travel standard](d001-travel-standard.mjs) | Fit, travel, modeled work, and the dimensional completion calculation. |
-| [Cut-package evaluator](cut-package-evaluator.mjs) · [Alcove evaluator](alcove-store-evaluator.mjs) | Multi-part dimensional requests. |
-| [Sheet-package evaluator](sheet-package-evaluator.mjs) | Routed sheet work, tabs, and supported panel cuts. |
-| [D-001 declarations](d001-stage2-envelope.mjs) · [S-001 declarations](src/envelopes/s001-stage2-envelope.mjs) | Machine-readable capability facts. |
+| [Catalog](data/store-zero-catalog.json) | Offerings, item identities, declared stock, and material prices. |
+| [Pricing engine](src/engine/store-zero-pricing-engine.mjs) | Material and modeled machine-work economics. |
+| [Dimensional travel standard](src/engine/d001-travel-standard.mjs) | Fit, travel, modeled work, and the dimensional completion calculation. |
+| [Cut-package evaluator](src/evaluators/cut-package-evaluator.mjs) · [Alcove evaluator](src/evaluators/alcove-store-evaluator.mjs) | Multi-part dimensional requests. |
+| [Sheet-package evaluator](src/evaluators/sheet-package-evaluator.mjs) | Routed sheet work, tabs, and supported panel cuts. |
+| [D-001 declarations](src/envelopes/d001-stage2-envelope.mjs) · [S-001 declarations](src/envelopes/s001-stage2-envelope.mjs) | Machine-readable capability facts. |
 
-**File map.** The root keeps the paths System consumes: Store evaluators, pricing, dimensional capability and travel declarations, catalog and observations, and the governing dimensional travel document. [`src/`](src/) holds internal sheet geometry, tab policy, and sheet capability; [`data/`](data/) holds the dated price and hardware sheets. [`tests/`](tests/) holds the existing tests and their fixture. [`docs/standards/`](docs/standards/) holds the other standards; [`docs/reference/`](docs/reference/) holds Store Zero, Job 001, and Store 1 documents. [`docs/project-1-digital-trail/`](docs/project-1-digital-trail/) preserves the Project 1 record, and [`history/`](history/) preserves the earlier paper.
+Code is in [`src/`](src/), catalog and price sheets in [`data/`](data/), and checks in [`tests/`](tests/). [`docs/`](docs/) holds standards, reference records, Store terms, and the earlier paper.
 
 Run the repository tests on Node 22:
 
@@ -88,7 +88,7 @@ Store Zero uses declared reference stock, budgetary prices, and modeled machine 
 - [**Store Zero**](docs/reference/STORE-ZERO.md) — the reference dealer and its service interface.
 - [**Store Job 001**](docs/reference/STORE-JOB-001.md) — a modeled Store-side production narrative.
 - [**Store 1**](docs/reference/store-1/README.md) — the surface for a later real Store implementation.
-- [**System definitions**](https://github.com/GeorgePlattDemo/scan-to-build-system/blob/main/docs/definitions/README.md) · [**Store terms**](DEFINITIONS.md) — shared job meaning and local yard vocabulary.
+- [**System definitions**](https://github.com/GeorgePlattDemo/scan-to-build-system/blob/main/docs/definitions/README.md) · [**Store terms**](docs/DEFINITIONS.md) — shared job meaning and local yard vocabulary.
 - [**Candidate machine engineering**](https://github.com/GeorgePlattDemo/3d-solutions-program/tree/main/research/machine-development) — the broader development work in Program.
 
 **NO BLOOD ON WOOD.**

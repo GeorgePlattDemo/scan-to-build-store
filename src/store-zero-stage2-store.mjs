@@ -16,9 +16,9 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { estimatePineAlcove, estimateJob, estimateUserDefinedBoardTravel } from "./store-zero-pricing-engine.mjs";
-import { D001_STAGE2_ENVELOPE, envelopeCheck } from "./d001-stage2-envelope.mjs";
-import { calculationHash, D001_TRAVEL_STANDARD } from "./d001-travel-standard.mjs";
+import { estimatePineAlcove, estimateJob, estimateUserDefinedBoardTravel } from "./engine/store-zero-pricing-engine.mjs";
+import { D001_STAGE2_ENVELOPE, envelopeCheck } from "./envelopes/d001-stage2-envelope.mjs";
+import { calculationHash, D001_TRAVEL_STANDARD } from "./engine/d001-travel-standard.mjs";
 
 export const STAGE2_JOB_DISPOSITIONS = [
   "SUPPORTABLE",
@@ -29,11 +29,11 @@ export const STAGE2_JOB_DISPOSITIONS = [
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 
-export function loadCatalog(path = join(ROOT, "store-zero-catalog.json")) {
+export function loadCatalog(path = join(ROOT, "../data/store-zero-catalog.json")) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
-export function loadObservations(path = join(ROOT, "store-zero-observations.json")) {
+export function loadObservations(path = join(ROOT, "../data/store-zero-observations.json")) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 

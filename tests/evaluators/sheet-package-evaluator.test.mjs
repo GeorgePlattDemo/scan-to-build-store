@@ -5,10 +5,10 @@ import {
   evaluateSheetPackageJob,
   evaluateSheetPackageStoreRequest,
   requestSheetPackageStoreEvaluation
-} from "../../sheet-package-evaluator.mjs";
+} from "../../src/evaluators/sheet-package-evaluator.mjs";
 import { S001_STAGE2_ENVELOPE } from "../../src/envelopes/s001-stage2-envelope.mjs";
-import { loadCatalog } from "../../store-zero-stage2-store.mjs";
-import { evaluateCutPackageJob } from "../../cut-package-evaluator.mjs";
+import { loadCatalog } from "../../src/store-zero-stage2-store.mjs";
+import { evaluateCutPackageJob } from "../../src/evaluators/cut-package-evaluator.mjs";
 
 // The canonical playhouse window: one 1/2 in sheet, a centered 36 in arched opening split down the middle,
 // and two crosscuts 18 in from each end. Every piece goes back to the owner.
