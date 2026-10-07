@@ -73,6 +73,8 @@ The application consumes one exact Store version, owned by System’s [`STORE_PI
 | [Sheet-package evaluator](sheet-package-evaluator.mjs) | Routed sheet work, tabs, and supported panel cuts. |
 | [D-001 declarations](d001-stage2-envelope.mjs) · [S-001 declarations](s001-stage2-envelope.mjs) | Machine-readable capability facts. |
 
+**Why so many files sit at the top level.** The evaluators above, their `*.test.mjs` tests, the Store Zero data (`store-zero-catalog.json`, the dated price and hardware CSV sheets, `store-zero-observations.json`) and the envelope and standard documents stay where they are on purpose: the application loads this Store at one exact version, by these exact paths. An earlier paper is parked in [`history/`](history/), the Project 1 record is in [`docs/`](docs/), and the surface for a later real Store in [`store-1/`](store-1/README.md).
+
 Run the repository tests on Node 22:
 
 ```sh
