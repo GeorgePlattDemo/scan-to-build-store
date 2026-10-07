@@ -73,6 +73,8 @@ The application consumes one exact Store version, owned by System’s [`STORE_PI
 | [Sheet-package evaluator](sheet-package-evaluator.mjs) | Routed sheet work, tabs, and supported panel cuts. |
 | [D-001 declarations](d001-stage2-envelope.mjs) · [S-001 declarations](s001-stage2-envelope.mjs) | Machine-readable capability facts. |
 
+**File map.** The top level contains the evaluators, their `*.test.mjs` tests, Store Zero catalog and observation data, dated price and hardware CSV sheets, and capability and standard documents. [`docs/project-1-digital-trail/`](docs/project-1-digital-trail/) holds the Project 1 record, [`history/`](history/) holds an earlier paper, and [`store-1/`](store-1/README.md) describes a later real Store implementation. System checks out its pinned Store version and imports selected modules from these paths; changing Store documentation does not move that pin.
+
 Run the repository tests on Node 22:
 
 ```sh
