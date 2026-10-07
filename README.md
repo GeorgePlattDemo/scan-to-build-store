@@ -25,7 +25,7 @@ Store Zero is the modeled reference yard used to develop and test this service. 
 | **Dimensional — D-001** | Cut to length, bounded miters, declared milling profiles, and a defined 3/16-in spot/pilot operation. |
 | **Sheet — S-001** | Bounded routed openings, retained tabs, supported center splits, and panel-saw crosscuts. |
 
-The [D-001 envelope](D-001-STAGE2-ENVELOPE-0.1.md) and [S-001 envelope](S-001-STAGE2-ENVELOPE-0.1.md) give the exact accepted operations and geometry. The sheet plan keeps the routed center pieces attached by planned tabs for later separation.
+The [D-001 envelope](docs/standards/D-001-STAGE2-ENVELOPE-0.1.md) and [S-001 envelope](docs/standards/S-001-STAGE2-ENVELOPE-0.1.md) give the exact accepted operations and geometry. The sheet plan keeps the routed center pieces attached by planned tabs for later separation.
 
 **Cut, mill, and drill are operations with material, geometry, tooling, and time behind them.** The Store answer connects those facts to the requested result.
 
@@ -40,7 +40,7 @@ Every request receives a bounded outcome with its reasons:
 - **`REFUSED`** — the request falls outside the declared capability.
 - **`UNAVAILABLE`** — the required supply is unavailable under the declared facts.
 
-The yard keeps control of its own service. Another Store can use different suppliers, stock, equipment, pricing, and operating systems through the same bounded request-and-answer interface. The [Store membrane](STORE-ZERO.md) explains how outside demand calls selected services while the dealer retains its internal systems.
+The yard keeps control of its own service. Another Store can use different suppliers, stock, equipment, pricing, and operating systems through the same bounded request-and-answer interface. The [Store membrane](docs/reference/STORE-ZERO.md) explains how outside demand calls selected services while the dealer retains its internal systems.
 
 ## The instructions are digital
 
@@ -71,23 +71,23 @@ The application consumes one exact Store version, owned by System’s [`STORE_PI
 | [Dimensional travel standard](d001-travel-standard.mjs) | Fit, travel, modeled work, and the dimensional completion calculation. |
 | [Cut-package evaluator](cut-package-evaluator.mjs) · [Alcove evaluator](alcove-store-evaluator.mjs) | Multi-part dimensional requests. |
 | [Sheet-package evaluator](sheet-package-evaluator.mjs) | Routed sheet work, tabs, and supported panel cuts. |
-| [D-001 declarations](d001-stage2-envelope.mjs) · [S-001 declarations](s001-stage2-envelope.mjs) | Machine-readable capability facts. |
+| [D-001 declarations](d001-stage2-envelope.mjs) · [S-001 declarations](src/envelopes/s001-stage2-envelope.mjs) | Machine-readable capability facts. |
 
-**File map.** The top level contains the evaluators, their `*.test.mjs` tests, Store Zero catalog and observation data, dated price and hardware CSV sheets, and capability and standard documents. [`docs/project-1-digital-trail/`](docs/project-1-digital-trail/) holds the Project 1 record, [`history/`](history/) holds an earlier paper, and [`store-1/`](store-1/README.md) describes a later real Store implementation. System checks out its pinned Store version and imports selected modules from these paths; changing Store documentation does not move that pin.
+**File map.** The root keeps the paths System consumes: Store evaluators, pricing, dimensional capability and travel declarations, catalog and observations, and the governing dimensional travel document. [`src/`](src/) holds internal sheet geometry, tab policy, and sheet capability; [`data/`](data/) holds the dated price and hardware sheets. [`tests/`](tests/) holds the existing tests and their fixture. [`docs/standards/`](docs/standards/) holds the other standards; [`docs/reference/`](docs/reference/) holds Store Zero, Job 001, and Store 1 documents. [`docs/project-1-digital-trail/`](docs/project-1-digital-trail/) preserves the Project 1 record, and [`history/`](history/) preserves the earlier paper.
 
 Run the repository tests on Node 22:
 
 ```sh
-node --test *.test.mjs
+node --test tests/evaluators/*.test.mjs tests/engine/*.test.mjs
 ```
 
 ## Reference status and further reading
 
-Store Zero uses declared reference stock, budgetary prices, and modeled machine time. Physical D-001/S-001 production is not commissioned; the demonstration does not transact real payment or issue a production release. The [stage guide](STB-STORE-CELL-STAGES-0.1.md) separates the software/reference work from physical commissioning.
+Store Zero uses declared reference stock, budgetary prices, and modeled machine time. Physical D-001/S-001 production is not commissioned; the demonstration does not transact real payment or issue a production release. The [stage guide](docs/standards/STB-STORE-CELL-STAGES-0.1.md) separates the software/reference work from physical commissioning.
 
-- [**Store Zero**](STORE-ZERO.md) — the reference dealer and its service interface.
-- [**Store Job 001**](STORE-JOB-001.md) — a modeled Store-side production narrative.
-- [**Store 1**](store-1/README.md) — the surface for a later real Store implementation.
+- [**Store Zero**](docs/reference/STORE-ZERO.md) — the reference dealer and its service interface.
+- [**Store Job 001**](docs/reference/STORE-JOB-001.md) — a modeled Store-side production narrative.
+- [**Store 1**](docs/reference/store-1/README.md) — the surface for a later real Store implementation.
 - [**System definitions**](https://github.com/GeorgePlattDemo/scan-to-build-system/blob/main/docs/definitions/README.md) · [**Store terms**](DEFINITIONS.md) — shared job meaning and local yard vocabulary.
 - [**Candidate machine engineering**](https://github.com/GeorgePlattDemo/3d-solutions-program/tree/main/research/machine-development) — the broader development work in Program.
 

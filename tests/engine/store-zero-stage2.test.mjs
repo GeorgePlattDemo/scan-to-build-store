@@ -5,9 +5,9 @@ import {
   findSku,
   pineAlcoveEvaluation,
   evaluateDimensionalTravelJob
-} from "./store-zero-stage2-store.mjs";
-import { estimatePineAlcove, sellingPrice, ENGINE } from "./store-zero-pricing-engine.mjs";
-import { USER1_DIMENSIONAL_TRAVEL_DEMAND } from "./user1-dimensional-travel-fixture.mjs";
+} from "../../store-zero-stage2-store.mjs";
+import { estimatePineAlcove, sellingPrice, ENGINE } from "../../store-zero-pricing-engine.mjs";
+import { USER1_DIMENSIONAL_TRAVEL_DEMAND } from "../fixtures/user1-dimensional-travel-fixture.mjs";
 
 const catalog = loadCatalog();
 const observations = loadObservations();

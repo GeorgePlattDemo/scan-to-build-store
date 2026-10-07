@@ -6,7 +6,7 @@ Purpose: `fit → operation → modeled minutes → Q` for sheet jobs, so a shee
 
 **Every number in this envelope is a newly adopted Stage-2 reference assumption.** Capability limits are `DECLARED_STAGE2_CAPABILITY`; feeds, handling seconds, panel-saw times, clearances and minimums are `DECLARED_STAGE2_MODEL`. None of them was recovered from earlier work or measured. `measured = false`, `commissioned = false`. They are not physical-machine evidence and they do not make a commercial quote. Measured Stage-3 evidence replaces them later; results computed under them are not rewritten when that happens. Every answer carries these labels in its `evidence` block.
 
-Machine-readable copy: [`s001-stage2-envelope.mjs`](s001-stage2-envelope.mjs) (`S001_STAGE2_ENVELOPE`). Evaluator: [`sheet-package-evaluator.mjs`](sheet-package-evaluator.mjs) (`SHEET_PACKAGE_V1`, standard `STB-SHEET-PACKAGE-0.1`). Tab planning: [`STENCIL-TAB-POLICY-0.1.md`](STENCIL-TAB-POLICY-0.1.md).
+Machine-readable copy: [`s001-stage2-envelope.mjs`](../../src/envelopes/s001-stage2-envelope.mjs) (`S001_STAGE2_ENVELOPE`). Evaluator: [`sheet-package-evaluator.mjs`](../../sheet-package-evaluator.mjs) (`SHEET_PACKAGE_V1`, standard `STB-SHEET-PACKAGE-0.1`). Tab planning: [`STENCIL-TAB-POLICY-0.1.md`](STENCIL-TAB-POLICY-0.1.md).
 
 Sheets never fall through D-001. D-001 refuses a sheet (`SHEET_NOT_D001`); S-001 refuses anything that is not a full sheet.
 

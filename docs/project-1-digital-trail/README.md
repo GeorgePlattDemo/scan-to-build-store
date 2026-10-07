@@ -27,7 +27,7 @@ Extract the evidence ZIP and read its README before running `node reproduce.mjs`
 
 The ZIP's source copies are frozen evidence inputs with recorded provenance. They are not a second runtime evaluator or independently maintained Store source. The operational application continues to consume the Store version owned by System's `STORE_PIN`.
 
-The governing capability declarations remain [D-001](../../D-001-STAGE2-ENVELOPE-0.1.md) and [S-001](../../S-001-STAGE2-ENVELOPE-0.1.md); the [stage guide](../../STB-STORE-CELL-STAGES-0.1.md) controls their evidence boundary. Broader research and adoption remain in [Program](https://github.com/GeorgePlattDemo/3d-solutions-program). Shared job meaning remains in [System](https://github.com/GeorgePlattDemo/scan-to-build-system).
+The governing capability declarations remain [D-001](../standards/D-001-STAGE2-ENVELOPE-0.1.md) and [S-001](../standards/S-001-STAGE2-ENVELOPE-0.1.md); the [stage guide](../standards/STB-STORE-CELL-STAGES-0.1.md) controls their evidence boundary. Broader research and adoption remain in [Program](https://github.com/GeorgePlattDemo/3d-solutions-program). Shared job meaning remains in [System](https://github.com/GeorgePlattDemo/scan-to-build-system).
 
 Publication does not grant a software or patent license or alter source attribution or rights.
 

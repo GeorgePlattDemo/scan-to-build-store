@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { loadCatalog, findSku, capabilityAnswer, evaluateJob } from "./store-zero-stage2-store.mjs";
+import { loadCatalog, findSku, capabilityAnswer, evaluateJob } from "../../store-zero-stage2-store.mjs";
 import {
   estimatePicnicLegSquare,
   estimatePicnicLegTapered
-} from "./store-zero-pricing-engine.mjs";
+} from "../../store-zero-pricing-engine.mjs";
 
 const catalog = loadCatalog();
 const sku = findSku(catalog, "STB-ZERO-SPF-2X4-96-001");
