@@ -81,7 +81,7 @@ A future special-order answer must remain distinguishable from:
 
 ## Machine engineering firewall
 
-Detailed mechanics live under `../machines/engineering/`.
+Detailed mechanics live in [Program machine development](https://github.com/GeorgePlattDemo/3d-solutions-program/tree/main/research/machine-development).
 
 The Store may need a bounded declaration such as supported operation, material form, dimensional limit, installed capability identity, or envelope version. It does **not** need the full BOM, drive model, rack pitch, I/O map, postprocessor, controller configuration, or safety wiring to answer ordinary Store questions.
 

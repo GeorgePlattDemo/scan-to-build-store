@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
-import { loadCatalog } from "./store-zero-stage2-store.mjs";
+import { loadCatalog } from "../../store-zero-stage2-store.mjs";
 import {
   ALCOVE_STORE_STANDARD,
   evaluateAlcoveJob,
   evaluateAlcoveStoreRequest
-} from "./alcove-store-evaluator.mjs";
+} from "../../alcove-store-evaluator.mjs";
 
 const catalog = loadCatalog();
 

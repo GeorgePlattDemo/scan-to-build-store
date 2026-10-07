@@ -18,4 +18,4 @@ jobs:
         with:
           node-version: "22"
       - name: Store test suite (documented command)
-        run: node --test *.test.mjs
+        run: node --test tests/evaluators/*.test.mjs tests/engine/*.test.mjs
